@@ -9,6 +9,7 @@ public class MailService {
 
     private final JavaMailSender mailSender;
 
+    // TODO Починить
     public MailService(JavaMailSender mailSender) {
         this.mailSender = mailSender;
     }
