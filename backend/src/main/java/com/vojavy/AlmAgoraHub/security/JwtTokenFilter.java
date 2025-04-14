@@ -33,7 +33,6 @@ public class JwtTokenFilter extends OncePerRequestFilter {
         String token = resolveToken(request);
         if (token != null && jwtTokenProvider.validateToken(token)) {
             String email = jwtTokenProvider.getEmail(token);
-            // Можно дополнительно загрузить пользователя из базы для получения ролей
             Authentication auth = new UsernamePasswordAuthenticationToken(email, null, Collections.emptyList());
             SecurityContextHolder.getContext().setAuthentication(auth);
         }
