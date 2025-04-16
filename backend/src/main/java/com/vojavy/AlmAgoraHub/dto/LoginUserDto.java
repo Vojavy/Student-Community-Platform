@@ -1,16 +1,8 @@
 package com.vojavy.AlmAgoraHub.dto;
 
-public class AuthRequest {
+public class LoginUserDto {
     private String email;
     private String password;
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
 
     public String getEmail() {
         return email;
@@ -18,5 +10,13 @@ public class AuthRequest {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
     }
 }
