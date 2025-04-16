@@ -88,16 +88,7 @@ answer_translations = {
     "Я пидор гырлы гырлы горловой":
         "Neplatná odpověď",
 
-    # Комбинированные ответы (разделённые ответы переводим отдельно)
-    "Сложность поиска жилья/общежития, рудности с пониманием административных процессов (документы, дедлайны)":
-        "Problém najít bydlení / kolej, Nejasnosti v administrativních postupech (dokumenty, termíny)",
-
-    "Отсутствие знакомых/сообщества для обмена опытом, рудности с пониманием административных процессов (документы, дедлайны)":
-        "Chybějící komunita / známí pro sdílení zkušeností, Nejasnosti v administrativních postupech (dokumenty, termíny)",
-
-    "Нехватка информации о факультетах и программах, рудности с пониманием административных процессов (документы, дедлайны)":
-        "Nedostatek informací o fakultách a studijních programech, Nejasnosti v administrativních postupech (dokumenty, termíny)",
-        "Нет": "Ne",
+     "Нет": "Ne",
     "Да, в одном": "Ano, v jednom",
     "Да, в нескольких": "Ano, v několika",
     "Да": "Ano",
@@ -113,6 +104,26 @@ answer_translations = {
         "Osobní kontakty a přátelské vazby",
     "Сложность поиска жилья/общежития":
         "Problém najít bydlení / kolej",
+        "Социальные сети (Facebook, Instagram)":"Sociální sítě (Facebook, Instagram)",
+        "Консультации с кураторами, преподавателями":"Konzultace s tutor(y), vyučujícími",
+        "Помощь старшекурсников (наставничество)":"Pomoc starších studentů (mentoring)",
+        "Официальные сайты/площадки университета":"Oficiální weby/univerzitní portály",
+        "Личные знакомства и дружеские связи":"Osobní kontakty a přátelské vazby",
+        "Никакие ресурсы особенно не помогли":"Nic z toho mi příliš nepomohlo",
+        "Официальный веб-сайт университета":"Oficiální web univerzity",
+        "Оффлайн реклама (листовки, объявления, баннеры)":"Offline reklama (letáky, nástěnky, bannery)",
+        "От других людей (студентов, преподавателей)":"Od ostatních lidí (spolužáci, vyučující)",
+        "Другое (Telegram, WhatsApp и т.п.)":"Jiné (Telegram, WhatsApp apod.)",
+        "Культурные (концерты, выставки)":"Kulturní (koncerty, výstavy)",
+        "Научные (конференции, семинары, хакатоны)":"Vědecké (konference, semináře, hackathony)",
+        "Спортивные (соревнования, секции)":"Sportovní (závody, tréninkové skupiny)",
+        "Развлекательные (вечеринки, игры, квизы)":"Zábavné (večírky, kvízy, hry)",
+        "Волонтёрские":"Dobrovolnické",
+        "Образовательные":"Vzdělávací",
+        "Оргии, групповой секс не обязательно с женщинами":"Neplatná odpověď",
+        "Не  интересуют":"Nemám zájem",
+        "Трудности с пониманием административных процессов (документы, дедлайны)":"Nejasnosti v administrativních postupech (dokumenty, termíny)",
+        "":"",
 }
 
 # =============================================================================
@@ -308,18 +319,17 @@ def process_type3(question_text, responses, save_path):
         print(f"Вопрос «{question_text}»: отсутствují odpovědi.")
         return
 
-    # Замена текста вопроса
+    # Замена текста вопроса согласно словарю
     question_text = question_translations.get(question_text, question_text)
     
     all_answers = []
+    # Для каждого ответа всегда применяем smart_split и добавляем все полученные части
     for resp in responses_nonnull:
-        parts = smart_split(resp)
-        if len(parts) > 1:
-            all_answers.extend(parts)
-        else:
-            all_answers.append(resp.strip())
-
-    # Перевод вариантов ответов, если они есть в словаре
+        splits = smart_split(resp)
+        # Добавляем все части (если smart_split вернула список длины 1 — ок)
+        all_answers.extend(splits)
+    
+    # Теперь для каждого русского варианта выполняем перевод
     all_answers_translated = [answer_translations.get(ans, ans) for ans in all_answers]
     
     if not all_answers_translated:
