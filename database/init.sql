@@ -376,3 +376,8 @@ create table public.event_publication
 alter table public.event_publication
     owner to admin;
 
+CREATE INDEX IF NOT EXISTS idx_user_tokens_token ON public.user_tokens (token);
+
+CREATE INDEX IF NOT EXISTS idx_user_tokens_user_id ON public.user_tokens (user_id);
+
+

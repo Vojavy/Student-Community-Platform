@@ -26,21 +26,22 @@ public class AuthenticationService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final EmailService emailService;
+    private final UserTokenService userTokenService;
 
     public AuthenticationService(
             UserRepository userRepository,
             PasswordEncoder passwordEncoder,
             AuthenticationManager authenticationManager,
-            EmailService emailService) {
+            EmailService emailService, UserTokenService userTokenService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
         this.emailService = emailService;
+        this.userTokenService = userTokenService;
     }
 
-    public User signupLocal(RegisterUserDto input){
+    public User signupLocal(RegisterUserDto input, String baseUrl){
         User user = new User();
-        UserToken userToken = new UserToken();
 
         user.setEmail(input.getEmail());
         user.setPassword(passwordEncoder.encode(input.getPassword()));
@@ -48,15 +49,15 @@ public class AuthenticationService {
         user.setActive(false);
         user.setVerificationCode(generateVerificationCode());
         user.setVerificationExpires(LocalDateTime.now().plusMinutes(15).toInstant(ZoneOffset.UTC));
-        user.setAuthProvider("local");
         user.setProviderId(0);
         user.setCreatedAt(Instant.now());
         user.setUpdatedAt(Instant.now());
 
-        sendVerificationEmailLocal(user);
+        sendVerificationEmailLocal(user, baseUrl);
 
         return userRepository.save(user);
     }
+
 
     public User authenticateLocal(LoginUserDto input){
         User user = userRepository.findByEmail(input.getEmail())
@@ -93,7 +94,7 @@ public class AuthenticationService {
         }
     }
 
-    public void resendVerificationEmailLocal(String email){
+    public void resendVerificationEmailLocal(String email, String baseUrl){
         Optional<User> optionalUser = userRepository.findByEmail(email);
         if (optionalUser.isPresent()) {
             User user = optionalUser.get();
@@ -101,16 +102,19 @@ public class AuthenticationService {
                 throw new RuntimeException("User is active");
             user.setVerificationCode(generateVerificationCode());
             user.setVerificationExpires(LocalDateTime.now().plusMinutes(15).toInstant(ZoneOffset.UTC));
-            sendVerificationEmailLocal(user);
+            sendVerificationEmailLocal(user, baseUrl);
             userRepository.save(user);
         } else {
             throw new RuntimeException("User not found");
         }
     }
 
-    public void sendVerificationEmailLocal(User user) {
+    public void sendVerificationEmailLocal(User user, String baseUrl) {
         String subject = "Account Verification for AlmAgoraHub Students Platform";
         String verificationCode = user.getVerificationCode();
+
+        // 📌 Формируем ссылку
+        String link = String.format("%s/verify?email=%s&code=%s", baseUrl, user.getEmail(), verificationCode);
 
         String htmlMessage = """
         <html>
@@ -141,6 +145,15 @@ public class AuthenticationService {
                     display: inline-block;
                     margin: 20px 0;
                 }
+                .verify-btn {
+                    display: inline-block;
+                    background-color: #4CAF50;
+                    color: white;
+                    padding: 12px 24px;
+                    text-decoration: none;
+                    border-radius: 6px;
+                    margin-top: 20px;
+                }
                 .footer {
                     font-size: 12px;
                     color: #888;
@@ -151,9 +164,13 @@ public class AuthenticationService {
         <body>
             <div class="container">
                 <h2>Welcome to AlmAgoraHub 👋</h2>
-                <p>To complete your registration, please verify your account using the code below:</p>
+                <p>To complete your registration, use this code:</p>
                 <div class="code">%s</div>
-                <p>This code is valid for 15 minutes. If you didn’t request this, you can safely ignore this email.</p>
+                <p>Or click the button below:</p>
+                <a href="%s" class="verify-btn">Verify My Account</a>
+                <p class="footer">
+                    This code is valid for 15 minutes. If you didn’t request this, you can safely ignore this email.
+                </p>
                 <div class="footer">
                     &copy; AlmAgoraHub Students Platform<br>
                     Do not reply to this email.
@@ -161,18 +178,24 @@ public class AuthenticationService {
             </div>
         </body>
         </html>
-        """.formatted(verificationCode);
+        """.formatted(verificationCode, link);
 
-       try {
-           emailService.sendVerificationEmail(user.getEmail(), subject, htmlMessage);
-       } catch (Exception e) {
-           e.printStackTrace();
-       }
+        try {
+            emailService.sendVerificationEmail(user.getEmail(), subject, htmlMessage);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private String generateVerificationCode() {
         Random random = new Random();
         int randomInt = random.nextInt(900000) + 100000;
         return String.valueOf(randomInt);
+    }
+
+    public void logoutByToken(String token) {
+        if (token != null) {
+            userTokenService.deleteToken(token);
+        }
     }
 }

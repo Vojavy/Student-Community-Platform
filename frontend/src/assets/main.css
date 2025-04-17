@@ -1,0 +1,26 @@
+@import "tailwindcss";
+@import "tailwindcss/utilities";
+
+@config "../../tailwind.config.js";
+
+
+/* Цветовая палитра */
+:root {
+  --color-primary-bg: #FFFFFF;
+  --color-secondary-bg: #F3F5F8;
+  --color-primary-text: #232A34;
+  --color-accent-primary: #5865F2;
+  --color-accent-secondary: #7C3AED;
+  --color-success: #28C76F;
+  --color-error: #EA5455;
+}
+
+[data-theme="dark"] {
+  --color-primary-bg: #18191B;
+  --color-secondary-bg: #24272C;
+  --color-primary-text: #E7E9EE;
+  --color-accent-primary: #7289DA;
+  --color-accent-secondary: #A370F7;
+  --color-success: #2ECC71;
+  --color-error: #FF6B6B;
+}

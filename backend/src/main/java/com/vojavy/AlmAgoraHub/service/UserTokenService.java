@@ -32,4 +32,9 @@ public class UserTokenService {
 
         userTokenRepository.save(userToken);
     }
+
+    public void deleteToken(String token) {
+        userTokenRepository.findByToken(token)
+                .ifPresent(userTokenRepository::delete);
+    }
 }
