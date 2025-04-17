@@ -4,7 +4,7 @@
       <li><a href="#" class="hover:text-accent-primary">{{ t('navBar.index') }}</a></li>
       <li><a href="#" class="hover:text-accent-primary">{{ t('navBar.forum') }}</a></li>
       <li><a href="#" class="hover:text-accent-primary">{{ t('navBar.actions') }}</a></li>
-      <li><a href="#" class="hover:text-accent-primary">{{ t('navBar.profile') }}</a></li>
+      <li><button @click="goProfile" class="hover:text-accent-primary">{{ t('navBar.profile') }}</button></li>
       <li><a href="#" class="hover:text-accent-primary">{{ t('navBar.market') }}</a></li>
       <li><a href="#" class="hover:text-accent-primary">{{ t('navBar.calendar') }}</a></li>
       <li><a href="#" class="hover:text-accent-primary">{{ t('navBar.messages') }}</a></li>
@@ -15,6 +15,12 @@
 
 <script setup>
 import { useI18n } from "vue-i18n";
+import {inject} from "vue";
+const coordinator = inject("coordinator")
 
 const { t } = useI18n()
+
+const goProfile = async () => {
+  coordinator.navigateToUser()
+}
 </script>

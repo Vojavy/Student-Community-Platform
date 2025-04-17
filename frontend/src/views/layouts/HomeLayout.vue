@@ -11,7 +11,7 @@
     <div v-else class="flex flex-col h-screen">
       <div class="flex justify-between items-center p-4 border-b">
         <div class="flex gap-4 items-center">
-          <button class="text-sm" @click="goHome">{{ t('navBar.index') }}</button>
+          <button @click="goHome" class="text-sm" >{{ t('navBar.index') }}</button>
         </div>
         <div>
           <div class="flex justify-end gap-4 items-center">
@@ -80,6 +80,10 @@ onMounted(() => {
     isMobile.value = window.innerWidth <= 768
   })
 })
+
+const goHome = async () => {
+  coordinator.navigateToHome();
+}
 
 const onLogout = async () => {
   const intent = logoutIntent();
