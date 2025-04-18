@@ -1,15 +1,24 @@
-create table public.roles
+create sequence user_tokens_id_seq
+    as integer;
+
+alter sequence user_tokens_id_seq owner to admin;
+
+create sequence user_is_data_id_seq;
+
+alter sequence user_is_data_id_seq owner to admin;
+
+create table roles
 (
-    id   integer generated always as identity
+    id   bigint generated always as identity
         constraint roles_pk
             primary key,
-    name varchar not null
+    name varchar(255) not null
 );
 
-alter table public.roles
+alter table roles
     owner to admin;
 
-create table public.university_domains
+create table university_domains
 (
     id          serial
         primary key,
@@ -18,10 +27,10 @@ create table public.university_domains
     admin_email varchar(255) not null
 );
 
-alter table public.university_domains
+alter table university_domains
     owner to admin;
 
-create table public.users
+create table users
 (
     id                   bigint generated always as identity
         constraint users_pk
@@ -38,7 +47,7 @@ create table public.users
     updated_at           timestamp    not null,
     domain_id            integer
         constraint fk_users_domains
-            references public.university_domains
+            references university_domains
             on delete set null,
     verification_code    varchar(6)
         constraint chk_user_verification_code_length
@@ -46,43 +55,55 @@ create table public.users
     verification_expires timestamp
 );
 
-alter table public.users
+alter table users
     owner to admin;
 
-create table public.user_roles
+create table user_roles
 (
-    user_id integer not null
-        references public.users
+    user_id bigint not null
+        references users
             on delete cascade,
-    role_id integer not null
-        references public.roles
+    role_id bigint not null
+        references roles
             on delete cascade,
     primary key (user_id, role_id)
 );
 
-alter table public.user_roles
+alter table user_roles
     owner to admin;
 
-create table public.user_tokens
+create table user_tokens
 (
-    id         serial
+    id           bigint       default nextval('user_tokens_id_seq'::regclass) not null
         primary key,
-    user_id    integer      not null
-        references public.users
+    user_id      bigint                                                       not null
+        references users
             on delete cascade,
-    token      varchar(255) not null,
-    token_type varchar(50)  not null
+    token        varchar(255)                                                 not null,
+    token_type   varchar(255)                                                 not null
         constraint user_tokens_token_type_check
             check ((token_type)::text = ANY
-                   ((ARRAY ['auth'::character varying, 'refresh'::character varying, 'verify'::character varying])::text[])),
-    expiration timestamp    not null,
-    created_at timestamp default now()
+                   (ARRAY [('auth'::character varying)::text, ('refresh'::character varying)::text, ('uni'::character varying)::text])),
+    expiration   timestamp                                                    not null,
+    created_at   timestamp    default now(),
+    token_origin varchar(255) default 'local'::character varying              not null
+        constraint user_tokens_token_origin_check
+            check ((token_origin)::text = ANY
+                   (ARRAY [('local'::character varying)::text, ('stag'::character varying)::text]))
 );
 
-alter table public.user_tokens
+alter table user_tokens
     owner to admin;
 
-create table public.groups
+alter sequence user_tokens_id_seq owned by user_tokens.id;
+
+create index idx_user_tokens_token
+    on user_tokens (token);
+
+create index idx_user_tokens_user_id
+    on user_tokens (user_id);
+
+create table groups
 (
     id                  serial
         primary key,
@@ -101,71 +122,71 @@ create table public.groups
                    (ARRAY [('owner'::character varying)::text, ('admin'::character varying)::text, ('editor'::character varying)::text, ('member'::character varying)::text]))
 );
 
-alter table public.groups
+alter table groups
     owner to admin;
 
-create table public.group_posts
+create table group_posts
 (
     id         serial
         primary key,
     group_id   integer not null
-        references public.groups
+        references groups
             on delete cascade,
     user_id    integer not null
-        references public.users
+        references users
             on delete cascade,
     content    jsonb   not null,
     created_at timestamp default now(),
     updated_at timestamp
 );
 
-alter table public.group_posts
+alter table group_posts
     owner to admin;
 
-create table public.group_announcements
+create table group_announcements
 (
     id         serial
         primary key,
     group_id   integer      not null
-        references public.groups
+        references groups
             on delete cascade,
     title      varchar(255) not null,
     content    text         not null,
     created_by integer      not null
-        references public.users
+        references users
             on delete cascade,
     created_at timestamp default now()
 );
 
-alter table public.group_announcements
+alter table group_announcements
     owner to admin;
 
-create table public.group_attachments
+create table group_attachments
 (
     id          serial
         primary key,
     group_id    integer      not null
-        references public.groups
+        references groups
             on delete cascade,
     uploaded_by integer      not null
-        references public.users
+        references users
             on delete cascade,
     file_url    varchar(255) not null,
     uploaded_at timestamp default now()
 );
 
-alter table public.group_attachments
+alter table group_attachments
     owner to admin;
 
-create table public.user_group_memberships
+create table user_group_memberships
 (
     id        serial
         primary key,
     user_id   integer     not null
-        references public.users
+        references users
             on delete cascade,
     group_id  integer     not null
-        references public.groups
+        references groups
             on delete cascade,
     status    varchar(50) not null
         constraint user_group_memberships_status_check
@@ -180,10 +201,10 @@ create table public.user_group_memberships
         unique (user_id, group_id)
 );
 
-alter table public.user_group_memberships
+alter table user_group_memberships
     owner to admin;
 
-create table public.sale_items
+create table sale_items
 (
     id          serial
         primary key,
@@ -193,7 +214,7 @@ create table public.sale_items
     topics      jsonb,
     created_at  timestamp   default now(),
     created_by  integer                                         not null
-        references public.users
+        references users
             on delete cascade,
     status      varchar(50) default 'active'::character varying not null
         constraint sale_items_status_check
@@ -203,26 +224,26 @@ create table public.sale_items
     is_local    boolean     default false
 );
 
-alter table public.sale_items
+alter table sale_items
     owner to admin;
 
-create table public.forum_posts
+create table forum_posts
 (
     id         serial
         primary key,
     forum_id   integer not null,
     author_id  integer not null
-        references public.users
+        references users
             on delete cascade,
     content    jsonb   not null,
     created_at timestamp default now(),
     updated_at timestamp
 );
 
-alter table public.forum_posts
+alter table forum_posts
     owner to admin;
 
-create table public.forums
+create table forums
 (
     id                   serial
         primary key,
@@ -230,10 +251,10 @@ create table public.forums
     topic                varchar(255),
     description          text,
     created_by           integer                                         not null
-        references public.users
+        references users
             on delete cascade,
     university_domain_id integer                                         not null
-        references public.university_domains
+        references university_domains
             on delete cascade,
     created_at           timestamp   default now(),
     status               varchar(50) default 'active'::character varying not null
@@ -244,10 +265,10 @@ create table public.forums
     is_public            boolean     default true
 );
 
-alter table public.forums
+alter table forums
     owner to admin;
 
-create table public.events
+create table events
 (
     id          serial
         primary key,
@@ -259,99 +280,80 @@ create table public.events
     visibility  boolean   default true,
     created_at  timestamp default now(),
     created_by  integer      not null
-        references public.users
+        references users
             on delete cascade
 );
 
-alter table public.events
+alter table events
     owner to admin;
 
-create table public.domain_events
+create table domain_events
 (
     id        serial
         primary key,
     event_id  integer not null
-        references public.events
+        references events
             on delete cascade,
     domain_id integer not null
-        references public.university_domains
+        references university_domains
             on delete cascade
 );
 
-alter table public.domain_events
+alter table domain_events
     owner to admin;
 
-create table public.group_events
+create table group_events
 (
     id       serial
         primary key,
     event_id integer not null
-        references public.events
+        references events
             on delete cascade,
     group_id integer not null
-        references public.groups
+        references groups
             on delete cascade
 );
 
-alter table public.group_events
+alter table group_events
     owner to admin;
 
-create table public.calendar
+create table calendar
 (
     id         serial
         primary key,
     user_id    integer      not null
-        references public.users
+        references users
             on delete cascade,
     name       varchar(255) not null,
     created_at timestamp default now()
 );
 
-alter table public.calendar
+alter table calendar
     owner to admin;
 
-create table public.calendar_events
+create table calendar_events
 (
     id                   serial
         primary key,
     calendar_id          integer not null
-        references public.calendar
+        references calendar
             on delete cascade,
     event_id             integer not null
-        references public.events
+        references events
             on delete cascade,
     participation_status varchar(50),
     added_at             timestamp default now()
 );
 
-alter table public.calendar_events
+alter table calendar_events
     owner to admin;
 
-create table public.user_details
-(
-    id            serial
-        primary key,
-    user_id       integer      not null
-        references public.users
-            on delete cascade,
-    first_name    varchar(255) not null,
-    last_name     varchar(255) not null,
-    year_of_study integer,
-    faculty       varchar(255),
-    contacts      jsonb,
-    created_at    timestamp default now(),
-    updated_at    timestamp default now()
-);
-
-alter table public.user_details
-    owner to admin;
-
-create table public.logs
+create table logs
 (
     id         serial
         primary key,
     user_id    integer
-                            references public.users
+                            references users
                                 on delete set null,
     log_type   varchar(255) not null,
     message    text,
@@ -359,10 +361,10 @@ create table public.logs
     created_at timestamp default now()
 );
 
-alter table public.logs
+alter table logs
     owner to admin;
 
-create table public.event_publication
+create table event_publication
 (
     id               uuid not null
         primary key,
@@ -373,11 +375,42 @@ create table public.event_publication
     serialized_event varchar(255)
 );
 
-alter table public.event_publication
+alter table event_publication
     owner to admin;
 
-CREATE INDEX IF NOT EXISTS idx_user_tokens_token ON public.user_tokens (token);
+create table user_is_data
+(
+    id                     bigint    default nextval('user_is_data_id_seq'::regclass) not null
+        primary key,
+    user_id                bigint                                                     not null
+        references users
+            on delete cascade,
+    os_cislo               varchar(255),
+    stpr_idno              varchar(255),
+    user_name              varchar(255),
+    email                  varchar(255),
+    jmeno                  varchar(255),
+    prijmeni               varchar(255),
+    titul_pred             varchar(255),
+    titul_za               varchar(255),
+    pohlavi                varchar(255),
+    obor_komb              varchar(255),
+    nazev_sp               varchar(255),
+    kod_sp                 varchar(255),
+    fakulta_sp             varchar(255),
+    forma_sp               varchar(255),
+    typ_sp                 varchar(255),
+    rocnik                 varchar(255),
+    stav                   varchar(255),
+    misto_vyuky            varchar(255),
+    cislo_karty            varchar(255),
+    rozvrhovy_krouzek      varchar(255),
+    studijni_kruh          varchar(255),
+    evidovan_bankovni_ucet varchar(255),
+    created_at             timestamp default now(),
+    updated_at             timestamp default now()
+);
 
-CREATE INDEX IF NOT EXISTS idx_user_tokens_user_id ON public.user_tokens (user_id);
-
+alter table user_is_data
+    owner to admin;
 

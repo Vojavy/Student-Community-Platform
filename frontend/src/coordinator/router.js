@@ -12,7 +12,6 @@ import VerificationView from '@/views/auth/VerificationView.vue'
 import { checkTokenIntent } from '@/intents/authIntents'
 import { handleAuthIntent } from '@/actions/authActions'
 import createAuthModel from '@/models/authModel'
-import apiClient from '@/utils/api/apiClient'
 import createCoordinator from '@/coordinator/coordinator'
 
 import HomeView from '@/views/authorized/HomeView.vue'
@@ -21,6 +20,7 @@ import AccessDeniedView from "@/views/auth/AccessDeniedView.vue";
 import UserLayout from "@/views/layouts/UserLayout.vue";
 import UserSettingsView from "@/views/authorized/User/UserSettingsView.vue";
 import UserStagView from "@/views/authorized/User/UserStagView.vue";
+import UserProfileWrapper from "@/views/authorized/User/UserProfileWrapper.vue";
 
 const routes = [
     {
@@ -54,25 +54,32 @@ const routes = [
                 meta: { requiresAuth: true }
             },
             {
-                path: '/user/:id',
+                path: '/user',
                 component: UserLayout,
-                meta: { requiresAuth: false }
-            },
-            {
-                path: '/user/settings',
-                name: 'user-settings',
-                component: UserSettingsView,
-                meta: { requiresAuth: true }
-            },
-
-            {
-                path: '/user/stag',
-                name: 'user-stag',
-                component: UserStagView,
-                meta: { requiresAuth: true }
+                children: [
+                    {
+                        path: ':id',
+                        name: 'user-profile',
+                        component: UserProfileWrapper,
+                        meta: { requiresAuth: false }
+                    },
+                    {
+                        path: 'settings',
+                        name: 'user-settings',
+                        component: UserSettingsView,
+                        meta: { requiresAuth: true }
+                    },
+                    {
+                        path: 'stag',
+                        name: 'user-stag',
+                        component: UserStagView,
+                        meta: { requiresAuth: true }
+                    }
+                ]
             },
         ]
     },
+
     {
         path: '/:pathMatch(.*)*',
         redirect: '/'
@@ -91,7 +98,7 @@ router.beforeEach(async (to, from, next) => {
     const requiresUnauth = to.matched.some(record => record.meta.requiresUnauth)
     const token = localStorage.getItem('token')
 
-    const model = createAuthModel(apiClient)
+    const model = createAuthModel()
     const coordinator = createCoordinator(router)
 
     if (requiresAuth) {

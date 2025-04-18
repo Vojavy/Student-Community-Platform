@@ -7,13 +7,12 @@
 <script setup>
 import { onMounted, inject } from 'vue'
 
-import apiClient from '@/utils/api/apiClient'
 import createAuthModel from '@/models/authModel'
 import { checkTokenIntent } from '@/intents/authIntents'
 import { handleAuthIntent } from '@/actions/authActions'
 
 const coordinator = inject('coordinator')
-const model = createAuthModel(apiClient)
+const model = createAuthModel()
 
 onMounted(async () => {
   const token = localStorage.getItem('token')

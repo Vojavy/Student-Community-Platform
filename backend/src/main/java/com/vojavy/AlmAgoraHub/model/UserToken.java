@@ -11,7 +11,7 @@ public class UserToken {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
@@ -27,7 +27,8 @@ public class UserToken {
     @Column(name = "created_at")
     private Instant createdAt = Instant.now();
 
-    // Getters and Setters
+    @Column(name = "token_origin", nullable = false)
+    private String tokenOrigin = "local";
 
     public User getUser() {
         return user;
@@ -71,5 +72,23 @@ public class UserToken {
 
     public Long getId() {
         return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getTokenOrigin() {
+        return tokenOrigin;
+    }
+
+    public void setTokenOrigin(String tokenOrigin) {
+        this.tokenOrigin = tokenOrigin;
+    }
+
+    public void setUserId(Long userId) {
+        if (this.user == null)
+            this.user = new User();
+        this.user.setId(userId);
     }
 }

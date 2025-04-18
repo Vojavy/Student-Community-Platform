@@ -1,1 +1,1 @@
-[]
+[{"name":"com.vojavy.AlmAgoraHub.service.StagService","methods":[{"name":"fetchStudentInfo","signature":"fetchStudentInfo(java.lang.Long, java.lang.String, java.lang.String)","comment":"Example test call: fetch student info from STAG using the stored token."}]}]

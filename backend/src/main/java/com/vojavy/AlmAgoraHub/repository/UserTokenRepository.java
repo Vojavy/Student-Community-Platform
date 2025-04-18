@@ -3,6 +3,8 @@ package com.vojavy.AlmAgoraHub.repository;
 import com.vojavy.AlmAgoraHub.model.User;
 import com.vojavy.AlmAgoraHub.model.UserToken;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -11,9 +13,8 @@ import java.util.Optional;
 @Repository
 public interface UserTokenRepository extends JpaRepository<UserToken, Long> {
     List<UserToken> findUserTokensByUser(User user);
-    List<UserToken> findUserTokensByToken(String token);
-    Optional<UserToken> findByToken(String token);
+    Optional<UserToken> findFirstByUser_IdAndTokenType(Long userId, String tokenType);
+    @Query("SELECT t FROM UserToken t WHERE t.token = :token")
+    Optional<UserToken> findByToken(@Param("token") String token);
     void delete(UserToken token);
-
-    void deleteByUser(User user);
 }

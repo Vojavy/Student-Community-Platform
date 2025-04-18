@@ -8,9 +8,12 @@ import com.vojavy.AlmAgoraHub.model.User;
 import com.vojavy.AlmAgoraHub.responses.LoginResponse;
 import com.vojavy.AlmAgoraHub.service.AuthenticationService;
 import com.vojavy.AlmAgoraHub.service.JwtService;
+import com.vojavy.AlmAgoraHub.service.UserService;
 import com.vojavy.AlmAgoraHub.service.UserTokenService;
+import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.data.annotation.AccessType;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -19,6 +22,8 @@ import org.springframework.web.bind.annotation.*;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.HashMap;
+import java.util.Map;
 
 @RequestMapping("/auth")
 @RestController
@@ -26,14 +31,17 @@ public class AuthenticationController {
     private final JwtService jwtService;
     private final AuthenticationService authenticationService;
     private final UserTokenService userTokenService;
+    private final UserService userService;
 
     public AuthenticationController(
             JwtService jwtService,
             AuthenticationService authenticationService,
-            UserTokenService userTokenService) {
+            UserTokenService userTokenService,
+            UserService userService) {
         this.jwtService = jwtService;
         this.authenticationService = authenticationService;
         this.userTokenService = userTokenService;
+        this.userService = userService;
     }
 
     //TODO возвращать только ок
@@ -88,13 +96,57 @@ public class AuthenticationController {
     }
 
     @GetMapping("/check")
-    public ResponseEntity<?> checkAuthentication(@AuthenticationPrincipal UserDetails user) {
+    public ResponseEntity<Map<String, Object>> checkAuthentication(@AuthenticationPrincipal UserDetails user) {
+        Map<String, Object> response = new HashMap<>();
+
         if (user != null) {
-            return ResponseEntity.ok("User is authenticated: " + user.getUsername());
+            response.put("authenticated", true);
+            response.put("username", user.getUsername());
+            return ResponseEntity.ok(response);
         } else {
-            return ResponseEntity.status(401).body("Unauthorized");
+            response.put("authenticated", false);
+            response.put("message", "Unauthorized");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
         }
     }
+
+    @GetMapping("/check/uni")
+    public ResponseEntity<Map<String, Object>> checkUniversityToken(
+            @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        Map<String, Object> response = new HashMap<>();
+
+        if (userDetails == null) {
+            response.put("hasValidToken", false);
+            response.put("ticket", null);
+            return ResponseEntity.status(401).body(response);
+        }
+
+        try {
+            String email = userDetails.getUsername();
+            User user = userService.findByEmail(email)
+                    .orElseThrow(() -> new IllegalStateException("User not found"));
+
+            return userTokenService.getUniversityToken(user.getId())
+                    .map(token -> {
+                        boolean valid = token.getExpiration().isAfter(Instant.now());
+                        response.put("hasValidToken", valid);
+                        response.put("ticket", token.getToken());
+                        return ResponseEntity.ok(response);
+                    })
+                    .orElseGet(() -> {
+                        response.put("hasValidToken", false);
+                        response.put("ticket", null);
+                        return ResponseEntity.ok(response);
+                    });
+
+        } catch (Exception e) {
+            response.put("hasValidToken", false);
+            response.put("ticket", null);
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
 
     @DeleteMapping("/logout")
     public ResponseEntity<?> logout(@RequestHeader("Authorization") String authHeader) {

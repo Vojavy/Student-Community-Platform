@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import org.springframework.security.core.GrantedAuthority;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -45,7 +46,6 @@ public class User implements org.springframework.security.core.userdetails.UserD
     private Instant verificationExpires;
 
     // --- Relations ---
-//
 
 
 //    @ManyToOne
@@ -61,7 +61,7 @@ public class User implements org.springframework.security.core.userdetails.UserD
     private Set<Role> roles;
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
-    private UserDetails userDetails;
+    private UserISData userDetails;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<UserToken> tokens;
@@ -95,6 +95,11 @@ public class User implements org.springframework.security.core.userdetails.UserD
 //
 //    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
 //    private List<Log> logs;
+
+    public User() {
+        this.createdAt = Instant.now();
+        this.updatedAt = Instant.now();
+    }
 
 // --- Getters and Setters omitted for brevity ---
 
@@ -165,7 +170,7 @@ public class User implements org.springframework.security.core.userdetails.UserD
         return roles;
     }
 
-    public UserDetails getUserDetails() {
+    public UserISData getUserDetails() {
         return userDetails;
     }
 
@@ -221,7 +226,7 @@ public class User implements org.springframework.security.core.userdetails.UserD
         this.verificationCode = verificationCode;
     }
 
-    public void setCreatedAt(Instant createdAt) {
-        this.createdAt = createdAt;
-    }
+    public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+
+    public void setId(Long id) { this.id = id; }
 }

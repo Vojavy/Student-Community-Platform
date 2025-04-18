@@ -66,5 +66,38 @@ export default {
                 actions: 'Události'
             }
         }
-    }
+    },
+    sessionExpired: {
+        title: 'Platnost relace vypršela',
+        message: 'Vaše relace vypršela. Přihlaste se znovu.',
+        login: 'Přihlásit se',
+        close: 'Na hlavní stránku'
+    },
+    stag: {
+        selectUniversity: 'Vyberte univerzitu',
+        login: 'Přihlásit se do STAG',
+        status: {
+            noToken: 'STAG token nebyl nalezen.',
+            invalid: 'STAG token je neplatný.',
+            valid: 'STAG token je platný.'
+        },
+        delete: {
+            show: 'Odstranit STAG token',
+            confirm: 'Potvrdit odstranění',
+            cancel: 'Zrušit'
+        },
+        universities: {
+            upce: 'Univerzita Pardubice',
+            zcu: 'Západočeská univerzita v Plzni'
+        }
+    },
+    profile: {
+        defaultName: 'Můj profil',
+        registered: 'Registrován',
+        buttons: {
+            settings: 'Nastavení profilu',
+            connectStag: 'Připojit STAG'
+        }
+    },
+    loading: 'Načítání...',
 }

@@ -50,8 +50,6 @@ public class AuthenticationService {
         user.setVerificationCode(generateVerificationCode());
         user.setVerificationExpires(LocalDateTime.now().plusMinutes(15).toInstant(ZoneOffset.UTC));
         user.setProviderId(0);
-        user.setCreatedAt(Instant.now());
-        user.setUpdatedAt(Instant.now());
 
         sendVerificationEmailLocal(user, baseUrl);
 

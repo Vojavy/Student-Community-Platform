@@ -66,5 +66,38 @@ export default {
                 actions: 'Events'
             }
         }
-    }
+    },
+    sessionExpired: {
+        title: 'Session Expired',
+        message: 'Your session has expired. Please log in again.',
+        login: 'Sign In',
+        close: 'Go to Home'
+    },
+    stag: {
+        selectUniversity: 'Select a university',
+        login: 'Login to STAG',
+        status: {
+            noToken: 'STAG token not found.',
+            invalid: 'STAG token is invalid.',
+            valid: 'STAG token is valid.'
+        },
+        delete: {
+            show: 'Delete STAG token',
+            confirm: 'Confirm deletion',
+            cancel: 'Cancel'
+        },
+        universities: {
+            upce: 'University of Pardubice',
+            zcu: 'University of West Bohemia in Pilsen'
+        }
+    },
+    profile: {
+        defaultName: 'My Profile',
+        registered: 'Registered on',
+        buttons: {
+            settings: 'Profile settings',
+            connectStag: 'Connect STAG'
+        }
+    },
+    loading: 'Loading...',
 }

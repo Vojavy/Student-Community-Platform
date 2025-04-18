@@ -17,7 +17,7 @@ export default {
                 },
                 success: 'var(--color-success)',
                 error: 'var(--color-error)',
-            }
+            },
         }
     },
     plugins: []

@@ -66,5 +66,38 @@ export default {
                 actions: 'События'
             }
         }
-    }
+    },
+    sessionExpired: {
+        title: 'Сессия истекла',
+        message: 'Ваша сессия завершилась. Пожалуйста, войдите снова.',
+        login: 'Войти',
+        close: 'На главную'
+    },
+    stag: {
+        selectUniversity: 'Выберите университет',
+        login: 'Подключиться к STAG',
+        status: {
+            noToken: 'STAG токен не найден.',
+            invalid: 'STAG токен недействителен.',
+            valid: 'STAG токен действителен.'
+        },
+        delete: {
+            show: 'Удалить STAG токен',
+            confirm: 'Подтвердить удаление',
+            cancel: 'Отмена'
+        },
+        universities: {
+            upce: 'Университет Пардубице',
+            zcu: 'Западночешский университет в Пльзени'
+        }
+    },
+    profile: {
+        defaultName: 'Мой профиль',
+        registered: 'Зарегистрирован',
+        buttons: {
+            settings: 'Настройки профиля',
+            connectStag: 'Подключить STAG'
+        }
+    },
+    loading: 'Загрузка...',
 }

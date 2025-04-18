@@ -34,11 +34,10 @@ import { useI18n } from 'vue-i18n'
 import { loginIntent } from '@/intents/authIntents'
 import { handleAuthIntent } from '@/actions/authActions'
 import createAuthModel from '@/models/authModel'
-import apiClient from '@/utils/api/apiClient'
 
 const { t } = useI18n()
 const coordinator = inject('coordinator')
-const model = createAuthModel(apiClient)
+const model = createAuthModel()
 
 const email = ref('')
 const password = ref('')

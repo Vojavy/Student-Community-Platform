@@ -7,6 +7,7 @@ import com.vojavy.AlmAgoraHub.repository.UserTokenRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.util.Optional;
 
 @Service
 public class UserTokenService {
@@ -36,5 +37,33 @@ public class UserTokenService {
     public void deleteToken(String token) {
         userTokenRepository.findByToken(token)
                 .ifPresent(userTokenRepository::delete);
+    }
+
+
+    public UserToken saveUniversityToken(Long userId, String token, Instant expiration, String origin) {
+        Optional<UserToken> existing = userTokenRepository
+                .findFirstByUser_IdAndTokenType(userId, "uni");
+        existing.ifPresent(userToken -> deleteToken(userToken.getToken()));
+        UserToken userToken = new UserToken();
+        userToken.setUserId(userId);
+        userToken.setToken(token);
+        userToken.setTokenType("uni");
+        userToken.setTokenOrigin(origin);
+        userToken.setExpiration(expiration);
+        userToken.setCreatedAt(Instant.now());
+        return userTokenRepository.save(userToken);
+    }
+
+    public Optional<UserToken> getUniversityToken(Long userId) {
+        return userTokenRepository.findFirstByUser_IdAndTokenType(userId, "uni");
+    }
+
+    public void deleteUniToken(Long userId) {
+        userTokenRepository.findFirstByUser_IdAndTokenType(userId, "uni")
+                .ifPresent(userTokenRepository::delete);
+    }
+
+    public Optional<UserToken> getUserTokenByToken(String token) {
+        return userTokenRepository.findByToken(token);
     }
 }

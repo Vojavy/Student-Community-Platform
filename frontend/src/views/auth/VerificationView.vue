@@ -54,12 +54,11 @@ import { useI18n } from 'vue-i18n'
 import { verifyIntent, resendIntent } from '@/intents/authIntents'
 import { handleAuthIntent } from '@/actions/authActions'
 import createAuthModel from '@/models/authModel'
-import apiClient from '@/utils/api/apiClient'
 
 const { t } = useI18n()
 const route = useRoute()
 const coordinator = inject('coordinator')
-const model = createAuthModel(apiClient)
+const model = createAuthModel()
 
 const verificationCode = ref('')
 const email = route.query.email || null

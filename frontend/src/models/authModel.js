@@ -1,4 +1,6 @@
-export default function createAuthModel(apiClient) {
+import apiClient from '@/utils/api/apiClient'
+
+export default function createAuthModel() {
     return {
         async login({ email, password }) {
             const response = await apiClient.post('/auth/login', { email, password })
