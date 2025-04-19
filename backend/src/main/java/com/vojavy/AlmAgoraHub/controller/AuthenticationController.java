@@ -1,18 +1,15 @@
 package com.vojavy.AlmAgoraHub.controller;
 
-import com.vojavy.AlmAgoraHub.config.JwtAuthFilter;
-import com.vojavy.AlmAgoraHub.dto.LoginUserDto;
-import com.vojavy.AlmAgoraHub.dto.RegisterUserDto;
+import com.vojavy.AlmAgoraHub.dto.requests.LoginUserRequest;
+import com.vojavy.AlmAgoraHub.dto.requests.RegisterUserRequest;
 import com.vojavy.AlmAgoraHub.dto.VerifyUserDto;
 import com.vojavy.AlmAgoraHub.model.User;
-import com.vojavy.AlmAgoraHub.responses.LoginResponse;
+import com.vojavy.AlmAgoraHub.dto.responses.LoginResponse;
 import com.vojavy.AlmAgoraHub.service.AuthenticationService;
 import com.vojavy.AlmAgoraHub.service.JwtService;
 import com.vojavy.AlmAgoraHub.service.UserService;
 import com.vojavy.AlmAgoraHub.service.UserTokenService;
-import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.data.annotation.AccessType;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -20,8 +17,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -47,19 +42,19 @@ public class AuthenticationController {
     //TODO возвращать только ок
     @PostMapping("/signup")
     public ResponseEntity<?> register(
-            @RequestBody RegisterUserDto registerUserDto,
+            @RequestBody RegisterUserRequest registerUserRequest,
             HttpServletRequest request
     ) {
         String baseUrl = request.getHeader("Origin");
-        User registeredUser = authenticationService.signupLocal(registerUserDto, baseUrl);
+        User registeredUser = authenticationService.signupLocal(registerUserRequest, baseUrl);
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@RequestBody LoginUserDto loginUserDto) {
-        System.out.println(loginUserDto.getEmail());
-        System.out.println(loginUserDto.getPassword());
-        User authenticatedUser = authenticationService.authenticateLocal(loginUserDto);
+    public ResponseEntity<LoginResponse> login(@RequestBody LoginUserRequest loginUserRequest) {
+        System.out.println(loginUserRequest.getEmail());
+        System.out.println(loginUserRequest.getPassword());
+        User authenticatedUser = authenticationService.authenticateLocal(loginUserRequest);
 
         String jwtToken = jwtService.generateToken(authenticatedUser);
         long expiresAt = jwtService.getExpirationTime();

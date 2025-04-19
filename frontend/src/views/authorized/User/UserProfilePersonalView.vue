@@ -8,25 +8,49 @@
       />
       <div>
         <h1 class="text-3xl font-bold text-accent-primary">
-          {{ userData.username || t('profile.defaultName') }}
+            {{ profile.titulPred ? profile.titulPred + ' ' : '' }}
+            {{ profile.jmeno }} {{ profile.prijmeni }}
+            {{ profile.titulZa ? ', ' + profile.titulZa : '' }}
         </h1>
         <p class="text-sm text-text/70">{{ formattedDate }}</p>
+        <p class="text-sm">
+          <span class="font-medium">{{ t('profile.email') }}:</span>
+          {{ profile.email }}
+        </p>
+        <p class="text-sm">
+          <span class="font-medium">{{ t('profile.active') }}:</span>
+          {{ profile.active ? t('profile.yes') : t('profile.no') }}
+        </p>
       </div>
     </div>
 
     <!-- STAG данные -->
-    <div v-if="studentInfo" class="bg-primary p-6 rounded-lg border border-gray-200 mb-8">
+    <div v-if="profile.osCislo" class="bg-primary p-6 rounded-lg border border-gray-200 mb-8">
       <h2 class="text-xl font-semibold text-accent-secondary mb-4">
         {{ t('stag.studentInfo') }}
       </h2>
       <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <dt class="font-medium text-text">{{ t('stag.field.name') }}</dt>
-          <dd class="text-text">{{ studentInfo.firstName }} {{ studentInfo.lastName }}</dd>
+          <dd class="text-text">
+            {{ profile.userName || t('profile.defaultName') }}
+          </dd>
         </div>
         <div>
           <dt class="font-medium text-text">{{ t('stag.field.osCislo') }}</dt>
-          <dd class="text-text">{{ studentInfo.osCislo }}</dd>
+          <dd class="text-text">{{ profile.osCislo }}</dd>
+        </div>
+        <div>
+          <dt class="font-medium text-text">{{ t('stag.field.faculty') }}</dt>
+          <dd class="text-text">{{ profile.fakultaSp }}</dd>
+        </div>
+        <div>
+          <dt class="font-medium text-text">{{ t('stag.field.program') }}</dt>
+          <dd class="text-text">{{ profile.nazevSp }}</dd>
+        </div>
+        <div>
+          <dt class="font-medium text-text">{{ t('stag.field.year') }}</dt>
+          <dd class="text-text">{{ profile.rocnik }}</dd>
         </div>
       </dl>
     </div>
@@ -35,13 +59,13 @@
     <div class="flex flex-wrap gap-4">
       <button
           @click="goToSettings"
-          class="flex-1 sm:flex-none px-6 py-3 bg-accent-primary text-white rounded hover:bg-accent-primary/90 transition"
+          class="flex-1 sm:flex-none px-6 py-3 bg-accent-primary hover:bg-accent-primary/90 text-white rounded shadow-accent-secondary transition"
       >
         {{ t('profile.buttons.settings') }}
       </button>
       <button
           @click="goToStag"
-          class="flex-1 sm:flex-none px-6 py-3 bg-accent-secondary text-white rounded hover:bg-accent-secondary/90 transition"
+          class="flex-1 sm:flex-none px-6 py-3 border-2 border-accent-secondary bg-accent-secondary/80 hover:bg-accent-secondary/70 text-white rounded shadow-accent-secondary transition"
       >
         {{ t('profile.buttons.connectStag') }}
       </button>
@@ -49,49 +73,34 @@
   </div>
 </template>
 
+
 <script setup>
-import { inject, ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import createUserModel from '@/models/userModel'
-import createStagModel from '@/models/stagModel'
-import { fetchUserByIdIntent } from '@/intents/userIntents'
-import { fetchStudentInfoIntent } from '@/intents/stagIntents'
+import { fetchUserProfileIntent } from '@/intents/userIntents'
 import { handleUserIntent } from '@/actions/userActions'
-import { handleStagIntent } from '@/actions/stagActions'
 import { getUserIdFromToken } from '@/utils/jwt/getUserIdFromToken'
 
 const { t } = useI18n()
 const coordinator = inject('coordinator')
 
-const userModel = createUserModel()
-const stagModel = createStagModel()
-
-const userData = ref({ username: '', createdAt: '' })
-const studentInfo = ref(null)
+const model = createUserModel()
+const profile = ref({})
 
 const formattedDate = computed(() => {
-  if (!userData.value.createdAt) return ''
-  const date = new Date(userData.value.createdAt)
-  return `${t('profile.registered')}: ${date.toLocaleDateString()}`
+  if (!profile.value.createdAt) return ''
+  const d = new Date(profile.value.createdAt)
+  return `${t('profile.registered')}: ${d.toLocaleDateString()}`
 })
 
 const goToSettings = () => coordinator.navigateToUserSettings()
 const goToStag     = () => coordinator.navigateToUserStag()
 
 onMounted(async () => {
-  // Загрузка данных пользователя
   const userId = getUserIdFromToken()
-  const userIntent = fetchUserByIdIntent(userId)
-  userData.value = await handleUserIntent(userIntent, { model: userModel })
-
-  // // Пытаемся получить STAG‑информацию
-  // try {
-  //   const domain = 'upce' // или 'zcu'
-  //   const studentIntent = fetchStudentInfoIntent(domain)
-  //   studentInfo.value = await handleStagIntent(studentIntent, { model: stagModel, coordinator })
-  // } catch (e) {
-  //   console.warn('Ошибка при получении STAG данных:', e)
-  // }
+  const intent = fetchUserProfileIntent(userId)
+  profile.value = await handleUserIntent(intent, { model })
 })
 </script>

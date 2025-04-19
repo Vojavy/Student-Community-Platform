@@ -9,12 +9,12 @@ import java.util.Base64;
 import java.util.Optional;
 
 import com.vojavy.AlmAgoraHub.config.StagProperties;
+import com.vojavy.AlmAgoraHub.model.UniversityDomain;
 import com.vojavy.AlmAgoraHub.model.User;
 import com.vojavy.AlmAgoraHub.model.UserISData;
 import com.vojavy.AlmAgoraHub.model.UserToken;
-import com.vojavy.AlmAgoraHub.repository.UserTokenRepository;
-import com.vojavy.AlmAgoraHub.responses.StagUserResponse;
-import com.vojavy.AlmAgoraHub.responses.StudentInfoResponseDto;
+import com.vojavy.AlmAgoraHub.dto.responses.StagUserResponse;
+import com.vojavy.AlmAgoraHub.dto.responses.StudentInfoResponse;
 
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +30,8 @@ public class StagService {
     private final UserTokenService tokenService;
     private final UserISDataService userISDataService;
     private final UserTokenService userTokenService;
+    private final UniversityDomainService universityDomainService;
+    private final UserService userService;
 
     @Autowired
     public StagService(
@@ -37,13 +39,16 @@ public class StagService {
             RestTemplate rest,
             UserTokenService tokenService,
             UserISDataService userISDataService,
-            UserTokenService userTokenService
-    ) {
+            UserTokenService userTokenService,
+            UniversityDomainService universityDomainService,
+            UserService userService) {
         this.props = props;
         this.rest = rest;
         this.tokenService = tokenService;
         this.userISDataService = userISDataService;
         this.userTokenService = userTokenService;
+        this.universityDomainService = universityDomainService;
+        this.userService = userService;
     }
 
     @Transactional
@@ -55,9 +60,12 @@ public class StagService {
         userTokenService.saveUniversityToken(user.getId(), ticket, expiration, "stag");
 
         String osCislo = fetchOsCisloFromTicket(ticket, domain);
-        StudentInfoResponseDto studentInfo = fetchStudentInfo(user.getId(), osCislo, domain);
+        StudentInfoResponse studentInfo = fetchStudentInfo(user.getId(), osCislo, domain);
 
-        // ✅ Проверка, есть ли уже запись
+        UniversityDomain universityDomain = universityDomainService.getDomainByCode(domain); // domain = "upce", "muni" и т.п.
+        user.setDomain(universityDomain);
+        userService.update(user);
+
         UserISData userISData = userISDataService.getByUser(user)
                 .orElse(new UserISData());
 
@@ -119,7 +127,7 @@ public class StagService {
     /**
      * Example test call: fetch student info from STAG using the stored token.
      */
-    public StudentInfoResponseDto fetchStudentInfo(Long userId, String stuOsCislo, String domain) {
+    public StudentInfoResponse fetchStudentInfo(Long userId, String stuOsCislo, String domain) {
         Optional<UserToken> optionalUserToken = tokenService.getUniversityToken(userId);
         String ticket = optionalUserToken
                 .orElseThrow(() -> new IllegalStateException("No STAG token for user"))
@@ -137,8 +145,8 @@ public class StagService {
                 URLEncoder.encode(stuOsCislo, StandardCharsets.UTF_8);
 
         HttpEntity<Void> request = new HttpEntity<>(headers);
-        ResponseEntity<StudentInfoResponseDto> resp = rest.exchange(
-                url, HttpMethod.GET, request, StudentInfoResponseDto.class);
+        ResponseEntity<StudentInfoResponse> resp = rest.exchange(
+                url, HttpMethod.GET, request, StudentInfoResponse.class);
 
         return resp.getBody();
     }

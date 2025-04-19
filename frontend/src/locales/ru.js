@@ -74,6 +74,16 @@ export default {
         close: 'На главную'
     },
     stag: {
+        studentInfo: 'Данные STAG',
+        field: {
+            name: 'Имя',
+            osCislo: 'OsCislo',
+            titulPred: 'Титул (перед)',
+            titulZa: 'Титул (после)',
+            year: 'Курс',
+            faculty: 'Факультет',
+            program: 'Специальность'
+        },
         selectUniversity: 'Выберите университет',
         login: 'Подключиться к STAG',
         status: {
@@ -93,11 +103,19 @@ export default {
     },
     profile: {
         defaultName: 'Мой профиль',
+        email: 'Email',
+        active: 'Активен',
+        yes: 'Да',
+        no: 'Нет',
         registered: 'Зарегистрирован',
         buttons: {
             settings: 'Настройки профиля',
-            connectStag: 'Подключить STAG'
+            connectStag: 'Подключить STAG',
+            addFriend: 'Добавить в друзья',
+            removeFriend: 'Удалить из друзей',
+            sendMessage: 'Написать сообщение'
         }
     },
+
     loading: 'Загрузка...',
 }

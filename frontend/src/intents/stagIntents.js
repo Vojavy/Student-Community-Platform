@@ -15,9 +15,3 @@ export const saveStagToken = (ticket, longTicket, domain) => ({
 export const deleteStagTicket = () => ({
     type: 'DELETE_STAG_TICKET',
 })
-
-// TODO ПЕРЕНЕСТИ НА БЭК
-export const fetchStudentInfoIntent = (domain) => ({
-    type: 'FETCH_STUDENT_INFO',
-    payload: { domain }
-})

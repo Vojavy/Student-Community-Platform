@@ -26,12 +26,5 @@ export default function createStagModel() {
             const response = await apiClient.delete('/stag/ticket', )
             return response.data
         },
-        // TODO ПЕРЕНЕСТИ НА БЭК
-        async fetchStudentInfo(domain) {
-            const response = await apiClient.get('/stag/student', {
-                params: { domain }
-            })
-            return response.data
-        }
     }
 }

@@ -1,4 +1,4 @@
-package com.vojavy.AlmAgoraHub.responses;
+package com.vojavy.AlmAgoraHub.dto.responses;
 
 public class LoginResponse {
     private String token;

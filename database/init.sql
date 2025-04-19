@@ -3,6 +3,11 @@ create sequence user_tokens_id_seq
 
 alter sequence user_tokens_id_seq owner to admin;
 
+create sequence university_domains_id_seq
+    as integer;
+
+alter sequence university_domains_id_seq owner to admin;
+
 create sequence user_is_data_id_seq;
 
 alter sequence user_is_data_id_seq owner to admin;
@@ -20,15 +25,18 @@ alter table roles
 
 create table university_domains
 (
-    id          serial
+    id          bigint default nextval('university_domains_id_seq'::regclass) not null
         primary key,
-    domain_name varchar(255) not null,
-    website_url varchar(255) not null,
-    admin_email varchar(255) not null
+    domain_name varchar(255)                                                  not null,
+    domain      varchar(255)                                                  not null,
+    admin_email varchar(255)                                                  not null,
+    website_url varchar(255)                                                  not null
 );
 
 alter table university_domains
     owner to admin;
+
+alter sequence university_domains_id_seq owned by university_domains.id;
 
 create table users
 (
@@ -45,7 +53,7 @@ create table users
     active               boolean      not null,
     created_at           timestamp    not null,
     updated_at           timestamp    not null,
-    domain_id            integer
+    domain_id            bigint
         constraint fk_users_domains
             references university_domains
             on delete set null,
@@ -412,5 +420,80 @@ create table user_is_data
 );
 
 alter table user_is_data
+    owner to admin;
+
+create table user_friends
+(
+    user_id_1  bigint                                           not null
+        references users
+            on delete cascade,
+    user_id_2  bigint                                           not null
+        references users
+            on delete cascade,
+    status     varchar(20) default 'pending'::character varying not null
+        constraint user_friends_status_check
+            check ((status)::text = ANY
+                   ((ARRAY ['pending'::character varying, 'approved'::character varying])::text[])),
+    hidden     boolean     default false,
+    created_at timestamp   default now(),
+    primary key (user_id_1, user_id_2)
+);
+
+alter table user_friends
+    owner to admin;
+
+create view user_profile_view
+            (user_id, email, active, domain, admin_email, os_cislo, stpr_idno, user_name, jmeno, prijmeni, titul_pred,
+             titul_za, pohlavi, fakulta_sp, obor_komb, nazev_sp, kod_sp, forma_sp, typ_sp, rocnik, stav, misto_vyuky,
+             cislo_karty, rozvrhovy_krouzek, studijni_kruh, evidovan_bankovni_ucet)
+as
+SELECT u.id AS user_id,
+       u.email,
+       u.active,
+       d.domain,
+       d.admin_email,
+       isd.os_cislo,
+       isd.stpr_idno,
+       isd.user_name,
+       isd.jmeno,
+       isd.prijmeni,
+       isd.titul_pred,
+       isd.titul_za,
+       isd.pohlavi,
+       isd.fakulta_sp,
+       isd.obor_komb,
+       isd.nazev_sp,
+       isd.kod_sp,
+       isd.forma_sp,
+       isd.typ_sp,
+       isd.rocnik,
+       isd.stav,
+       isd.misto_vyuky,
+       isd.cislo_karty,
+       isd.rozvrhovy_krouzek,
+       isd.studijni_kruh,
+       isd.evidovan_bankovni_ucet
+FROM users u
+         LEFT JOIN university_domains d ON u.domain_id = d.id
+         LEFT JOIN user_is_data isd ON u.id = isd.user_id;
+
+alter table user_profile_view
+    owner to admin;
+
+create view pending_friend_requests
+            (requester_id, requester_email, recipient_id, recipient_email, status, hidden, created_at) as
+SELECT uf.user_id_1 AS requester_id,
+       u1.email     AS requester_email,
+       uf.user_id_2 AS recipient_id,
+       u2.email     AS recipient_email,
+       uf.status,
+       uf.hidden,
+       uf.created_at
+FROM user_friends uf
+         JOIN users u1 ON u1.id = uf.user_id_1
+         JOIN users u2 ON u2.id = uf.user_id_2
+WHERE uf.status::text = 'pending'::text;
+
+alter table pending_friend_requests
     owner to admin;
 

@@ -1,34 +1,89 @@
 package com.vojavy.AlmAgoraHub.controller;
 
+import com.vojavy.AlmAgoraHub.dto.requests.UpdateUserRequest;
+import com.vojavy.AlmAgoraHub.dto.responses.UserProfileResponse;
 import com.vojavy.AlmAgoraHub.model.User;
+import com.vojavy.AlmAgoraHub.model.UserDetailsExtended;
+import com.vojavy.AlmAgoraHub.service.JwtService;
+import com.vojavy.AlmAgoraHub.service.UserProfileService;
 import com.vojavy.AlmAgoraHub.service.UserService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import java.util.Optional;
 
-@RequestMapping("/users")
 @RestController
+@RequestMapping("/users")
 public class UserController {
+
     private final UserService userService;
-    public UserController(UserService userService) {
+    private final JwtService jwtService;
+    private final UserProfileService userProfileService;
+    private final BCryptPasswordEncoder passwordEncoder;
+
+    public UserController(
+            UserService userService,
+            JwtService jwtService,
+            BCryptPasswordEncoder passwordEncoder,
+            UserProfileService userProfileService) {
         this.userService = userService;
+        this.jwtService = jwtService;
+        this.passwordEncoder = passwordEncoder;
+        this.userProfileService = userProfileService;
     }
 
-    @GetMapping("/me")
-    public ResponseEntity<User> getCurrentUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        User currentUser = (User) authentication.getPrincipal();
-        return ResponseEntity.ok(currentUser);
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateUser(@PathVariable Long id,
+                                        @RequestBody UpdateUserRequest request,
+                                        @RequestHeader("Authorization") String tokenHeader) {
+        String token = tokenHeader.replace("Bearer ", "");
+
+        if (!isAuthorized(id, token)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access denied");
+        }
+
+        try {
+            userService.updateUserWithPasswordCheck(id, request, passwordEncoder);
+            return ResponseEntity.ok("User updated");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred");
+        }
     }
 
-    @GetMapping("/all")
-    public ResponseEntity<List<User>> getAllUsers() {
-        List<User> users = userService.findAll();
-        return ResponseEntity.ok(users);
+    //TODO Приотправке он почему то сохраняет лишь часть данных
+    @PutMapping("/{id}/details")
+    public ResponseEntity<?> updateUserDetails(@PathVariable Long id,
+                                               @RequestBody UserDetailsExtended details,
+                                               @RequestHeader("Authorization") String tokenHeader) {
+        String token = tokenHeader.replace("Bearer ", "");
+
+        if (!isAuthorized(id, token)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access denied");
+        }
+
+        try {
+            userService.updateUserDetails(id, details);
+            return ResponseEntity.ok("Details updated");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred");
+        }
+    }
+
+    @GetMapping("/{id}/profile")
+    public ResponseEntity<UserProfileResponse> getProfileById(@PathVariable Long id) {
+        Optional<UserProfileResponse> response = userProfileService.getProfileById(id);
+        return response.map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    private boolean isAuthorized(Long pathUserId, String token) {
+        Long tokenUserId = jwtService.extractClaim(token, claims -> claims.get("id", Long.class));
+        String roles = jwtService.extractClaim(token, claims -> claims.get("roles", String.class));
+        boolean isAdmin = roles != null && roles.contains("ADMIN");
+        return pathUserId.equals(tokenUserId) || isAdmin;
     }
 }

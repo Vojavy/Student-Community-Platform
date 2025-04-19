@@ -2,17 +2,13 @@
 package com.vojavy.AlmAgoraHub.controller;
 
 import com.vojavy.AlmAgoraHub.service.UserService;
-import jakarta.servlet.http.HttpServletRequest;
 
 import com.vojavy.AlmAgoraHub.service.StagService;
-import com.vojavy.AlmAgoraHub.service.JwtService;
 import com.vojavy.AlmAgoraHub.model.User;
-import com.vojavy.AlmAgoraHub.repository.UserRepository;
-import com.vojavy.AlmAgoraHub.responses.StudentInfoResponseDto;
+import com.vojavy.AlmAgoraHub.dto.responses.StudentInfoResponse;
 
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -63,21 +59,5 @@ public class StagController {
 
         stagService.deleteStagToken(user.getId());
         return ResponseEntity.ok("STAG token deleted");
-    }
-
-    /**
-     * Test endpoint: fetch the STAG student info for the currently logged-in user.
-     */
-    @GetMapping("/student")
-    public ResponseEntity<StudentInfoResponseDto> getStudent(
-            @RequestParam String domain,
-            @AuthenticationPrincipal UserDetails userDetails
-    ) {
-
-        User user = userService.findByEmail(userDetails.getUsername())
-                .orElseThrow(() -> new IllegalStateException("User not found"));
-        String osCislo = user.getProviderId().toString();
-        StudentInfoResponseDto info = stagService.fetchStudentInfo(user.getId(), osCislo, domain);
-        return ResponseEntity.ok(info);
     }
 }

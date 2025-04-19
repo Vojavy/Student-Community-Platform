@@ -61,7 +61,7 @@ const routes = [
                         path: ':id',
                         name: 'user-profile',
                         component: UserProfileWrapper,
-                        meta: { requiresAuth: false }
+                        meta: { requiresAuth: true }
                     },
                     {
                         path: 'settings',

@@ -1,6 +1,8 @@
 package com.vojavy.AlmAgoraHub.model;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import org.springframework.security.core.GrantedAuthority;
 
 import java.time.Instant;
@@ -45,12 +47,18 @@ public class User implements org.springframework.security.core.userdetails.UserD
     @Column(name = "verification_expires")
     private Instant verificationExpires;
 
+    @Convert(converter = UserDetailsExtended.ConverterImpl.class)
+    @JdbcTypeCode(SqlTypes.JSON)               // говорим Hibernate, что это JSON (_не_ varchar)
+    @Column(columnDefinition = "jsonb")
+    private UserDetailsExtended details;
+
+
     // --- Relations ---
 
 
-//    @ManyToOne
-//    @JoinColumn(name = "domain_id")
-//    private UniversityDomain domain;
+    @ManyToOne
+    @JoinColumn(name = "domain_id")
+    private UniversityDomain domain;
 
     @ManyToMany
     @JoinTable(
@@ -106,6 +114,18 @@ public class User implements org.springframework.security.core.userdetails.UserD
 
     public Long getId() {
         return id;
+    }
+
+    public UniversityDomain getDomain() {
+        return domain;
+    }
+
+    public void setDomain(UniversityDomain domain) {
+        this.domain = domain;
+    }
+
+    public void setUserDetails(UserISData userDetails) {
+        this.userDetails = userDetails;
     }
 
     public String getAuthProvider() {
@@ -229,4 +249,12 @@ public class User implements org.springframework.security.core.userdetails.UserD
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
 
     public void setId(Long id) { this.id = id; }
+
+    public UserDetailsExtended getDetails() {
+        return details;
+    }
+
+    public void setDetails(UserDetailsExtended details) {
+        this.details = details;
+    }
 }

@@ -74,6 +74,16 @@ export default {
         close: 'Go to Home'
     },
     stag: {
+        studentInfo: 'STAG Info',
+        field: {
+            name: 'Name',
+            osCislo: 'OsCislo',
+            titulPred: 'Title (Prefix)',
+            titulZa: 'Title (Suffix)',
+            year: 'Year',
+            faculty: 'Faculty',
+            program: 'Program'
+        },
         selectUniversity: 'Select a university',
         login: 'Login to STAG',
         status: {
@@ -93,10 +103,17 @@ export default {
     },
     profile: {
         defaultName: 'My Profile',
-        registered: 'Registered on',
+        email: 'Email',
+        active: 'Active',
+        yes: 'Yes',
+        no: 'No',
+        registered: 'Registered',
         buttons: {
-            settings: 'Profile settings',
-            connectStag: 'Connect STAG'
+            settings: 'Profile Settings',
+            connectStag: 'Connect STAG',
+            addFriend: 'Add Friend',
+            removeFriend: 'Remove Friend',
+            sendMessage: 'Send Message'
         }
     },
     loading: 'Loading...',

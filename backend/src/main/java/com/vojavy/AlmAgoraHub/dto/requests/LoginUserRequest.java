@@ -1,6 +1,6 @@
-package com.vojavy.AlmAgoraHub.dto;
+package com.vojavy.AlmAgoraHub.dto.requests;
 
-public class RegisterUserDto {
+public class LoginUserRequest {
     private String email;
     private String password;
 

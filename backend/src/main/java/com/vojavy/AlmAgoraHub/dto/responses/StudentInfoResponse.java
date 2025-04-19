@@ -1,8 +1,8 @@
-package com.vojavy.AlmAgoraHub.responses;
+package com.vojavy.AlmAgoraHub.dto.responses;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class StudentInfoResponseDto {
+public class StudentInfoResponse {
 
     @JsonProperty("osCislo")
     private String osCislo;

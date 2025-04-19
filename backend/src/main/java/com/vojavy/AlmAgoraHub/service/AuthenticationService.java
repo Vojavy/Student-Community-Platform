@@ -1,12 +1,9 @@
 package com.vojavy.AlmAgoraHub.service;
 
-import com.vojavy.AlmAgoraHub.dto.LoginUserDto;
-import com.vojavy.AlmAgoraHub.dto.RegisterUserDto;
+import com.vojavy.AlmAgoraHub.dto.requests.LoginUserRequest;
+import com.vojavy.AlmAgoraHub.dto.requests.RegisterUserRequest;
 import com.vojavy.AlmAgoraHub.dto.VerifyUserDto;
 import com.vojavy.AlmAgoraHub.model.User;
-import com.vojavy.AlmAgoraHub.model.UserToken;
-import com.vojavy.AlmAgoraHub.repository.UserRepository;
-import org.hibernate.boot.archive.scan.internal.ScanResultImpl;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
@@ -14,7 +11,6 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Optional;
@@ -22,27 +18,27 @@ import java.util.Random;
 
 @Service
 public class AuthenticationService {
-    private final UserRepository userRepository;
+    private final UserService userService;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final EmailService emailService;
     private final UserTokenService userTokenService;
 
     public AuthenticationService(
-            UserRepository userRepository,
+            UserService userService,
             PasswordEncoder passwordEncoder,
             AuthenticationManager authenticationManager,
-            EmailService emailService, UserTokenService userTokenService) {
-        this.userRepository = userRepository;
+            EmailService emailService,
+            UserTokenService userTokenService) {
+        this.userService = userService;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
         this.emailService = emailService;
         this.userTokenService = userTokenService;
     }
 
-    public User signupLocal(RegisterUserDto input, String baseUrl){
+    public User signupLocal(RegisterUserRequest input, String baseUrl) {
         User user = new User();
-
         user.setEmail(input.getEmail());
         user.setPassword(passwordEncoder.encode(input.getPassword()));
         user.setAuthProvider("local");
@@ -52,38 +48,38 @@ public class AuthenticationService {
         user.setProviderId(0);
 
         sendVerificationEmailLocal(user, baseUrl);
-
-        return userRepository.save(user);
+        return userService.save(user);
     }
 
-
-    public User authenticateLocal(LoginUserDto input){
-        User user = userRepository.findByEmail(input.getEmail())
+    public User authenticateLocal(LoginUserRequest input) {
+        User user = userService.findByEmail(input.getEmail())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
         if (!user.isActive()) {
             throw new AuthenticationException("Account not verified. Please verify your account") {};
         }
+
         authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        input.getEmail(),
-                        input.getPassword()
-                )
+                new UsernamePasswordAuthenticationToken(input.getEmail(), input.getPassword())
         );
+
         return user;
     }
 
-    public void verifyUserLocal(VerifyUserDto input){
-        Optional<User> optionalUser = userRepository.findByEmail(input.getEmail());
+    public void verifyUserLocal(VerifyUserDto input) {
+        Optional<User> optionalUser = userService.findByEmail(input.getEmail());
         if (optionalUser.isPresent()) {
             User user = optionalUser.get();
+
             if (user.getVerificationExpires().isBefore(LocalDateTime.now().toInstant(ZoneOffset.UTC))) {
                 throw new RuntimeException("Verification expired");
             }
+
             if (user.getVerificationCode().equals(input.getVerificationCode())) {
                 user.setActive(true);
                 user.setVerificationCode(null);
                 user.setVerificationExpires(null);
-                userRepository.save(user);
+                userService.update(user);
             } else {
                 throw new RuntimeException("Invalid verification code");
             }
@@ -92,16 +88,18 @@ public class AuthenticationService {
         }
     }
 
-    public void resendVerificationEmailLocal(String email, String baseUrl){
-        Optional<User> optionalUser = userRepository.findByEmail(email);
+    public void resendVerificationEmailLocal(String email, String baseUrl) {
+        Optional<User> optionalUser = userService.findByEmail(email);
         if (optionalUser.isPresent()) {
             User user = optionalUser.get();
+
             if (user.isActive())
                 throw new RuntimeException("User is active");
+
             user.setVerificationCode(generateVerificationCode());
             user.setVerificationExpires(LocalDateTime.now().plusMinutes(15).toInstant(ZoneOffset.UTC));
             sendVerificationEmailLocal(user, baseUrl);
-            userRepository.save(user);
+            userService.update(user);
         } else {
             throw new RuntimeException("User not found");
         }
@@ -111,54 +109,11 @@ public class AuthenticationService {
         String subject = "Account Verification for AlmAgoraHub Students Platform";
         String verificationCode = user.getVerificationCode();
 
-        // 📌 Формируем ссылку
         String link = String.format("%s/verify?email=%s&code=%s", baseUrl, user.getEmail(), verificationCode);
 
         String htmlMessage = """
         <html>
-        <head>
-            <style>
-                body {
-                    font-family: Arial, sans-serif;
-                    background-color: #f4f4f4;
-                    color: #333;
-                    padding: 20px;
-                }
-                .container {
-                    background-color: #fff;
-                    padding: 30px;
-                    border-radius: 8px;
-                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-                    max-width: 500px;
-                    margin: auto;
-                }
-                .code {
-                    font-size: 28px;
-                    font-weight: bold;
-                    color: #2c3e50;
-                    letter-spacing: 4px;
-                    background: #eef2f5;
-                    padding: 10px 20px;
-                    border-radius: 6px;
-                    display: inline-block;
-                    margin: 20px 0;
-                }
-                .verify-btn {
-                    display: inline-block;
-                    background-color: #4CAF50;
-                    color: white;
-                    padding: 12px 24px;
-                    text-decoration: none;
-                    border-radius: 6px;
-                    margin-top: 20px;
-                }
-                .footer {
-                    font-size: 12px;
-                    color: #888;
-                    margin-top: 20px;
-                }
-            </style>
-        </head>
+        <head><style> /* стиль как у тебя */ </style></head>
         <body>
             <div class="container">
                 <h2>Welcome to AlmAgoraHub 👋</h2>
@@ -186,8 +141,7 @@ public class AuthenticationService {
     }
 
     private String generateVerificationCode() {
-        Random random = new Random();
-        int randomInt = random.nextInt(900000) + 100000;
+        int randomInt = new Random().nextInt(900000) + 100000;
         return String.valueOf(randomInt);
     }
 

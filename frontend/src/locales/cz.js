@@ -74,6 +74,16 @@ export default {
         close: 'Na hlavní stránku'
     },
     stag: {
+        studentInfo: 'Informace o STAG',
+        field: {
+            name: 'Jméno',
+            osCislo: 'OsCislo',
+            titulPred: 'Titul před',
+            titulZa: 'Titul za',
+            year: 'Ročník',
+            faculty: 'Fakulta',
+            program: 'Studijní program'
+        },
         selectUniversity: 'Vyberte univerzitu',
         login: 'Přihlásit se do STAG',
         status: {
@@ -93,10 +103,17 @@ export default {
     },
     profile: {
         defaultName: 'Můj profil',
+        email: 'Email',
+        active: 'Aktivní',
+        yes: 'Ano',
+        no: 'Ne',
         registered: 'Registrován',
         buttons: {
             settings: 'Nastavení profilu',
-            connectStag: 'Připojit STAG'
+            connectStag: 'Připojit STAG',
+            addFriend: 'Přidat mezi přátele',
+            removeFriend: 'Odebrat z přátel',
+            sendMessage: 'Poslat zprávu'
         }
     },
     loading: 'Načítání...',

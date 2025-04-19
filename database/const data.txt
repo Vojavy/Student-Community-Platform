@@ -1,0 +1,2 @@
+1,Univerzita Pardubice,upce,admin@upce.cz,https://portal.upce.cz/
+2,Západočeská univerzita v Plzni,zcu,admin@zcu.cz,https://portal.zcu.cz/
