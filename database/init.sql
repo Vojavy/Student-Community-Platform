@@ -60,8 +60,33 @@ create table users
     verification_code    varchar(6)
         constraint chk_user_verification_code_length
             check ((verification_code)::text ~ '^[0-9]{6}$'::text),
-    verification_expires timestamp
+    verification_expires timestamp,
+    details              jsonb
 );
+
+comment on column users.details is 'Extended user profile data:
+{
+  "bio": "Short description of the profile",
+  "interests": ["technology", "football", "reading"],
+  "birthdate": "1995-06-12",
+  "languages": ["cs", "ru", "en"],
+  "contacts": {
+    "inst": "username_insta",
+    "tg": "@username",
+    "fb": "facebook.com/user",
+    "steam": "steamcommunity.com/id/user",
+    "ln": "linkedin.com/in/user",
+    "telephone": "+420123456789",
+    "other": [
+      {"source": "discord", "value": "user#1234"},
+      {"source": "matrix", "value": "@user:matrix.org"}
+    ]
+  },
+  "location": "Prague, Czech Republic",
+  "website": "https://mywebsite.com",
+  "status": "Open to conversation",
+  "skills": ["Vue", "Java", "SQL"]
+}';
 
 alter table users
     owner to admin;
@@ -445,7 +470,7 @@ alter table user_friends
 create view user_profile_view
             (user_id, email, active, domain, admin_email, os_cislo, stpr_idno, user_name, jmeno, prijmeni, titul_pred,
              titul_za, pohlavi, fakulta_sp, obor_komb, nazev_sp, kod_sp, forma_sp, typ_sp, rocnik, stav, misto_vyuky,
-             cislo_karty, rozvrhovy_krouzek, studijni_kruh, evidovan_bankovni_ucet)
+             cislo_karty, rozvrhovy_krouzek, studijni_kruh, evidovan_bankovni_ucet, details)
 as
 SELECT u.id AS user_id,
        u.email,
@@ -472,7 +497,8 @@ SELECT u.id AS user_id,
        isd.cislo_karty,
        isd.rozvrhovy_krouzek,
        isd.studijni_kruh,
-       isd.evidovan_bankovni_ucet
+       isd.evidovan_bankovni_ucet,
+       u.details
 FROM users u
          LEFT JOIN university_domains d ON u.domain_id = d.id
          LEFT JOIN user_is_data isd ON u.id = isd.user_id;
