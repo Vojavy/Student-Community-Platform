@@ -4,6 +4,7 @@ import com.vojavy.AlmAgoraHub.dto.requests.LoginUserRequest;
 import com.vojavy.AlmAgoraHub.dto.requests.RegisterUserRequest;
 import com.vojavy.AlmAgoraHub.dto.VerifyUserDto;
 import com.vojavy.AlmAgoraHub.model.User;
+import com.vojavy.AlmAgoraHub.model.UserDetailsExtended;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
@@ -15,6 +16,8 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Optional;
 import java.util.Random;
+import java.util.List;
+import java.util.Map;
 
 @Service
 public class AuthenticationService {
@@ -47,9 +50,32 @@ public class AuthenticationService {
         user.setVerificationExpires(LocalDateTime.now().plusMinutes(15).toInstant(ZoneOffset.UTC));
         user.setProviderId(0);
 
+        // 👇 Инициализация пустых деталей
+        UserDetailsExtended emptyDetails = new UserDetailsExtended();
+        emptyDetails.setBio("");
+        emptyDetails.setInterests(List.of());
+        emptyDetails.setBirthDate(null);
+        emptyDetails.setLanguages(List.of());
+        emptyDetails.setContacts(Map.of(
+                "inst", "",
+                "tg", "",
+                "fb", "",
+                "steam", "",
+                "ln", "",
+                "telephone", ""
+        ));
+        emptyDetails.setOther(Map.of()); // пустой, фронт потом добавит
+        emptyDetails.setLocation("");
+        emptyDetails.setWebsite("");
+        emptyDetails.setStatus("");
+        emptyDetails.setSkills(List.of());
+
+        user.setDetails(emptyDetails);
+
         sendVerificationEmailLocal(user, baseUrl);
         return userService.save(user);
     }
+
 
     public User authenticateLocal(LoginUserRequest input) {
         User user = userService.findByEmail(input.getEmail())

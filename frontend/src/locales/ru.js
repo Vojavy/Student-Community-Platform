@@ -1,4 +1,12 @@
 export default {
+    common: {
+        save: 'Сохранить',
+        cancel: 'Отмена',
+        add: 'Добавить',
+        change: 'Изменить',
+        delete: 'Удалить',
+        loading: 'Loading...'
+    },
     verification: {
         title: 'Подтверждение Email',
         placeholder: 'Код подтверждения',
@@ -107,7 +115,60 @@ export default {
         active: 'Активен',
         yes: 'Да',
         no: 'Нет',
+        notFound: 'Пользователь не найден',
         registered: 'Зарегистрирован',
+        detailsTitle: 'Детали',
+        noDetails: 'Нет указанных данных',
+
+        settings: {
+            title: 'Настройки',
+            save: 'Сохранить',
+            updated: 'Настройки сохранены',
+            error: 'Произошла ошибка',
+            empty:'Не указано',
+            contacts: {
+                otherTitle: 'Другие контакты',
+                addOther: 'Добавить контакт',
+                keyPlaceholder: 'Способ связи',
+                valuePlaceholder: 'Данные контакта'
+            },
+            tabs: {
+                security: 'Безопасность',
+                contacts: 'Контакты',
+                personal: 'Личные данные',
+                about: 'О себе'
+            },
+            security: {
+                oldPassword: 'Текущий пароль',
+                newPassword: 'Новый пароль',
+                incorrectPassword: 'Неверный текущий пароль',
+                deactivate: 'Деактивировать аккаунт?',
+                confirmDeactivate: 'Подтвердите деактивацию аккаунта введя ваш пароль. Это действие нельзя отменить.'
+            },
+            fields: {
+                bio: 'О себе',
+                status: 'Статус',
+                skills: 'Навыки'
+            }
+        },
+
+        contacts: {
+            inst: 'Instagram',
+            tg: 'Telegram',
+            fb: 'Facebook',
+            steam: 'Steam',
+            ln: 'LinkedIn',
+            telephone: 'Телефон',
+            otherTitle: 'Другие контакты',
+        },
+
+        personal: {
+            birthDate: 'Дата рождения',
+            languages: 'Языки',
+            location: 'Местоположение',
+            website: 'Веб‑сайт'
+        },
+
         buttons: {
             settings: 'Настройки профиля',
             connectStag: 'Подключить STAG',
@@ -116,6 +177,4 @@ export default {
             sendMessage: 'Написать сообщение'
         }
     },
-
-    loading: 'Загрузка...',
 }

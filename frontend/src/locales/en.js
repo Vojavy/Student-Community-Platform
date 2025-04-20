@@ -1,4 +1,12 @@
 export default {
+    common: {
+        save: 'Save',
+        cancel: 'Cancel',
+        add: 'Add',
+        change: 'Change',
+        delete: 'Delete',
+        loading: 'Loading...'
+    },
     verification: {
         title: 'Email Verification',
         placeholder: 'Verification code',
@@ -107,7 +115,60 @@ export default {
         active: 'Active',
         yes: 'Yes',
         no: 'No',
+        notFound: 'User not found',
         registered: 'Registered',
+        detailsTitle: 'Details',
+        noDetails: 'No details provided',
+
+        settings: {
+            title: 'Settings',
+            save: 'Save',
+            updated: 'Settings saved',
+            error: 'An error occurred',
+            empty:'Not specified',
+            contacts:{
+                otherTitle: 'Other contacts',
+                addOther: 'Add another contact',
+                keyPlaceholder: 'Contact method',
+                valuePlaceholder: 'Contact details'
+            },
+            tabs: {
+                security: 'Security',
+                contacts: 'Contacts',
+                personal: 'Personal Info',
+                about: 'About'
+            },
+            security: {
+                oldPassword: 'Current password',
+                newPassword: 'New password',
+                incorrectPassword: 'Incorrect current password',
+                deactivate: 'Deactivate account?',
+                confirmDeactivate: 'Confirm account deactivation by entering your password. This action cannot be undone.',
+            },
+            fields: {
+                bio: 'Bio',
+                status: 'Status',
+                skills: 'Skills'
+            }
+        },
+
+        contacts: {
+            inst: 'Instagram',
+            tg: 'Telegram',
+            fb: 'Facebook',
+            steam: 'Steam',
+            ln: 'LinkedIn',
+            telephone: 'Telephone',
+            otherTitle: 'Other contacts',
+        },
+
+        personal: {
+            birthDate: 'Birth Date',
+            languages: 'Languages',
+            location: 'Location',
+            website: 'Website'
+        },
+
         buttons: {
             settings: 'Profile Settings',
             connectStag: 'Connect STAG',
@@ -116,5 +177,4 @@ export default {
             sendMessage: 'Send Message'
         }
     },
-    loading: 'Loading...',
 }

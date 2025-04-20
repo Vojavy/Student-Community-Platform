@@ -1,72 +1,132 @@
 <template>
-  <div class="space-y-4">
-    <div>
-      <label class="block font-medium mb-1">{{ t('profile.personal.birthDate') }}</label>
-      <input type="date" v-model="local.birthDate" class="w-full input" />
-    </div>
+  <div class="space-y-6">
+    <h2 class="text-xl font-semibold">{{ t('profile.settings.tabs.personal') }}</h2>
 
-    <div>
-      <label class="block font-medium mb-1">{{ t('profile.personal.languages') }}</label>
-      <select v-model="local.languages" multiple class="w-full input h-32">
-        <option value="en">English</option>
-        <option value="ru">Русский</option>
-        <option value="cs">Čeština</option>
-      </select>
-    </div>
+    <div v-for="f in fields" :key="f.key" class="space-y-2">
+      <label class="block font-medium">{{ t(f.label) }}</label>
 
-    <div>
-      <label class="block font-medium mb-1">{{ t('profile.personal.location') }}</label>
-      <input type="text" v-model="local.location" class="w-full input" />
-    </div>
+      <div v-if="!editing[f.key]" class="flex items-center gap-4">
+        <span class="flex-1 text-text/60">{{ display(f.key) || t('profile.settings.empty') }}</span>
+        <button
+            class="px-3 py-1 border rounded border-accent-primary text-accent-primary hover:bg-accent-primary/10"
+            @click="start(f.key)"
+        >
+          {{ display(f.key) ? t('common.change') : t('common.add') }}
+        </button>
+        <button
+            v-if="display(f.key)"
+            class="px-3 py-1 border rounded border-red-600 text-red-600 hover:bg-red-600/10"
+            @click="remove(f.key)"
+        >
+          {{ t('common.delete') }}
+        </button>
+      </div>
 
-    <div>
-      <label class="block font-medium mb-1">{{ t('profile.personal.website') }}</label>
-      <input type="text" v-model="local.website" class="w-full input" />
-    </div>
+      <div v-else class="flex flex-col gap-2">
+        <input
+            v-if="f.type==='date'"
+            type="date"
+            v-model="local[f.key]"
+            ref="refs[f.key]"
+            class="w-full p-2 border rounded bg-primary text-text"
+        />
+        <select
+            v-else-if="f.type==='multiselect'"
+            v-model="local[f.key]"
+            ref="refs[f.key]"
+            multiple
+            class="w-full p-2 border rounded bg-primary text-text h-32"
+        >
+          <option v-for="o in f.options" :key="o.value" :value="o.value">{{ o.label }}</option>
+        </select>
+        <input
+            v-else
+            type="text"
+            v-model="local[f.key]"
+            ref="refs[f.key]"
+            class="w-full p-2 border rounded bg-primary text-text"
+        />
 
-    <button
-        @click="onSave"
-        class="bg-accent-primary text-white px-6 py-2 rounded shadow-accent-secondary transition"
-    >
-      {{ t('common.save') }}
-    </button>
+        <div class="flex gap-2">
+          <button
+              class="px-4 py-1 bg-accent-primary text-white rounded hover:bg-accent-primary/90"
+              @click="save(f.key)"
+          >
+            {{ t('common.save') }}
+          </button>
+          <button
+              class="px-4 py-1 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
+              @click="cancel(f.key)"
+          >
+            {{ t('common.cancel') }}
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { reactive, watch, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { getUserIdFromToken } from '@/utils/jwt/getUserIdFromToken'
-import createUserModel from '@/models/userModel'
-import { fetchUserProfileIntent, updateUserDetailsIntent } from '@/intents/userIntents'
-import { handleUserIntent } from '@/actions/userActions'
 
 const { t } = useI18n()
-const userId = getUserIdFromToken()
-const model = createUserModel()
+const props = defineProps({ profile: Object })
+const emit  = defineEmits(['update-details'])
 
-const local = ref({
-  birthDate: '',
-  languages: [],
-  location: '',
-  website: ''
-})
+const fields = [
+  { key:'birthDate', label:'profile.personal.birthDate', type:'date' },
+  { key:'languages', label:'profile.personal.languages', type:'multiselect',
+    options:[
+      {value:'en', label:'English'},
+      {value:'ru', label:'Русский'},
+      {value:'cs', label:'Češtина'}
+    ]
+  },
+  { key:'location',   label:'profile.personal.location', type:'text' },
+  { key:'website',    label:'profile.personal.website',  type:'text' }
+]
 
-onMounted(async () => {
-  const fullProfile = await handleUserIntent(fetchUserProfileIntent(userId), { model })
-  local.value = {
-    birthDate: fullProfile.details?.birthDate || '',
-    languages: fullProfile.details?.languages || [],
-    location: fullProfile.details?.location || '',
-    website: fullProfile.details?.website || ''
-  }
-})
+// локалки
+const local   = reactive({})
+const editing = reactive({})
+const refs    = reactive({})
 
-const onSave = async () => {
-  await handleUserIntent(updateUserDetailsIntent(userId, local.value), { model })
-  alert(t('common.saved'))
+watch(()=>props.profile.details, d=>{
+  fields.forEach(f=>{
+    if(f.key==='languages'){
+      local.languages = Array.isArray(d.languages)?[...d.languages]:[]
+    } else {
+      local[f.key] = d[f.key]||''
+    }
+    editing[f.key]=false
+    refs[f.key]=null
+  })
+},{ immediate:true })
+
+const display = key => {
+  const v = props.profile.details?.[key]
+  if(key==='languages') return Array.isArray(v)?v.join(', '):''
+  return v||''
+}
+
+function start(key){
+  editing[key]=true
+  nextTick(()=>refs[key]?.focus?.())
+}
+function cancel(key){
+  const v = props.profile.details?.[key]
+  local[key] = key==='languages'
+      ? Array.isArray(v)?[...v]:[]
+      : v||''
+  editing[key]=false
+}
+function remove(key){
+  emit('update-details',{ [key]: key==='languages'?[]:'' })
+}
+function save(key){
+  const val = key==='languages'?local.languages:local[key]
+  emit('update-details',{ [key]: val })
+  editing[key]=false
 }
 </script>
-
-<style scoped>
-</style>

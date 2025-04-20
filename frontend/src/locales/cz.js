@@ -1,4 +1,12 @@
 export default {
+    common: {
+        save: 'Uložit',
+        cancel: 'Zrušit',
+        add: 'Přidat',
+        change: 'Změnit',
+        delete: 'Smazat',
+        loading: 'Loading...'
+    },
     verification: {
         title: 'Ověření e‑mailu',
         placeholder: 'Ověřovací kód',
@@ -107,7 +115,60 @@ export default {
         active: 'Aktivní',
         yes: 'Ano',
         no: 'Ne',
+        notFound: 'Uživatel nenalezen',
         registered: 'Registrován',
+        detailsTitle: 'Detaily',
+        noDetails: 'Žádné uvedené údaje',
+
+        settings: {
+            title: 'Nastavení',
+            save: 'Uložit',
+            updated: 'Nastavení uloženo',
+            error: 'Došlo k chybě',
+            empty:'Nenalezeno',
+            contacts:{
+                otherTitle: 'Další kontakty',
+                addOther: 'Přidat kontakt',
+                keyPlaceholder: 'Způsob kontaktu',
+                valuePlaceholder: 'Detail kontaktu'
+            },
+            tabs: {
+                security: 'Zabezpečení',
+                contacts: 'Kontakty',
+                personal: 'Osobní údaje',
+                about: 'O mně'
+            },
+            security: {
+                oldPassword: 'Současné heslo',
+                newPassword: 'Nové heslo',
+                incorrectPassword: 'Nesprávné aktuální heslo',
+                deactivate: 'Deaktivovat učet?',
+                confirmDeactivate: 'Deaktivaci účtu potvrďte zadáním hesla. Tuto akci nelze zrušit.',
+            },
+            fields: {
+                bio: 'O mně',
+                status: 'Status',
+                skills: 'Dovednosti'
+            }
+        },
+
+        contacts: {
+            inst: 'Instagram',
+            tg: 'Telegram',
+            fb: 'Facebook',
+            steam: 'Steam',
+            ln: 'LinkedIn',
+            telephone: 'Telefon',
+            otherTitle: 'Další kontakty',
+        },
+
+        personal: {
+            birthDate: 'Datum narození',
+            languages: 'Jazyky',
+            location: 'Místo',
+            website: 'Webová stránka'
+        },
+
         buttons: {
             settings: 'Nastavení profilu',
             connectStag: 'Připojit STAG',
@@ -116,5 +177,4 @@ export default {
             sendMessage: 'Poslat zprávu'
         }
     },
-    loading: 'Načítání...',
 }
