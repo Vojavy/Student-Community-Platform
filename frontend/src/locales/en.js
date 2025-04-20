@@ -120,6 +120,21 @@ export default {
         detailsTitle: 'Details',
         noDetails: 'No details provided',
 
+        friends: {
+            title: 'Friends',
+            empty: 'You have no friends yet',
+            add: 'Add Friend',
+            approve: 'Approve Request',
+            decline: 'Decline Request',
+            pending: 'Request Pending',
+            remove: 'Remove Friend',
+            column: {
+                name: 'Name',
+                status: 'Status',
+                actions: 'Actions'
+            }
+        },
+
         settings: {
             title: 'Settings',
             save: 'Save',

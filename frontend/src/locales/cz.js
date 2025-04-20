@@ -120,6 +120,21 @@ export default {
         detailsTitle: 'Detaily',
         noDetails: 'Žádné uvedené údaje',
 
+        friends: {
+            title: 'Přátelé',
+            empty: 'Zatím nemáte žádné přátele',
+            add: 'Přidat mezi přátele',
+            approve: 'Potvrdit žádost',
+            decline: 'Zamítnout žádost',
+            pending: 'Žádost odeslána',
+            remove: 'Odstranit z přátel',
+            column: {
+                name: 'Jméno',
+                status: 'Stav',
+                actions: 'Akce'
+            }
+        },
+
         settings: {
             title: 'Nastavení',
             save: 'Uložit',

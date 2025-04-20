@@ -120,6 +120,22 @@ export default {
         detailsTitle: 'Детали',
         noDetails: 'Нет указанных данных',
 
+        friends: {
+            title: 'Друзья',
+            empty: 'У вас пока нет друзей',
+            add: 'Добавить в друзья',
+            approve: 'Принять запрос',
+            decline: 'Отклонить запрос',
+            pending: 'Запрос отправлен',
+            remove: 'Удалить из друзей',
+            cancel: 'Отменить запрос дружбы',
+            column: {
+                name: 'Имя',
+                status: 'Статус',
+                actions: 'Действия'
+            }
+        },
+
         settings: {
             title: 'Настройки',
             save: 'Сохранить',

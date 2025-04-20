@@ -5,7 +5,7 @@
     </h1>
 
     <div v-if="isLoading" class="text-center text-text/70 py-12">
-      ⏳ {{ t('loading') }}
+      ⏳ {{ t('common.loading') }}
     </div>
 
     <div v-else>

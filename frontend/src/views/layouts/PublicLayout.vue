@@ -37,12 +37,14 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useIsMobile } from '@/utils/device/useIsMobile'
 
 import BurgerComponent from '@/components/mobile/BurgerComponent.vue'
 import { changeLocaleIntent } from '@/intents/localeIntents.js'
 import { handleLocaleIntent } from '@/actions/localeActions.js'
 import createLocaleModel from '@/models/localeModel.js'
 import { inject } from "vue";
+
 
 const { locale, t } = useI18n()
 const lang = ref(locale.value)
@@ -75,10 +77,5 @@ const goRegister = () => {
   coordinator.navigateToRegister();
 }
 
-const isMobile = ref(window.innerWidth <= 768)
-onMounted(() => {
-  window.addEventListener('resize', () => {
-    isMobile.value = window.innerWidth <= 768
-  })
-})
+const isMobile = useIsMobile()
 </script>

@@ -41,6 +41,7 @@ import { changeLocaleIntent } from '@/intents/localeIntents.js'
 import { handleLocaleIntent } from '@/actions/localeActions.js'
 import BurgerComponent from '@/components/mobile/BurgerComponent.vue'
 import BottomNavbarComponent from '@/components/mobile/BottomNavbarComponent.vue'
+import { useIsMobile } from '@/utils/device/useIsMobile'
 
 import NavBarComponent from '@/components/desktop/NavBarComponent.vue'
 import ContainerCentralComponent from '@/components/desktop/ContainerCentralComponent.vue'
@@ -74,13 +75,6 @@ const changeLang = async () => {
   await handleLocaleIntent(intent, { model: model.locale })
 }
 
-const isMobile = ref(window.innerWidth <= 768)
-onMounted(() => {
-  window.addEventListener('resize', () => {
-    isMobile.value = window.innerWidth <= 768
-  })
-})
-
 const goHome = async () => {
   coordinator.navigateToHome();
 }
@@ -89,4 +83,6 @@ const onLogout = async () => {
   const intent = logoutIntent();
   await handleAuthIntent(intent, { model: model.auth, coordinator })
 }
+
+const isMobile = useIsMobile()
 </script>
