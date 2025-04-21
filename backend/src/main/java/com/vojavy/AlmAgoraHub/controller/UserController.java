@@ -81,7 +81,7 @@ public class UserController {
     }
 
     private boolean isAuthorized(Long pathUserId, String token) {
-        Long tokenUserId = jwtService.extractClaim(token, claims -> claims.get("id", Long.class));
+        Long tokenUserId = userService.extractUserId(token);
         String roles = jwtService.extractClaim(token, claims -> claims.get("roles", String.class));
         boolean isAdmin = roles != null && roles.contains("ADMIN");
         return pathUserId.equals(tokenUserId) || isAdmin;

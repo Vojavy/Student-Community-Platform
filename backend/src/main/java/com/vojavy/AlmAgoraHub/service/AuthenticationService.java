@@ -14,10 +14,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.util.Optional;
-import java.util.Random;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 public class AuthenticationService {
@@ -26,18 +23,21 @@ public class AuthenticationService {
     private final AuthenticationManager authenticationManager;
     private final EmailService emailService;
     private final UserTokenService userTokenService;
+    private final RoleService roleService;
 
     public AuthenticationService(
             UserService userService,
             PasswordEncoder passwordEncoder,
             AuthenticationManager authenticationManager,
             EmailService emailService,
-            UserTokenService userTokenService) {
+            UserTokenService userTokenService,
+            RoleService roleService) {
         this.userService = userService;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
         this.emailService = emailService;
         this.userTokenService = userTokenService;
+        this.roleService = roleService;
     }
 
     public User signupLocal(RegisterUserRequest input, String baseUrl) {
@@ -50,7 +50,6 @@ public class AuthenticationService {
         user.setVerificationExpires(LocalDateTime.now().plusMinutes(15).toInstant(ZoneOffset.UTC));
         user.setProviderId(0);
 
-        // 👇 Инициализация пустых деталей
         UserDetailsExtended emptyDetails = new UserDetailsExtended();
         emptyDetails.setBio("");
         emptyDetails.setInterests(List.of());
@@ -71,6 +70,8 @@ public class AuthenticationService {
         emptyDetails.setSkills(List.of());
 
         user.setDetails(emptyDetails);
+
+        user.setRoles(Set.of(roleService.getByName("ROLE_LIMITED")));
 
         sendVerificationEmailLocal(user, baseUrl);
         return userService.save(user);
@@ -105,6 +106,9 @@ public class AuthenticationService {
                 user.setActive(true);
                 user.setVerificationCode(null);
                 user.setVerificationExpires(null);
+                user.setRoles(Set.of(
+                        roleService.getByName("ROLE_USER"),
+                        roleService.getByName("ROLE_LIMITED")));
                 userService.update(user);
             } else {
                 throw new RuntimeException("Invalid verification code");

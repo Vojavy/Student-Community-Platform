@@ -21,6 +21,9 @@ import UserLayout from "@/views/layouts/UserLayout.vue";
 import UserSettingsView from "@/views/authorized/User/UserSettingsView.vue";
 import UserStagView from "@/views/authorized/User/UserStagView.vue";
 import UserProfileWrapper from "@/views/authorized/User/UserProfileWrapper.vue";
+import GroupsView from "@/views/authorized/group/GroupsView.vue";
+import GroupsBlockedView from "@/views/public/GroupsBlockedView.vue";
+import CreateGroupView from "@/views/authorized/group/CreateGroupView.vue";
 
 const routes = [
     {
@@ -40,6 +43,7 @@ const routes = [
                     next()
                 }
             },
+            { path: 'groups', name: 'groups-blocked', component: GroupsBlockedView },
             { path: 'access-denied', name: 'access-denied', component: AccessDeniedView }
         ]
     },
@@ -77,6 +81,9 @@ const routes = [
                     }
                 ]
             },
+            { path: 'app/groups',           name: 'groups',      component: GroupsView,      meta: { requiresAuth: true } },
+            { path: 'app/groups/:groupId',  name: 'group-detail',component: GroupsBlockedView, meta: { requiresAuth: true } },
+            { path: 'app/groups/create', name: 'create-group', component: CreateGroupView, meta: { requiresAuth: true } },
         ]
     },
 
@@ -94,16 +101,21 @@ const router = createRouter({
 })
 
 router.beforeEach(async (to, from, next) => {
-    const requiresAuth = to.matched.some(record => record.meta.requiresAuth)
+    const requiresAuth   = to.matched.some(record => record.meta.requiresAuth)
     const requiresUnauth = to.matched.some(record => record.meta.requiresUnauth)
-    const token = localStorage.getItem('token')
+    const token          = localStorage.getItem('token')
 
-    const model = createAuthModel()
+    const model       = createAuthModel()
     const coordinator = createCoordinator(router)
 
-    if (requiresAuth) {
-        if (!token) return next({ name: 'login' })
+    if (requiresAuth && !token) {
+        if (to.name === 'groups' || to.name === 'group-detail') {
+            return next({ name: 'groups-blocked' })
+        }
+        return next({ name: 'login' })
+    }
 
+    if (requiresAuth && token) {
         try {
             await handleAuthIntent(checkTokenIntent(), { model, coordinator })
             return next()
@@ -111,11 +123,11 @@ router.beforeEach(async (to, from, next) => {
             if (e.response?.status === 401) {
                 localStorage.removeItem('token')
                 window.dispatchEvent(new CustomEvent('jwt-expired'))
-                return next(false) // остановим переход
-            } else if (e.response?.status === 403) {
+                return next(false)
+            }
+            if (e.response?.status === 403) {
                 return next({ name: 'access-denied' })
             }
-
             return next({ name: 'login' })
         }
     }
@@ -129,8 +141,8 @@ router.beforeEach(async (to, from, next) => {
             return next()
         }
     }
-
     return next()
 })
+
 
 export default router

@@ -192,4 +192,31 @@ export default {
             sendMessage: 'Poslat zprávu'
         }
     },
+    groups: {
+        title: 'Skupiny',
+        tabs: {
+            my: 'Mé skupiny',
+            browse: 'Procházet'
+        },
+        searchPlaceholder: 'Hledat podle názvu nebo tématu…',
+        noMyGroups: 'Zatím nemáte žádné skupiny',
+        noBrowseResults: 'Nebyly nalezeny žádné výsledky',
+        filters: {
+            name: 'Název',
+            domain: 'Doména',
+            access: 'Přístup',
+            public: 'Veřejné',
+            private: 'Soukromé',
+            topics: 'Témata',
+            apply: 'Použít'
+        },
+        createTitle: 'Vytvořit novou skupinu',
+        form: {
+            domain: 'Doména (volitelně)',
+            name: 'Název skupiny',
+            description: 'Popis',
+            topics: 'Témata (oddělená čárkou)',
+            createButton: 'Vytvořit skupinu'
+        }
+    },
 }

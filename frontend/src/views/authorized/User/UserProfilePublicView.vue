@@ -114,13 +114,14 @@
         </button>
       </div>
 
-      <!-- Список друзей -->
+      <!--      TODO ПОФИКСИТЬ ВСЮ ХУЙНЮ ПОЖАЛУЙСТА-->
       <div class="mt-8">
         <h2 class="text-xl font-semibold mb-4">{{ t('profile.friends.title') }}</h2>
 
         <div v-if="friendsLoading" class="text-text/60">
           ⏳ {{ t('common.loading') }}
         </div>
+        <!--      TODO ВЫВОДИТ ПЕНДИНГ ДРУЗЕЙ-->
         <div v-else-if="friends.length === 0" class="text-text/60">
           {{ t('profile.friends.empty') }}
         </div>

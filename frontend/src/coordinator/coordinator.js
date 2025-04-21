@@ -31,9 +31,6 @@ export default function createCoordinator(router) {
         navigateToCalendar() {
             router.push('/calendar')
         },
-        navigateToGroups() {
-            router.push('/groups')
-        },
         navigateToMessages() {
             router.push('/messages')
         },
@@ -50,6 +47,20 @@ export default function createCoordinator(router) {
         },
         navigateToSearch() {
             router.push('/search')
-        }
+        },
+        navigateToGroups() {
+            const userId = getUserIdFromToken();
+            if (!userId) {
+                router.push('/groups');            // заглушка для гостей
+            } else {
+                router.push('/app/groups');        // реальная страница для авторизованных
+            }
+        },
+        navigateToGroup(id) {
+            router.push(`/app/groups/${id}`);    // детальная страница конкретной группы
+        },
+        navigateToCreateGroup() {
+            router.push('/app/groups/create')
+        },
     }
 }

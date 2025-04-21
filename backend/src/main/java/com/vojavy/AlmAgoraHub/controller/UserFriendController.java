@@ -37,28 +37,28 @@ public class UserFriendController {
 
     @PostMapping("/{id}/request")
     public ResponseEntity<?> sendFriendRequest(@PathVariable Long id, @RequestHeader("Authorization") String tokenHeader) {
-        Long senderId = extractUserId(tokenHeader);
+        Long senderId = userService.extractUserId(tokenHeader);
         friendService.sendFriendRequest(senderId, id);
         return ResponseEntity.ok("Friend request sent");
     }
 
     @PostMapping("/{id}/approve")
     public ResponseEntity<?> approveRequest(@PathVariable Long id, @RequestHeader("Authorization") String tokenHeader) {
-        Long receiverId = extractUserId(tokenHeader);
+        Long receiverId = userService.extractUserId(tokenHeader);
         friendService.acceptFriendRequest(id, receiverId);
         return ResponseEntity.ok("Friend request approved");
     }
 
     @PostMapping("/{id}/decline")
     public ResponseEntity<?> declineRequest(@PathVariable Long id, @RequestHeader("Authorization") String tokenHeader) {
-        Long receiverId = extractUserId(tokenHeader);
+        Long receiverId = userService.extractUserId(tokenHeader);
         friendService.deleteFriendship(id, receiverId);
         return ResponseEntity.ok("Friend request declined");
     }
 
     @GetMapping("/incoming")
     public ResponseEntity<List<FriendResponse>> getIncoming(@RequestHeader("Authorization") String tokenHeader) {
-        Long me = extractUserId(tokenHeader);
+        Long me = userService.extractUserId(tokenHeader);
         List<User> incoming = friendService.getIncomingRequests(me);
         List<FriendResponse> dto = incoming.stream()
                 .map(u -> mapFriend(u.getId(), "pending"))
@@ -69,7 +69,7 @@ public class UserFriendController {
     @GetMapping
     public ResponseEntity<List<FriendResponse>> getAllFriends(@RequestHeader("Authorization") String tokenHeader,
                                                               @RequestParam(required = false) Long id) {
-        Long userId = id != null ? id : extractUserId(tokenHeader);
+        Long userId = id != null ? id : userService.extractUserId(tokenHeader);
         List<User> friends = friendService.getFriendsForUser(userId);
 
         List<FriendResponse> response = friends.stream()
@@ -81,7 +81,7 @@ public class UserFriendController {
 
     @GetMapping("/{id}")
     public ResponseEntity<FriendResponse> getFriendById(@PathVariable Long id, @RequestHeader("Authorization") String tokenHeader) {
-        Long selfId = extractUserId(tokenHeader);
+        Long selfId = userService.extractUserId(tokenHeader);
         List<User> friends = friendService.getFriendsForUser(selfId);
 
         boolean isFriend = friends.stream().anyMatch(f -> f.getId().equals(id));
@@ -92,7 +92,7 @@ public class UserFriendController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteFriend(@PathVariable Long id, @RequestHeader("Authorization") String tokenHeader) {
-        Long selfId = extractUserId(tokenHeader);
+        Long selfId = userService.extractUserId(tokenHeader);
         friendService.deleteFriendship(selfId, id);
         return ResponseEntity.ok("Friend removed");
     }
@@ -112,10 +112,5 @@ public class UserFriendController {
         dto.setName(name);
         dto.setStatus(status);
         return dto;
-    }
-
-    private Long extractUserId(String tokenHeader) {
-        String token = tokenHeader.replace("Bearer ", "");
-        return jwtService.extractClaim(token, claims -> claims.get("id", Long.class));
     }
 }

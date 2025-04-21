@@ -192,4 +192,31 @@ export default {
             sendMessage: 'Send Message'
         }
     },
+    groups: {
+        title: 'Groups',
+        tabs: {
+            my: 'My Groups',
+            browse: 'Browse'
+        },
+        searchPlaceholder: 'Search by name or topic…',
+        noMyGroups: 'You have no groups yet',
+        noBrowseResults: 'No results found',
+        filters: {
+            name: 'Name',
+            domain: 'Domain',
+            access: 'Access',
+            public: 'Public',
+            private: 'Private',
+            topics: 'Topics',
+            apply: 'Apply'
+        },
+        createTitle: 'Create New Group',
+        form: {
+            domain: 'Domain (optional)',
+            name: 'Group Name',
+            description: 'Description',
+            topics: 'Topics (comma separated)',
+            createButton: 'Create Group'
+        }
+    },
 }

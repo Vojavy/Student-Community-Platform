@@ -94,6 +94,7 @@
         <div v-if="friendsLoading" class="text-text/60">
           ⏳ {{ t('common.loading') }}
         </div>
+        <!--      TODO НЕ ВЫВОДИТ ПЕНДИНГ ДРУЗЕЙ -->
         <div v-else-if="friends.length === 0" class="text-text/60">
           {{ t('profile.friends.empty') }}
         </div>
@@ -113,6 +114,7 @@
                   class="px-3 py-1 rounded border border-red-600 text-red-600 hover:bg-red-600/10 transition"
                   @click.stop="removeFriend(f.userId)"
               >
+                <!--      TODO НЕ РАБОТАЕТ-->
                 <div v-if="f.status ==='approved'">{{ t('profile.friends.remove') }}</div>
                 <div v-else>{{ t('profile.friends.decline') }}</div>
               </button>

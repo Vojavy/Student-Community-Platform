@@ -5,6 +5,8 @@ import com.vojavy.AlmAgoraHub.repository.UniversityDomainRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
+
 @Service
 public class UniversityDomainService {
 
@@ -15,9 +17,9 @@ public class UniversityDomainService {
         this.domainRepository = domainRepository;
     }
 
-    public UniversityDomain getDomainByCode(String domainCode) {
-        return domainRepository
+    public Optional<UniversityDomain> getDomainByCode(String domainCode) {
+        return Optional.ofNullable(domainRepository
                 .findByDomain(domainCode)
-                .orElseThrow(() -> new IllegalArgumentException("University domain not found: " + domainCode));
+                .orElseThrow(() -> new IllegalArgumentException("University domain not found: " + domainCode)));
     }
 }

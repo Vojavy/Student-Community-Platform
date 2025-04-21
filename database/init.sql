@@ -152,11 +152,17 @@ create table groups
     min_role_for_events varchar(50) default 'admin'::character varying
         constraint groups_min_role_for_events_check
             check ((min_role_for_events)::text = ANY
-                   (ARRAY [('owner'::character varying)::text, ('admin'::character varying)::text, ('editor'::character varying)::text, ('member'::character varying)::text]))
+                   (ARRAY [('owner'::character varying)::text, ('admin'::character varying)::text, ('editor'::character varying)::text, ('member'::character varying)::text])),
+    domain_id           bigint
+                                     references university_domains
+                                         on delete set null
 );
 
 alter table groups
     owner to admin;
+
+create index idx_groups_domain_id
+    on groups (domain_id);
 
 create table group_posts
 (
@@ -228,7 +234,7 @@ create table user_group_memberships
     role      varchar(50) not null
         constraint user_group_memberships_role_check
             check ((role)::text = ANY
-                   (ARRAY [('owner'::character varying)::text, ('admin'::character varying)::text, ('editor'::character varying)::text, ('member'::character varying)::text])),
+                   (ARRAY ['owner'::text, 'admin'::text, 'creator'::text, 'helper'::text, 'member'::text, 'invited'::text, 'pending'::text])),
     joined_at timestamp default now(),
     constraint unique_user_in_group
         unique (user_id, group_id)

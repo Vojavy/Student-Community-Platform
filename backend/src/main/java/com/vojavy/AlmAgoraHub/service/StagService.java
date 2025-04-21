@@ -62,7 +62,10 @@ public class StagService {
         String osCislo = fetchOsCisloFromTicket(ticket, domain);
         StudentInfoResponse studentInfo = fetchStudentInfo(user.getId(), osCislo, domain);
 
-        UniversityDomain universityDomain = universityDomainService.getDomainByCode(domain); // domain = "upce", "muni" и т.п.
+        UniversityDomain universityDomain = universityDomainService
+                .getDomainByCode(domain)
+                .orElseThrow(() -> new RuntimeException("No such domain: " + domain));
+
         user.setDomain(universityDomain);
         userService.update(user);
 

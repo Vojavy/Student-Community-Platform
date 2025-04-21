@@ -14,9 +14,11 @@ import java.util.Optional;
 @Service
 public class UserService {
     private final UserRepository userRepository;
+    private final JwtService jwtService;
 
-    public UserService(UserRepository userRepository) {
+    public UserService(UserRepository userRepository, JwtService jwtService) {
         this.userRepository = userRepository;
+        this.jwtService = jwtService;
     }
 
     public List<User> findAll() {
@@ -56,6 +58,12 @@ public class UserService {
 
         user.setActive(request.isActive());
         userRepository.save(user);
+    }
+
+    public Long extractUserId(String tokenHeader){
+        if (tokenHeader == null) return null;
+        String token = tokenHeader.replace("Bearer ", "");
+        return jwtService.extractClaim(token, claims -> claims.get("id", Long.class));
     }
 
     public void updateUserDetails(Long userId, UserDetailsExtended details) {

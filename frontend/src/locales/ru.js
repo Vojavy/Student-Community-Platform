@@ -193,4 +193,31 @@ export default {
             sendMessage: 'Написать сообщение'
         }
     },
+    groups: {
+        title: 'Группы',
+        tabs: {
+            my: 'Мои',
+            browse: 'Обзор'
+        },
+        searchPlaceholder: 'Поиск по названию или теме…',
+        noMyGroups: 'У вас ещё нет групп',
+        noBrowseResults: 'Ничего не найдено',
+        filters: {
+            name: 'Название',
+            domain: 'Домен',
+            access: 'Доступ',
+            public: 'Открытые',
+            private: 'Закрытые',
+            topics: 'Темы',
+            apply: 'Применить'
+        },
+        createTitle: 'Создать новую группу',
+        form: {
+            domain: 'Домен (опционально)',
+            name: 'Название группы',
+            description: 'Описание',
+            topics: 'Темы (через запятую)',
+            createButton: 'Создать группу'
+        }
+    },
 }

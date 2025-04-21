@@ -108,4 +108,14 @@ public class UserFriendService {
                 .map(UserFriend::getUser1)
                 .collect(Collectors.toList());
     }
+
+    public List<User> getIncomingRequests(Long userId) {
+        Optional<User> userOpt = userService.findById(userId);
+        if (userOpt.isEmpty()) return List.of();
+
+        return friendRepository.findByUser2AndStatus(userOpt.get(), "pending")
+                .stream()
+                .map(UserFriend::getUser1)
+                .collect(Collectors.toList());
+    }
 }
