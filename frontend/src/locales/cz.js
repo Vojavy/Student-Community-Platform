@@ -201,22 +201,38 @@ export default {
         searchPlaceholder: 'Hledat podle názvu nebo tématu…',
         noMyGroups: 'Zatím nemáte žádné skupiny',
         noBrowseResults: 'Nebyly nalezeny žádné výsledky',
+
         filters: {
             name: 'Název',
             domain: 'Doména',
+            domainAll: 'Všechny domény',
             access: 'Přístup',
+            accessAll: 'Všechny',
             public: 'Veřejné',
             private: 'Soukromé',
             topics: 'Témata',
             apply: 'Použít'
         },
+
+        pagination: {
+            prev: '← Předch.',
+            next: 'Další →',
+            size: 'Na stránce'
+        },
+
+        domainUnknown: 'Bez domény',
+        public: 'Veřejná',
+        private: 'Soukromá',
+
         createTitle: 'Vytvořit novou skupinu',
         form: {
             domain: 'Doména (volitelně)',
+            domainNone: 'Žádná',
             name: 'Název skupiny',
             description: 'Popis',
             topics: 'Témata (oddělená čárkou)',
-            createButton: 'Vytvořit skupinu'
+            createButton: 'Vytvořit skupину',
+            public: 'Veřejná'
         }
-    },
+    }
 }

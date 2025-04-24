@@ -1,11 +1,14 @@
 package com.vojavy.AlmAgoraHub.controller;
 
 import com.vojavy.AlmAgoraHub.dto.requests.CreateGroupRequest;
+import com.vojavy.AlmAgoraHub.dto.responses.GroupDetailResponse;
+import com.vojavy.AlmAgoraHub.dto.responses.GroupResponse;
 import com.vojavy.AlmAgoraHub.model.group.Group;
 import com.vojavy.AlmAgoraHub.model.group.GroupMembership;
 import com.vojavy.AlmAgoraHub.service.UserService;
 import com.vojavy.AlmAgoraHub.service.group.GroupMembershipService;
 import com.vojavy.AlmAgoraHub.service.group.GroupService;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -109,11 +112,13 @@ public class GroupController {
     }
 
     @GetMapping("/user")
-    public List<Group> listMyGroups(
-            @RequestHeader("Authorization") String authHeader
+    public Page<GroupResponse> listMyGroups(
+            @RequestHeader("Authorization") String authHeader,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "25") int size
     ) {
         Long userId = userService.extractUserId(authHeader);
-        return membershipService.getGroupsForUser(userId);
+        return membershipService.getGroupsForUser(userId, page, size);
     }
 
     @GetMapping("/{groupId}/members/{userId}/status")
@@ -125,12 +130,25 @@ public class GroupController {
     }
 
     @GetMapping
-    public List<Group> browse(
+    @CrossOrigin(allowedHeaders = "*")
+    public Page<GroupResponse> browse(
             @RequestParam(required = false) String name,
             @RequestParam(required = false) Long domainId,
             @RequestParam(required = false) Boolean isPublic,
-            @RequestParam(required = false) List<String> topics
+            @RequestParam(required = false) List<String> topics,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "25") int size
     ) {
-        return groupService.browseGroups(name, domainId, isPublic, topics);
+        return groupService.browseGroups(name, domainId, isPublic, topics, page, size);
+    }
+
+    @GetMapping("/{groupId}")
+    public ResponseEntity<GroupDetailResponse> getGroupDetails(
+            @PathVariable Long groupId,
+            @RequestHeader("Authorization") String authHeader
+    ) {
+        Long currentUserId = userService.extractUserId(authHeader);
+        GroupDetailResponse detail = groupService.getGroupDetails(groupId, currentUserId);
+        return ResponseEntity.ok(detail);
     }
 }

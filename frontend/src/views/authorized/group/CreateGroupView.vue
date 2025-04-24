@@ -6,12 +6,19 @@
       <!-- Domain -->
       <div>
         <label class="block font-medium mb-1">{{ t('groups.form.domain') }}</label>
-        <input
-            type="text"
+        <select
             v-model="form.domain"
             class="w-full p-2 border rounded bg-primary text-text"
-            readonly
-        />
+        >
+          <option value="">{{ t('groups.form.domainNone') }}</option>
+          <option
+              v-for="d in domains"
+              :key="d.id"
+              :value="d.domain"
+          >
+            {{ d.domainName }}
+          </option>
+        </select>
       </div>
 
       <!-- Name -->
@@ -68,26 +75,37 @@
 </template>
 
 <script setup>
-import { reactive, onMounted } from 'vue'
+import { reactive, ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { inject } from 'vue'
+
 import createGroupModel from '@/models/groupModel'
-import createUserModel from '@/models/userModel'
-import { fetchUserProfileIntent } from '@/intents/userIntents'
 import { createGroupIntent } from '@/intents/groupIntents'
 import { handleGroupIntent } from '@/actions/groupActions'
+
+import createDomainModel from '@/models/domainModel'
+import { fetchDomainsIntent } from '@/intents/domainIntents'
+import { handleDomainIntent } from '@/actions/domainActions'
+
+import createUserModel from '@/models/userModel'
+import { fetchUserProfileIntent } from '@/intents/userIntents'
 import { handleUserIntent } from '@/actions/userActions'
+
 import { getUserIdFromToken } from '@/utils/jwt/getUserIdFromToken'
 
 const { t } = useI18n()
 const coordinator = inject('coordinator')
+
 const groupModel = createGroupModel()
+const domainModel = createDomainModel()
 const userModel = createUserModel()
 
 const userId = getUserIdFromToken()
 
+const domains = ref([])
+
 const form = reactive({
-  domain: '',
+  domain: '',         // empty = none
   name: '',
   description: '',
   topics: '',
@@ -95,18 +113,28 @@ const form = reactive({
 })
 
 onMounted(async () => {
+  // fetch available university domains
+  domains.value = await handleDomainIntent(
+      fetchDomainsIntent(),
+      { model: domainModel }
+  )
+
+  // optionally prefill domain from user profile if needed:
   try {
     const profile = await handleUserIntent(
         fetchUserProfileIntent(userId),
         { model: userModel }
     )
-    form.domain = profile.domain || ''
+    if (profile.domain) {
+      form.domain = profile.domain
+    }
   } catch {
-    form.domain = ''
+    // ignore
   }
 })
 
 async function onSubmit() {
+  // split tags
   const topicsArr = form.topics
       .split(',')
       .map(s => s.trim())
@@ -119,14 +147,16 @@ async function onSubmit() {
     public: form.public,
     minRoleForPosts: 'member',
     minRoleForEvents: 'admin',
-    domain: form.domain || undefined
+    domain: form.domain || undefined   // undefined => no domain
   }
 
+  // create
   const created = await handleGroupIntent(
       createGroupIntent(groupData),
       { model: groupModel }
   )
 
+  // navigate to newly created group
   coordinator.navigateToGroup(created.id)
 }
 </script>

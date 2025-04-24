@@ -1,11 +1,15 @@
 package com.vojavy.AlmAgoraHub.service.group;
 
+import com.vojavy.AlmAgoraHub.dto.responses.GroupResponse;
 import com.vojavy.AlmAgoraHub.model.User;
 import com.vojavy.AlmAgoraHub.model.group.Group;
 import com.vojavy.AlmAgoraHub.model.group.GroupMembership;
 import com.vojavy.AlmAgoraHub.repository.group.GroupMembershipRepository;
 import com.vojavy.AlmAgoraHub.repository.group.GroupRepository;
 import com.vojavy.AlmAgoraHub.service.UserService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -176,14 +180,16 @@ public class GroupMembershipService {
                 .collect(Collectors.toList());
     }
 
-    /** 7) Все группы по ID пользователя */
+    /** 7) Все группы по ID пользователя с пагинацией и в DTO */
     @Transactional(readOnly = true)
-    public List<Group> getGroupsForUser(Long userId) {
+    public Page<GroupResponse> getGroupsForUser(Long userId, int page, int size) {
         User user = userService.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
-        return membershipRepo.findByUser(user).stream()
-                .map(GroupMembership::getGroup)
-                .collect(Collectors.toList());
+
+        Pageable pageable = PageRequest.of(page, size);
+        return membershipRepo
+                .findByUser(user, pageable)
+                .map(m -> GroupResponse.fromEntity(m.getGroup()));
     }
 
     /** 8) Информация о статусе/роли конкретного пользователя в группе */

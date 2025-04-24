@@ -1,21 +1,29 @@
+<!-- src/views/authorized/User/UserStagView.vue -->
 <template>
   <div class="p-6 max-w-lg mx-auto bg-secondary rounded-lg shadow">
     <h1 class="text-2xl font-semibold text-accent-primary mb-6">
       {{ t('stag.selectUniversity') }}
     </h1>
 
+    <!-- Loading -->
     <div v-if="isLoading" class="text-center text-text/70 py-12">
       ⏳ {{ t('common.loading') }}
     </div>
 
+    <!-- Main -->
     <div v-else>
       <select
           v-model="selected"
           class="w-full bg-white border border-gray-300 rounded px-4 py-2 mb-6 focus:border-accent-primary focus:outline-none"
       >
         <option disabled value="">{{ t('stag.selectUniversity') }}</option>
-        <option value="upce">{{ t('stag.universities.upce') }}</option>
-        <option value="zcu">{{ t('stag.universities.zcu') }}</option>
+        <option
+            v-for="dom in domains"
+            :key="dom.domain"
+            :value="dom.domain"
+        >
+          {{ dom.domainName }}
+        </option>
       </select>
 
       <div class="mb-6">
@@ -65,54 +73,62 @@
 
 <script setup>
 import { ref, onMounted, inject } from 'vue'
-import { useI18n } from 'vue-i18n'
+import { useI18n }              from 'vue-i18n'
+
 import {
   checkStagTicketIntent,
   deleteStagTicket,
   saveStagToken,
   startStagLoginIntent
 } from '@/intents/stagIntents.js'
-import { handleStagIntent } from '@/actions/stagActions.js'
-import createStagModel from '@/models/stagModel.js'
+import { handleStagIntent }   from '@/actions/stagActions.js'
+import createStagModel        from '@/models/stagModel.js'
 
-const { t } = useI18n()
-const coordinator = inject('coordinator')
-const model = createStagModel()
+import { fetchDomainsIntent } from '@/intents/domainIntents.js'
+import { handleDomainIntent } from '@/actions/domainActions.js'
+import createDomainModel      from '@/models/domainModel.js'
 
-const status = ref(null)
-const selected = ref('')
+const { t }      = useI18n()
+const coordinator= inject('coordinator')
+
+const stagModel      = createStagModel()
+const status         = ref(null)
 const confirmingDelete = ref(false)
-const isLoading = ref(true)
+
+const domainModel    = createDomainModel()
+const domains        = ref([])
+const selected       = ref('')
+
+const isLoading      = ref(true)
 
 onMounted(async () => {
-  // Обработка редиректа с STAG
-  const params = new URLSearchParams(window.location.search)
-  const ticket = params.get('stagUserTicket')
-  const longTicket = params.get('longTicket')
-  const domain = params.get('domain')
+  domains.value = await handleDomainIntent(fetchDomainsIntent(), { model: domainModel })
 
-  if (ticket && domain) {
+  const params = new URLSearchParams(window.location.search)
+  const ticket      = params.get('stagUserTicket')
+  const longTicket  = params.get('longTicket')
+  const domainCode  = params.get('domain')
+  if (ticket && domainCode) {
     await handleStagIntent(
-        saveStagToken(ticket, longTicket, domain),
-        { model, coordinator }
+        saveStagToken(ticket, longTicket, domainCode),
+        { model: stagModel, coordinator }
     )
   }
 
-  // Проверка токена
-  status.value = await handleStagIntent(checkStagTicketIntent(), { model, coordinator })
+  status.value = await handleStagIntent(checkStagTicketIntent(), { model: stagModel, coordinator })
   isLoading.value = false
 })
 
 const onLogin = async () => {
   if (!selected.value) return
-  await handleStagIntent(startStagLoginIntent(selected.value), { model, coordinator })
+  await handleStagIntent(startStagLoginIntent(selected.value), { model: stagModel, coordinator })
 }
 
 const onDelete = async () => {
   isLoading.value = true
-  await handleStagIntent(deleteStagTicket(), { model, coordinator })
+  await handleStagIntent(deleteStagTicket(), { model: stagModel, coordinator })
   confirmingDelete.value = false
-  status.value = await handleStagIntent(checkStagTicketIntent(), { model, coordinator })
+  status.value = await handleStagIntent(checkStagTicketIntent(), { model: stagModel, coordinator })
   isLoading.value = false
 }
 </script>

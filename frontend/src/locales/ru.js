@@ -196,28 +196,44 @@ export default {
     groups: {
         title: 'Группы',
         tabs: {
-            my: 'Мои',
+            my: 'Мои группы',
             browse: 'Обзор'
         },
         searchPlaceholder: 'Поиск по названию или теме…',
         noMyGroups: 'У вас ещё нет групп',
         noBrowseResults: 'Ничего не найдено',
+
         filters: {
             name: 'Название',
             domain: 'Домен',
+            domainAll: 'Все домены',
             access: 'Доступ',
+            accessAll: 'Любой',
             public: 'Открытые',
             private: 'Закрытые',
             topics: 'Темы',
             apply: 'Применить'
         },
+
+        pagination: {
+            prev: '← Назад',
+            next: 'Вперёд →',
+            size: 'На странице'
+        },
+
+        domainUnknown: 'Без домена',
+        public: 'Открытая',
+        private: 'Закрытая',
+
         createTitle: 'Создать новую группу',
         form: {
             domain: 'Домен (опционально)',
+            domainNone: 'Без домена',
             name: 'Название группы',
             description: 'Описание',
             topics: 'Темы (через запятую)',
-            createButton: 'Создать группу'
+            createButton: 'Создать группу',
+            public: 'Открытая',
         }
-    },
+    }
 }

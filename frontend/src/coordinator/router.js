@@ -24,6 +24,7 @@ import UserProfileWrapper from "@/views/authorized/User/UserProfileWrapper.vue";
 import GroupsView from "@/views/authorized/group/GroupsView.vue";
 import GroupsBlockedView from "@/views/public/GroupsBlockedView.vue";
 import CreateGroupView from "@/views/authorized/group/CreateGroupView.vue";
+import GroupDetailWrapper from "@/views/authorized/group/GroupDetailWrapper.vue";
 
 const routes = [
     {
@@ -61,29 +62,16 @@ const routes = [
                 path: '/user',
                 component: UserLayout,
                 children: [
-                    {
-                        path: ':id',
-                        name: 'user-profile',
-                        component: UserProfileWrapper,
-                        meta: { requiresAuth: true }
-                    },
-                    {
-                        path: 'settings',
-                        name: 'user-settings',
-                        component: UserSettingsView,
-                        meta: { requiresAuth: true }
-                    },
-                    {
-                        path: 'stag',
-                        name: 'user-stag',
-                        component: UserStagView,
-                        meta: { requiresAuth: true }
-                    }
+                    { path: ':id', name: 'user-profile', component: UserProfileWrapper, meta: { requiresAuth: true } },
+                    { path: 'settings', name: 'user-settings', component: UserSettingsView, meta: { requiresAuth: true } },
+                    { path: 'stag', name: 'user-stag', component: UserStagView, meta: { requiresAuth: true } }
                 ]
             },
-            { path: 'app/groups',           name: 'groups',      component: GroupsView,      meta: { requiresAuth: true } },
-            { path: 'app/groups/:groupId',  name: 'group-detail',component: GroupsBlockedView, meta: { requiresAuth: true } },
+            { path: 'app/groups', name: 'groups', component: GroupsView, meta: { requiresAuth: true } },
+            { path: 'app/groups/:groupId', name: 'group-detail',component: GroupsBlockedView, meta: { requiresAuth: true } },
             { path: 'app/groups/create', name: 'create-group', component: CreateGroupView, meta: { requiresAuth: true } },
+            { path: 'app/groups/:groupId', name: 'group-detail', component: GroupDetailWrapper, meta: { requiresAuth: true }
+            }
         ]
     },
 

@@ -201,22 +201,38 @@ export default {
         searchPlaceholder: 'Search by name or topic…',
         noMyGroups: 'You have no groups yet',
         noBrowseResults: 'No results found',
+
         filters: {
             name: 'Name',
             domain: 'Domain',
+            domainAll: 'All domains',
             access: 'Access',
+            accessAll: 'All',
             public: 'Public',
             private: 'Private',
             topics: 'Topics',
             apply: 'Apply'
         },
+
+        pagination: {
+            prev: '← Prev',
+            next: 'Next →',
+            size: 'Per page'
+        },
+
+        domainUnknown: 'No domain',
+        public: 'Public',
+        private: 'Private',
+
         createTitle: 'Create New Group',
         form: {
             domain: 'Domain (optional)',
+            domainNone: 'None',
             name: 'Group Name',
             description: 'Description',
             topics: 'Topics (comma separated)',
-            createButton: 'Create Group'
+            createButton: 'Create Group',
+            public: 'Public',
         }
-    },
+    }
 }

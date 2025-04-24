@@ -1,18 +1,31 @@
 package com.vojavy.AlmAgoraHub.service.group;
 
 import com.vojavy.AlmAgoraHub.dto.requests.CreateGroupRequest;
+import com.vojavy.AlmAgoraHub.dto.responses.GroupDetailResponse;
+import com.vojavy.AlmAgoraHub.dto.responses.GroupResponse;
+import com.vojavy.AlmAgoraHub.dto.responses.UserSummaryResponse;
 import com.vojavy.AlmAgoraHub.model.UniversityDomain;
 import com.vojavy.AlmAgoraHub.model.User;
 import com.vojavy.AlmAgoraHub.model.group.Group;
 import com.vojavy.AlmAgoraHub.model.group.GroupMembership;
 import com.vojavy.AlmAgoraHub.repository.group.GroupRepository;
 import com.vojavy.AlmAgoraHub.service.UniversityDomainService;
+import com.vojavy.AlmAgoraHub.service.UserISDataService;
 import com.vojavy.AlmAgoraHub.service.UserService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class GroupService {
@@ -20,15 +33,20 @@ public class GroupService {
     private final GroupMembershipService membershipService;
     private final UserService userService;
     private final UniversityDomainService domainService;
+    private final UserISDataService userISDataService;
 
-    public GroupService(GroupRepository groupRepository,
-                        GroupMembershipService membershipService,
-                        UserService userService,
-                        UniversityDomainService domainService) {
+    public GroupService(
+            GroupRepository groupRepository,
+            GroupMembershipService membershipService,
+            UserService userService,
+            UniversityDomainService domainService,
+            UserISDataService userISDataService
+    ) {
         this.groupRepository = groupRepository;
         this.membershipService = membershipService;
         this.userService = userService;
         this.domainService = domainService;
+        this.userISDataService = userISDataService;
     }
 
     public List<Group> getAllGroups() {
@@ -116,25 +134,112 @@ public class GroupService {
         groupRepository.deleteById(id);
     }
 
-    public List<Group> findGroupsByDomainAndTopics(Long domainId, String[] topics) {
-        return groupRepository.findByDomainIdAndTopics(domainId, topics);
+    /** Найти по домену и топикам */
+    public List<GroupResponse> findGroupsByDomainAndTopics(Long domainId, String[] topics) {
+        return groupRepository.findByDomainIdAndTopics(domainId, topics)
+                .stream()
+                .map(GroupResponse::fromEntity)
+                .collect(Collectors.toList());
     }
 
-    public List<Group> browseGroups(
+    public Page<GroupResponse> browseGroups(
             String name,
             Long domainId,
             Boolean isPublic,
-            List<String> topics
+            List<String> topics,
+            int page,
+            int size
     ) {
         String[] topicsArray = (topics == null || topics.isEmpty())
                 ? null
                 : topics.toArray(String[]::new);
 
-        return groupRepository.findByFilters(
-                name,
-                domainId,
-                isPublic,
-                topicsArray
+        Pageable pageable = PageRequest.of(page, size);
+
+        List<Group> filtered = groupRepository.findByFilters(
+                name, domainId, isPublic, topicsArray
         );
+
+        int fromIndex = (int) Math.min(pageable.getOffset(), filtered.size());
+        int toIndex = Math.min(fromIndex + pageable.getPageSize(), filtered.size());
+        List<GroupResponse> pageContent = filtered.subList(fromIndex, toIndex)
+                .stream()
+                .map(GroupResponse::fromEntity)
+                .toList();
+
+        return new PageImpl<>(pageContent, pageable, filtered.size());
+    }
+
+    public GroupDetailResponse getGroupDetails(Long groupId, Long currentUserId) {
+        Group group = groupRepository.findById(Math.toIntExact(groupId))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+
+        // проверяем статус membership у currentUser
+        boolean isMemberApproved = membershipService
+                .getMembershipInfo(groupId, currentUserId)
+                .filter(m -> "approved".equals(m.getStatus()))
+                .isPresent();
+
+        if (!isMemberApproved) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
+
+        List<GroupMembership> approvedAll = membershipService
+                .getMembershipsForGroup(groupId).stream()
+                .filter(m -> "approved".equals(m.getStatus()))
+                .toList();
+
+        UserSummaryResponse owner = approvedAll.stream()
+                .filter(m -> "owner".equals(m.getRole()))
+                .map(m -> toSummary(m.getUser()))
+                .findFirst()
+                .orElse(null);
+
+        List<UserSummaryResponse> admins = approvedAll.stream()
+                .filter(m -> "admin".equals(m.getRole()))
+                .map(m -> toSummary(m.getUser()))
+                .toList();
+
+        List<UserSummaryResponse> helpers = approvedAll.stream()
+                .filter(m -> "helper".equals(m.getRole()))
+                .map(m -> toSummary(m.getUser()))
+                .toList();
+
+        List<UserSummaryResponse> members = approvedAll.stream()
+                .filter(m -> !List.of("owner","admin","helper").contains(m.getRole()))
+                .sorted(Comparator.comparing(GroupMembership::getJoinedAt).reversed())
+                .limit(10)
+                .map(m -> toSummary(m.getUser()))
+                .toList();
+
+        return new GroupDetailResponse(
+                group.getId(),
+                group.getName(),
+                group.getDescription(),
+                Collections.singletonList(group.getTopics()),
+                group.isPublic(),
+                group.getMinRoleForPosts(),
+                group.getMinRoleForEvents(),
+                group.getDomain(),
+                group.getCreatedAt(),
+                owner,
+                admins,
+                helpers,
+                members
+        );
+    }
+
+    private UserSummaryResponse toSummary(User u) {
+        return userISDataService.getByUserId(u.getId())
+                .map(data -> new UserSummaryResponse(
+                        u.getId(),
+                        data.getJmeno(),
+                        data.getPrijmeni()
+                ))
+                .orElseGet(() -> new UserSummaryResponse(
+                        u.getId(),
+                        u.getUsername(),
+                        ""
+                ));
     }
 }

@@ -1,44 +1,53 @@
 export const handleGroupIntent = async (intent, { model, coordinator }) => {
     switch (intent.type) {
-        case 'CREATE_GROUP': {
-            const { groupData } = intent.payload
-            return await model.createGroup(groupData)
-        }
-        case 'JOIN_GROUP': {
+        case 'CREATE_GROUP':
+            return await model.createGroup(intent.payload.groupData)
+        case 'JOIN_GROUP':
+            return await model.joinGroup(intent.payload.groupId)
+        case 'INVITE_USER':
+            return await model.inviteUser(
+                intent.payload.groupId,
+                intent.payload.targetUserId,
+                intent.payload.role
+            )
+        case 'CHANGE_MEMBER_ROLE':
+            return await model.changeMemberRole(
+                intent.payload.groupId,
+                intent.payload.targetUserId,
+                intent.payload.newRole
+            )
+        case 'PROCESS_JOIN_REQUEST':
+            return await model.processJoinRequest(
+                intent.payload.groupId,
+                intent.payload.targetUserId,
+                intent.payload.approve
+            )
+        case 'REMOVE_MEMBER':
+            await model.removeMember(
+                intent.payload.groupId,
+                intent.payload.targetUserId
+            )
+            return
+        case 'FETCH_MEMBERS':
+            return await model.fetchMembers(
+                intent.payload.groupId,
+                intent.payload.status
+            )
+        case 'FETCH_USER_GROUPS':
+            return await model.fetchUserGroups(
+                intent.payload.page,
+                intent.payload.size
+            )
+        case 'FETCH_MEMBER_STATUS':
+            return await model.fetchMemberStatus(
+                intent.payload.groupId,
+                intent.payload.targetUserId
+            )
+        case 'FETCH_BROWSE_GROUPS':
+            return await model.fetchBrowseGroups(intent.payload.filters)
+        case 'FETCH_GROUP': {
             const { groupId } = intent.payload
-            return await model.joinGroup(groupId)
-        }
-        case 'INVITE_USER': {
-            const { groupId, targetUserId, role } = intent.payload
-            return await model.inviteUser(groupId, targetUserId, role)
-        }
-        case 'CHANGE_MEMBER_ROLE': {
-            const { groupId, targetUserId, newRole } = intent.payload
-            return await model.changeMemberRole(groupId, targetUserId, newRole)
-        }
-        case 'PROCESS_JOIN_REQUEST': {
-            const { groupId, targetUserId, approve } = intent.payload
-            return await model.processJoinRequest(groupId, targetUserId, approve)
-        }
-        case 'REMOVE_MEMBER': {
-            const { groupId, targetUserId } = intent.payload
-            await model.removeMember(groupId, targetUserId)
-            break
-        }
-        case 'FETCH_MEMBERS': {
-            const { groupId, status } = intent.payload
-            return await model.fetchMembers(groupId, status)
-        }
-        case 'FETCH_USER_GROUPS': {
-            return await model.fetchUserGroups()
-        }
-        case 'FETCH_MEMBER_STATUS': {
-            const { groupId, targetUserId } = intent.payload
-            return await model.fetchMemberStatus(groupId, targetUserId)
-        }
-        case 'FETCH_BROWSE_GROUPS': {
-            const { filters } = intent.payload
-            return await model.fetchBrowseGroups(filters)
+            return await model.fetchGroup(groupId)
         }
         default:
             throw new Error(`Unknown group intent: ${intent.type}`)
