@@ -74,9 +74,12 @@ export default function createGroupModel() {
 
         // 9. Статус участника
         async fetchMemberStatus(groupId, targetUserId) {
-            const resp = await apiClient.get(
-                `/groups/${groupId}/members/${targetUserId}/status`
-            )
+            let resp
+            if (targetUserId === null) {
+                resp = await apiClient.get(`/groups/${groupId}/members/status`)
+            } else {
+                resp = await apiClient.get(`/groups/${groupId}/members/${targetUserId}/status`)
+            }
             return resp.data
         },
 

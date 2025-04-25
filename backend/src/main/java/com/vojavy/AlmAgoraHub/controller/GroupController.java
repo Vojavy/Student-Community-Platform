@@ -2,6 +2,7 @@ package com.vojavy.AlmAgoraHub.controller;
 
 import com.vojavy.AlmAgoraHub.dto.requests.CreateGroupRequest;
 import com.vojavy.AlmAgoraHub.dto.responses.GroupDetailResponse;
+import com.vojavy.AlmAgoraHub.dto.responses.GroupMembershipResponse;
 import com.vojavy.AlmAgoraHub.dto.responses.GroupResponse;
 import com.vojavy.AlmAgoraHub.model.group.Group;
 import com.vojavy.AlmAgoraHub.model.group.GroupMembership;
@@ -100,15 +101,19 @@ public class GroupController {
         return ResponseEntity.noContent().build();
     }
 
+    /**
+     * GET /groups/{groupId}/members?status=approved
+     */
     @GetMapping("/{groupId}/members")
-    public List<GroupMembership> listMembers(
+    public List<GroupMembershipResponse> listMembers(
             @PathVariable Long groupId,
-            @RequestParam(required = false) String status
+            @RequestParam(required = false) String status,
+            @RequestHeader("Authorization") String authHeader
     ) {
-        if (status == null) {
-            return membershipService.getMembershipsForGroup(groupId);
-        }
-        return membershipService.getMembershipsForGroupByStatus(groupId, status);
+        // извлекаем текущего пользователя из JWT
+        Long currentUserId = userService.extractUserId(authHeader);
+        // вызываем новый сервисный метод
+        return groupService.getGroupMembers(groupId, currentUserId, status);
     }
 
     @GetMapping("/user")
@@ -127,6 +132,15 @@ public class GroupController {
             @PathVariable Long userId
     ) {
         return membershipService.getMembershipStatus(groupId, userId);
+    }
+
+    @GetMapping("/{groupId}/members/status")
+    public String getStatus(
+            @PathVariable Long groupId,
+            @RequestHeader("Authorization") String authHeader
+    ) {
+        Long currentUserId = userService.extractUserId(authHeader);
+        return membershipService.getMembershipStatus(groupId, currentUserId);
     }
 
     @GetMapping

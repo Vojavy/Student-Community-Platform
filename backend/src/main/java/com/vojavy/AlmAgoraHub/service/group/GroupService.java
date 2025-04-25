@@ -2,6 +2,7 @@ package com.vojavy.AlmAgoraHub.service.group;
 
 import com.vojavy.AlmAgoraHub.dto.requests.CreateGroupRequest;
 import com.vojavy.AlmAgoraHub.dto.responses.GroupDetailResponse;
+import com.vojavy.AlmAgoraHub.dto.responses.GroupMembershipResponse;
 import com.vojavy.AlmAgoraHub.dto.responses.GroupResponse;
 import com.vojavy.AlmAgoraHub.dto.responses.UserSummaryResponse;
 import com.vojavy.AlmAgoraHub.model.UniversityDomain;
@@ -177,7 +178,7 @@ public class GroupService {
         // проверяем статус membership у currentUser
         boolean isMemberApproved = membershipService
                 .getMembershipInfo(groupId, currentUserId)
-                .filter(m -> "approved".equals(m.getStatus()))
+                .filter(groupMembership -> "approved".equals(groupMembership.getStatus()))
                 .isPresent();
 
         if (!isMemberApproved) {
@@ -186,30 +187,30 @@ public class GroupService {
 
         List<GroupMembership> approvedAll = membershipService
                 .getMembershipsForGroup(groupId).stream()
-                .filter(m -> "approved".equals(m.getStatus()))
+                .filter(groupMembership -> "approved".equals(groupMembership.getStatus()))
                 .toList();
 
         UserSummaryResponse owner = approvedAll.stream()
-                .filter(m -> "owner".equals(m.getRole()))
-                .map(m -> toSummary(m.getUser()))
+                .filter(groupMembership -> "owner".equals(groupMembership.getRole()))
+                .map(groupMembership -> toSummary(groupMembership.getUser()))
                 .findFirst()
                 .orElse(null);
 
         List<UserSummaryResponse> admins = approvedAll.stream()
-                .filter(m -> "admin".equals(m.getRole()))
-                .map(m -> toSummary(m.getUser()))
+                .filter(groupMembership -> "admin".equals(groupMembership.getRole()))
+                .map(groupMembership -> toSummary(groupMembership.getUser()))
                 .toList();
 
         List<UserSummaryResponse> helpers = approvedAll.stream()
-                .filter(m -> "helper".equals(m.getRole()))
-                .map(m -> toSummary(m.getUser()))
+                .filter(groupMembership -> "helper".equals(groupMembership.getRole()))
+                .map(groupMembership -> toSummary(groupMembership.getUser()))
                 .toList();
 
         List<UserSummaryResponse> members = approvedAll.stream()
-                .filter(m -> !List.of("owner","admin","helper").contains(m.getRole()))
+                .filter(groupMembership -> !List.of("owner","admin","helper").contains(groupMembership.getRole()))
                 .sorted(Comparator.comparing(GroupMembership::getJoinedAt).reversed())
                 .limit(10)
-                .map(m -> toSummary(m.getUser()))
+                .map(groupMembership -> toSummary(groupMembership.getUser()))
                 .toList();
 
         return new GroupDetailResponse(
@@ -229,17 +230,53 @@ public class GroupService {
         );
     }
 
-    private UserSummaryResponse toSummary(User u) {
-        return userISDataService.getByUserId(u.getId())
+    public List<GroupMembershipResponse> getGroupMembers(
+            Long groupId,
+            Long currentUserId,
+            String status
+    ) {
+        // 1) Проверяем саму группу
+        Group group = groupRepository.findById(Math.toIntExact(groupId))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+
+        // 2) Если группа приватная — проверяем, что текущий пользователь одобрен
+        if (!group.isPublic()) {
+            boolean ok = membershipService.getMembershipInfo(groupId, currentUserId)
+                    .filter(m -> "approved".equals(m.getStatus()))
+                    .isPresent();
+            if (!ok) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+            }
+        }
+
+        // 3) Получаем сами маппинги
+        List<GroupMembership> raw = (status == null)
+                ? membershipService.getMembershipsForGroup(groupId)
+                : membershipService.getMembershipsForGroupByStatus(groupId, status);
+
+        // 4) Мапим в DTO
+        return raw.stream()
+                .map(m -> new GroupMembershipResponse(
+                        m.getId(),
+                        toSummary(m.getUser()),
+                        m.getRole(),
+                        m.getStatus(),
+                        m.getJoinedAt()
+                ))
+                .toList();
+    }
+
+    private UserSummaryResponse toSummary(User user) {
+        return userISDataService.getByUserId(user.getId())
                 .map(data -> new UserSummaryResponse(
-                        u.getId(),
-                        data.getJmeno(),
-                        data.getPrijmeni()
+                        user.getId(),
+                        user.getUsername(),
+                        data.getJmeno() + ' ' + data.getPrijmeni()
                 ))
                 .orElseGet(() -> new UserSummaryResponse(
-                        u.getId(),
-                        u.getUsername(),
-                        ""
+                        user.getId(),
+                        null,
+                        user.getUsername()
                 ));
     }
 }
