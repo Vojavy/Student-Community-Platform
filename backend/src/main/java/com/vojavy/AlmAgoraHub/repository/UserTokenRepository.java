@@ -1,7 +1,7 @@
 package com.vojavy.AlmAgoraHub.repository;
 
-import com.vojavy.AlmAgoraHub.model.User;
-import com.vojavy.AlmAgoraHub.model.UserToken;
+import com.vojavy.AlmAgoraHub.model.user.User;
+import com.vojavy.AlmAgoraHub.model.user.UserToken;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

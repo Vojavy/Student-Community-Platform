@@ -1,8 +1,7 @@
 package com.vojavy.AlmAgoraHub.config;
 
-import com.vojavy.AlmAgoraHub.repository.UserTokenRepository;
-import com.vojavy.AlmAgoraHub.service.JwtService;
-import com.vojavy.AlmAgoraHub.service.UserTokenService;
+import com.vojavy.AlmAgoraHub.service.authentication.JwtService;
+import com.vojavy.AlmAgoraHub.service.authentication.UserTokenService;
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

@@ -50,13 +50,13 @@
 import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { getUserIdFromToken } from '@/utils/jwt/getUserIdFromToken'
-import createUserModel from '@/models/userModel'
+import createUserModel from '@/iam/models/userModel'
 import {
   fetchUserProfileIntent,
   updateUserIntent,
   updateUserDetailsIntent
-} from '@/intents/userIntents'
-import { handleUserIntent } from '@/actions/userActions'
+} from '@/iam/intents/userIntents'
+import { handleUserIntent } from '@/iam/actions/userActions'
 
 import UserSettingsSecurity from '@/components/settings/UserSettingsSecurity.vue'
 import UserSettingsContacts from '@/components/settings/UserSettingsContacts.vue'

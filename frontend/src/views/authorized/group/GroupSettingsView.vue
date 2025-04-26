@@ -40,10 +40,10 @@
       <div>
         <label class="block text-sm font-medium mb-1">{{ t('groups.minRoleForPosts') }}</label>
         <select v-model="minRoleForPosts" class="w-full border rounded px-3 py-2">
-          <option value="member">{{ t('roles.member') }}</option>
-          <option value="helper">{{ t('roles.helper') }}</option>
-          <option value="admin">{{ t('roles.admin') }}</option>
-          <option value="owner">{{ t('roles.owner') }}</option>
+          <option value="member">{{ t('groups.role.member') }}</option>
+          <option value="helper">{{ t('groups.role.helper') }}</option>
+          <option value="admin">{{ t('groups.role.admin') }}</option>
+          <option value="owner">{{ t('groups.role.owner') }}</option>
         </select>
       </div>
 
@@ -51,10 +51,10 @@
       <div>
         <label class="block text-sm font-medium mb-1">{{ t('groups.minRoleForEvents') }}</label>
         <select v-model="minRoleForEvents" class="w-full border rounded px-3 py-2">
-          <option value="member">{{ t('roles.member') }}</option>
-          <option value="helper">{{ t('roles.helper') }}</option>
-          <option value="admin">{{ t('roles.admin') }}</option>
-          <option value="owner">{{ t('roles.owner') }}</option>
+          <option value="member">{{ t('groups.role.member') }}</option>
+          <option value="helper">{{ t('groups.role.helper') }}</option>
+          <option value="admin">{{ t('groups.role.admin') }}</option>
+          <option value="owner">{{ t('groups.role.owner') }}</option>
         </select>
       </div>
 
@@ -84,12 +84,12 @@ import { ref, computed, onMounted } from 'vue'
 import { inject } from 'vue'
 import { useI18n } from 'vue-i18n'
 import checkRights from '@/utils/groups/checkRights'
-import { updateGroupSettingsIntent } from '@/intents/groupIntents'
-import { handleGroupIntent } from '@/actions/groupActions'
-import createGroupModel from '@/models/groupModel'
-import createDomainModel from '@/models/domainModel'
-import { fetchDomainsIntent } from '@/intents/domainIntents'
-import { handleDomainIntent } from '@/actions/domainActions'
+import { updateGroupSettingsIntent } from '@/iam/intents/groupIntents'
+import { handleGroupIntent } from '@/iam/actions/groupActions'
+import createGroupModel from '@/iam/models/group/groupModel.js'
+import createDomainModel from '@/iam/models/domainModel'
+import { fetchDomainsIntent } from '@/iam/intents/domainIntents'
+import { handleDomainIntent } from '@/iam/actions/domainActions'
 
 const { t } = useI18n()
 const coordinator = inject('coordinator')

@@ -2,56 +2,72 @@
   <div class="space-y-6">
     <h1 class="text-2xl font-semibold">{{ t('groups.members') }}</h1>
 
+
+    <div class="flex-1">
+      <label class="block text-sm font-medium mb-1">
+        {{ t('common.search') }}
+      </label>
+      <input
+          v-model="searchTerm"
+          @input="applyFilters"
+          type="text"
+          placeholder="Name..."
+          class="w-full border rounded px-3 py-2"
+      />
+    </div>
     <!-- Search & Filters -->
-    <div class="flex flex-col md:flex-row md:items-end md:space-x-4 space-y-4 md:space-y-0">
+    <div class="flex flex-col md:flex-row md:items-start md:space-x-4 space-y-4 md:space-y-0">
       <!-- Поиск по имени -->
-      <div class="flex-1">
-        <label class="block text-sm font-medium mb-1">{{ t('common.search') }}</label>
-        <input
-            v-model="searchTerm"
-            @input="applyFilters"
-            type="text"
-            placeholder="Введите имя..."
-            class="w-full border rounded px-3 py-2"
-        />
-      </div>
+
 
       <!-- Фильтр по статусам -->
       <div>
-        <label class="block text-sm font-medium mb-1">{{ t('groups.filterStatus') }}</label>
-        <select
-            v-model="selectedStatuses"
-            @change="applyFilters"
-            multiple
-            class="w-full border rounded px-3 py-2"
-        >
-          <option
+        <span class="block text-sm font-medium mb-1">
+          {{ t('groups.filterStatus') }}
+        </span>
+        <div class="flex flex-wrap gap-2">
+          <label
               v-for="statusOption in statusOptions"
               :key="statusOption"
-              :value="statusOption"
+              class="inline-flex items-center space-x-1"
           >
-            {{ t(`groups.status.${statusOption}`) }}
-          </option>
-        </select>
+            <input
+                type="checkbox"
+                :value="statusOption"
+                v-model="selectedStatuses"
+                @change="applyFilters"
+                class="form-checkbox h-4 w-4"
+            />
+            <span class="text-sm">
+              {{ t(`groups.status.${statusOption}`) }}
+            </span>
+          </label>
+        </div>
       </div>
 
       <!-- Фильтр по ролям -->
       <div>
-        <label class="block text-sm font-medium mb-1">{{ t('groups.filterRole') }}</label>
-        <select
-            v-model="selectedRoles"
-            @change="applyFilters"
-            multiple
-            class="w-full border rounded px-3 py-2"
-        >
-          <option
+        <span class="block text-sm font-medium mb-1">
+          {{ t('groups.filterRole') }}
+        </span>
+        <div class="flex flex-wrap gap-2">
+          <label
               v-for="roleOption in roleOptions"
               :key="roleOption"
-              :value="roleOption"
+              class="inline-flex items-center space-x-1"
           >
-            {{ t(`roles.${roleOption}`) }}
-          </option>
-        </select>
+            <input
+                type="checkbox"
+                :value="roleOption"
+                v-model="selectedRoles"
+                @change="applyFilters"
+                class="form-checkbox h-4 w-4"
+            />
+            <span class="text-sm">
+              {{ t(`groups.role.${roleOption}`) }}
+            </span>
+          </label>
+        </div>
       </div>
     </div>
 
@@ -63,7 +79,6 @@
           class="p-4 bg-secondary rounded flex flex-col md:flex-row md:items-center justify-between"
       >
         <div>
-          <!-- Кликабельное имя -->
           <button
               @click="navigateToUserProfile(member.user.id)"
               class="text-lg font-medium text-accent-primary hover:underline"
@@ -71,19 +86,18 @@
             {{ member.user.name }}
           </button>
           <div class="text-sm text-text/60">
-            {{ t('groups.status') }}:
+            {{ t('groups.status.status') }}:
             {{ t(`groups.status.${member.status}`) }},
-            {{ t('groups.role') }}:
-            {{ t(`roles.${member.role}`) }}
+            {{ t('groups.role.role') }}:
+            {{ t(`groups.role.${member.role}`) }}
           </div>
         </div>
 
-        <!-- Кнопки управления (не показываем для owner) -->
         <div
             v-if="canManage && member.role !== 'owner'"
             class="mt-4 md:mt-0 flex flex-wrap gap-2"
         >
-          <!-- Pending: принять / отклонить -->
+          <!-- Pending -->
           <template v-if="member.status === 'pending'">
             <button
                 @click="approveMember(member.user.id)"
@@ -99,7 +113,7 @@
             </button>
           </template>
 
-          <!-- Invited: отменить приглашение -->
+          <!-- Invited -->
           <template v-else-if="member.status === 'invited'">
             <button
                 @click="cancelInvitation(member.user.id)"
@@ -109,7 +123,7 @@
             </button>
           </template>
 
-          <!-- Approved: кик / бан / смена роли -->
+          <!-- Approved -->
           <template v-else-if="member.status === 'approved'">
             <button
                 @click="kickMember(member.user.id)"
@@ -133,9 +147,19 @@
                   :key="roleOption"
                   :value="roleOption"
               >
-                {{ t(`roles.${roleOption}`) }}
+                {{ t(`groups.role.${roleOption}`) }}
               </option>
             </select>
+          </template>
+
+          <!-- Banned -->
+          <template v-else-if="member.status === 'banned'">
+            <button
+                @click="unbanMember(member.user.id)"
+                class="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+              {{ t('groups.unban') }}
+            </button>
           </template>
         </div>
       </li>
@@ -144,77 +168,142 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
-import { inject } from 'vue'
+import { ref, computed, watch, onMounted, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
 import checkRights from '@/utils/groups/checkRights'
-// import {
-//   processJoinRequestIntent,
-//   removeMemberIntent,
-//   changeMemberRoleIntent,
-//   fetchMembersIntent
-// } from '@/intents/groupIntents'
-// import { handleGroupIntent } from '@/actions/groupActions'
+
+// Intents & Actions
+import {
+  fetchMembersIntent,
+  changeMemberRoleIntent,
+  banMemberIntent,
+  unbanMemberIntent,
+  kickMemberIntent,
+  apply_pendingJoinRequestsIntent,
+  decline_pendingJoinRequestsIntent
+} from '@/iam/intents/groupIntents.js'
+import { handleGroupIntent } from '@/iam/actions/groupActions.js'
+import createGroupModel from "@/iam/models/group/groupModel.js";
 
 const { t } = useI18n()
 
-// Данные из GroupWrapper
+// Из wrapper-а
 const group = inject('group')
-const members = inject('members')
-const userRole = inject('role')
 const coordinator = inject('coordinator')
+const userRole = inject('role')
 
-// Опции фильтрации
-const statusOptions = ['approved', 'pending', 'banned']
-const roleOptions = ['member', 'helper', 'admin', 'owner', 'invited']
+// Модель и общий диспетчер действий
+const model = createGroupModel()
+const actions = handleGroupIntent
 
-// Поиск и фильтры
+// локальные реактивы
+const members = ref([])
+const filteredMembers = ref([])
+
 const searchTerm = ref('')
 const selectedStatuses = ref([])
 const selectedRoles = ref([])
 
-// Отфильтрованный список
-const filteredMembers = ref([])
+const statusOptions = ['approved', 'pending', 'banned']
+const roleOptions = ['member', 'helper', 'admin', 'owner', 'invited']
 
-// Проверка прав
+// проверка прав менеджмента
 const canManage = computed(() =>
     checkRights(userRole.value, group.value.minRoleForEvents)
 )
 
-// Фильтрация
+// загрузка списка
+async function loadMembers() {
+  const data = await actions(
+      fetchMembersIntent(group.value.id, null),
+      { model, coordinator }
+  )
+  members.value = data
+  applyFilters()
+}
+
+// фильтрация
 function applyFilters() {
-  filteredMembers.value = members.value.filter(member => {
-    const matchesName = member.user.name
-        .toLowerCase()
-        .includes(searchTerm.value.trim().toLowerCase())
-    const matchesStatus =
-        selectedStatuses.value.length === 0 ||
-        selectedStatuses.value.includes(member.status)
-    const matchesRole =
-        selectedRoles.value.length === 0 ||
-        selectedRoles.value.includes(member.role)
-    return matchesName && matchesStatus && matchesRole
+  const term = searchTerm.value.trim().toLowerCase()
+  filteredMembers.value = members.value.filter(m => {
+    const name = m.user.name.toLowerCase()
+    const okName   = !term || name.includes(term)
+    const okStatus = selectedStatuses.value.length === 0
+        || selectedStatuses.value.includes(m.status)
+    const okRole   = selectedRoles.value.length === 0
+        || selectedRoles.value.includes(m.role)
+    return okName && okStatus && okRole
   })
 }
 
-// Инициализация и реактивное обновление
-applyFilters()
+// при монтировании подгружаем
+onMounted(loadMembers)
+
+// реагируем на изменения фильтров
 watch(
     [members, searchTerm, selectedStatuses, selectedRoles],
     applyFilters
 )
 
-// Навигация по пользователю
+// навигация
 function navigateToUserProfile(userId) {
   coordinator.navigateToUser(userId)
 }
 
-// Заглушки для обработчиков действий
-async function approveMember(userId) { /* ... */ }
-async function declineMember(userId) { /* ... */ }
-async function cancelInvitation(userId) { /* ... */ }
-async function kickMember(userId) { /* ... */ }
-async function unbanMember(userId) { /* ... */ }
-async function banMember(userId) { /* ... */ }
-async function changeRole(userId, newRole) { /* ... */ }
+// === обработчики действий ===
+async function approveMember(userId) {
+  await actions(
+      apply_pendingJoinRequestsIntent(group.value.id, userId),
+      { model, coordinator }
+  )
+  await loadMembers()
+}
+
+async function declineMember(userId) {
+  await actions(
+      decline_pendingJoinRequestsIntent(group.value.id, userId),
+      { model, coordinator }
+  )
+  await loadMembers()
+}
+
+async function cancelInvitation(userId) {
+  await actions(
+      cancelInvitationIntent(group.value.id, userId),
+      { model, coordinator }
+  )
+  await loadMembers()
+}
+
+async function kickMember(userId) {
+  await actions(
+      kickMemberIntent(group.value.id, userId),
+      { model, coordinator }
+  )
+  await loadMembers()
+}
+
+async function banMember(userId) {
+  await actions(
+      banMemberIntent(group.value.id, userId),
+      { model, coordinator }
+  )
+  await loadMembers()
+}
+
+async function unbanMember(userId) {
+  await actions(
+      unbanMemberIntent(group.value.id, userId),
+      { model, coordinator }
+  )
+  await loadMembers()
+}
+
+async function changeRole(userId, newRole) {
+  await actions(
+      changeMemberRoleIntent(group.value.id, userId, newRole),
+      { model, coordinator }
+  )
+  await loadMembers()
+}
 </script>

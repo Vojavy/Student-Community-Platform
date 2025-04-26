@@ -40,9 +40,9 @@ import { useI18n } from 'vue-i18n'
 import { useIsMobile } from '@/utils/device/useIsMobile'
 
 import BurgerComponent from '@/components/mobile/BurgerComponent.vue'
-import { changeLocaleIntent } from '@/intents/localeIntents.js'
-import { handleLocaleIntent } from '@/actions/localeActions.js'
-import createLocaleModel from '@/models/localeModel.js'
+import { changeLocaleIntent } from '@/iam/intents/localeIntents.js'
+import { handleLocaleIntent } from '@/iam/actions/localeActions.js'
+import createLocaleModel from '@/iam/models/localeModel.js'
 import { inject } from "vue";
 
 

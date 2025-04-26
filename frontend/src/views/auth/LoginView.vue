@@ -31,9 +31,9 @@
 <script setup>
 import { ref, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { loginIntent } from '@/intents/authIntents'
-import { handleAuthIntent } from '@/actions/authActions'
-import createAuthModel from '@/models/authModel'
+import { loginIntent } from '@/iam/intents/authIntents'
+import { handleAuthIntent } from '@/iam/actions/authActions'
+import createAuthModel from '@/iam/models/authModel'
 
 const { t } = useI18n()
 const coordinator = inject('coordinator')

@@ -1,7 +1,7 @@
 package com.vojavy.AlmAgoraHub.config;
 
 import com.vojavy.AlmAgoraHub.repository.RoleRepository;
-import com.vojavy.AlmAgoraHub.model.Role;
+import com.vojavy.AlmAgoraHub.model.user.Role;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;

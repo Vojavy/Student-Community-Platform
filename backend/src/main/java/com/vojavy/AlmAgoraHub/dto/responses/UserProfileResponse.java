@@ -1,6 +1,6 @@
 package com.vojavy.AlmAgoraHub.dto.responses;
 
-import com.vojavy.AlmAgoraHub.model.UserDetailsExtended;
+import com.vojavy.AlmAgoraHub.model.user.UserDetailsExtended;
 
 public class UserProfileResponse {
     private Long userId;

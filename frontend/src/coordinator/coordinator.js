@@ -71,6 +71,15 @@ export default function createCoordinator(router) {
         navigateToGroupSettings(groupId) {
             router.push(`/app/groups/${groupId}/settings`);
         },
+        navigateToGroupPosts(groupId) {
+            router.push(`/app/groups/${groupId}/posts`);
+        },
+        navigateToGroupNewPost(groupId) {
+            router.push(`/app/groups/${groupId}/post-edit`)
+        },
+        navigateToGroupEditPost(groupId, postId) {
+            router.push(`/app/groups/${groupId}/post-edit/${postId}`)
+        },
         refreshPage() {
             router.go(0);
         }

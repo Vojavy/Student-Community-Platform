@@ -37,8 +37,8 @@
 import {ref, onMounted, inject} from 'vue'
 import { useI18n } from 'vue-i18n'
 
-import { changeLocaleIntent } from '@/intents/localeIntents.js'
-import { handleLocaleIntent } from '@/actions/localeActions.js'
+import { changeLocaleIntent } from '@/iam/intents/localeIntents.js'
+import { handleLocaleIntent } from '@/iam/actions/localeActions.js'
 import BurgerComponent from '@/components/mobile/BurgerComponent.vue'
 import BottomNavbarComponent from '@/components/mobile/BottomNavbarComponent.vue'
 import { useIsMobile } from '@/utils/device/useIsMobile'
@@ -46,11 +46,11 @@ import { useIsMobile } from '@/utils/device/useIsMobile'
 import NavBarComponent from '@/components/desktop/NavBarComponent.vue'
 import ContainerCentralComponent from '@/components/desktop/ContainerCentralComponent.vue'
 
-import createAuthModel from "@/models/authModel.js";
-import createLocaleModel from '@/models/localeModel.js'
+import createAuthModel from "@/iam/models/authModel.js";
+import createLocaleModel from '@/iam/models/localeModel.js'
 import apiClient from "@/utils/api/apiClient.js"
-import {logoutIntent} from "@/intents/authIntents.js";
-import {handleAuthIntent} from "@/actions/authActions.js";
+import {logoutIntent} from "@/iam/intents/authIntents.js";
+import {handleAuthIntent} from "@/iam/actions/authActions.js";
 
 
 const { locale,t } = useI18n()

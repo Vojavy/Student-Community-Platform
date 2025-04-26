@@ -5,7 +5,8 @@ export default {
         add: 'Přidat',
         change: 'Změnit',
         delete: 'Smazat',
-        loading: 'Loading...'
+        loading: 'Loading...',
+        search: 'Hledat'
     },
     verification: {
         title: 'Ověření e‑mailu',
@@ -194,10 +195,17 @@ export default {
     },
     groups: {
         title: 'Skupiny',
-        tabs: {
-            my: 'Mé skupiny',
-            browse: 'Procházet'
-        },
+        domain: 'Doména',
+        name: 'Název',
+        description: 'Popis',
+        topics: 'Témata',
+
+        overview: 'Přehled',
+        calendar: 'Kalendář',
+        settings: 'Nastavení',
+        posts: 'Příspěvky',
+
+        tabs: { my: 'Mé skupiny', browse: 'Procházet' },
         searchPlaceholder: 'Hledat podle názvu nebo tématu…',
         noMyGroups: 'Zatím nemáte žádné skupiny',
         noBrowseResults: 'Nebyly nalezeny žádné výsledky',
@@ -213,16 +221,52 @@ export default {
             topics: 'Témata',
             apply: 'Použít'
         },
-
-        pagination: {
-            prev: '← Předch.',
-            next: 'Další →',
-            size: 'Na stránce'
-        },
+        pagination: { prev: '← Předch.', next: 'Další →', size: 'Na stránce' },
 
         domainUnknown: 'Bez domény',
         public: 'Veřejná',
         private: 'Soukromá',
+        createdAt: 'Vytvořeno',
+        owner: 'Vlastník',
+        admins: 'Administrátoři',
+        helpers: 'Pomocníci',
+
+        deleteGroup: 'Smazat skupinu',
+        leave: 'Opustit',
+        join: 'Připojit se',
+
+        members: 'Členové',
+        filterStatus: 'Stav',
+        filterRole: 'Role',
+        approve: 'Schválit',
+        decline: 'Odmítnout',
+        cancelInvitation: 'Zrušit pozvání',
+        kick: 'Vyloučit',
+        ban: 'Zabanovat',
+        unban: 'Odblokovat',
+
+        role: {
+            role: 'Role',
+            member: 'Člen',
+            helper: 'Pomocník',
+            admin: 'Administrátor',
+            owner: 'Vlastník',
+            invited: 'Pozván',
+        },
+        status: {
+            status: 'Stav',
+            approved: 'Člen',
+            pending: 'Čeká na schválení',
+            banned: 'Zabanován'
+        },
+
+        pending: 'Žádost o členství odeslána',
+        banned: 'Zabanováno',
+        notFound: 'Skupina nenalezena',
+
+        minRoleForPosts: 'Min. role pro příspěvky',
+        minRoleForEvents: 'Min. role pro události',
+        noDomain: 'Bez domény',
 
         createTitle: 'Vytvořit novou skupinu',
         form: {
@@ -231,8 +275,31 @@ export default {
             name: 'Název skupiny',
             description: 'Popis',
             topics: 'Témata (oddělená čárkou)',
-            createButton: 'Vytvořit skupину',
+            createButton: 'Vytvořit skupinu',
             public: 'Veřejná'
         }
-    }
+    },
+    posts: {
+        newPost:        'Nový příspěvek',
+        title:          'Nadpis',
+        titlePlaceholder:'Zadejte nadpis…',
+        topics:         'Témata',
+        topicsPlaceholder:'Témata oddělená čárkou…',
+        bold:            '🅱️ Tučné',
+        italic:          '𝘐 Kurzíva',
+        underline:       '〰️ Podtržené',
+        strikethrough:   '❌ Přeškrtnuté',
+        h1:              '🔢 Nadpis 1',
+        h2:              '🔢 Nadpis 2',
+        insertLink:      '🔗 Vložit odkaz',
+        linkPrompt:      'URL adresa',
+        insertImage:     '🖼️ Vložit obrázek',
+        submit:         'Publikovat',
+        expand:         'Rozbalit',
+        hide:           'Skrýt',
+        by:             'od',
+        on:             'dne',
+        edit:           'Upravit',
+        delete:         'Smazat'
+    },
 }

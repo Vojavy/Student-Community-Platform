@@ -1,7 +1,7 @@
 package com.vojavy.AlmAgoraHub.repository;
 
-import com.vojavy.AlmAgoraHub.model.UserFriend;
-import com.vojavy.AlmAgoraHub.model.User;
+import com.vojavy.AlmAgoraHub.model.user.UserFriend;
+import com.vojavy.AlmAgoraHub.model.user.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

@@ -111,9 +111,9 @@
 import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { inject } from 'vue'
-import { loginIntent, registerIntent, logoutIntent } from '@/intents/authIntents.js'
-import { handleAuthIntent } from '@/actions/authActions.js'
-import createAuthModel from '@/models/authModel.js'
+import { loginIntent, registerIntent, logoutIntent } from '@/iam/intents/authIntents.js'
+import { handleAuthIntent } from '@/iam/actions/authActions.js'
+import createAuthModel from '@/iam/models/authModel.js'
 
 const { t } = useI18n()
 const coordinator = inject('coordinator')

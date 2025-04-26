@@ -1,8 +1,8 @@
 // apiClient.js
 import axios from 'axios'
-import { checkTokenIntent } from '@/intents/authIntents'
-import { handleAuthIntent } from '@/actions/authActions'
-import createAuthModel from '@/models/authModel'
+import { checkTokenIntent } from '@/iam/intents/authIntents'
+import { handleAuthIntent } from '@/iam/actions/authActions'
+import createAuthModel from '@/iam/models/authModel'
 import router from '@/coordinator/router'
 import createCoordinator from '@/coordinator/coordinator'
 

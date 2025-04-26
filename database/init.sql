@@ -164,24 +164,6 @@ alter table groups
 create index idx_groups_domain_id
     on groups (domain_id);
 
-create table group_posts
-(
-    id         serial
-        primary key,
-    group_id   integer not null
-        references groups
-            on delete cascade,
-    user_id    integer not null
-        references users
-            on delete cascade,
-    content    jsonb   not null,
-    created_at timestamp default now(),
-    updated_at timestamp
-);
-
-alter table group_posts
-    owner to admin;
-
 create table group_announcements
 (
     id         serial
@@ -268,15 +250,18 @@ alter table sale_items
 
 create table forum_posts
 (
-    id         serial
+    id             serial
         primary key,
-    forum_id   integer not null,
-    author_id  integer not null
+    forum_id       integer not null,
+    author_id      integer not null
         references users
             on delete cascade,
-    content    jsonb   not null,
-    created_at timestamp default now(),
-    updated_at timestamp
+    content        text    not null,
+    created_at     timestamp default now(),
+    updated_at     timestamp,
+    parent_post_id integer
+                           references forum_posts
+                               on delete set null
 );
 
 alter table forum_posts
@@ -287,7 +272,7 @@ create table forums
     id                   serial
         primary key,
     name                 varchar(256)                                    not null,
-    topic                varchar(255),
+    topics               jsonb       default '[]'::jsonb,
     description          text,
     created_by           integer                                         not null
         references users
@@ -301,7 +286,8 @@ create table forums
             check ((status)::text = ANY
                    (ARRAY [('active'::character varying)::text, ('closed'::character varying)::text])),
     is_pinned            boolean     default false,
-    is_public            boolean     default true
+    is_public            boolean     default true,
+    is_closed            boolean     default false                       not null
 );
 
 alter table forums
@@ -472,6 +458,43 @@ create table user_friends
 
 alter table user_friends
     owner to admin;
+
+create table group_posts
+(
+    id         serial
+        primary key,
+    group_id   integer                       not null
+        references groups
+            on delete cascade,
+    user_id    integer                       not null
+        references users
+            on delete cascade,
+    title      varchar(255)                  not null,
+    topics     jsonb     default '[]'::jsonb not null,
+    content    text                          not null,
+    created_at timestamp default now(),
+    updated_at timestamp
+);
+
+alter table group_posts
+    owner to admin;
+
+create table forum_allowed_roles
+(
+    forum_id integer not null
+        references forums
+            on delete cascade,
+    role_id  bigint  not null
+        references roles
+            on delete cascade,
+    primary key (forum_id, role_id)
+);
+
+alter table forum_allowed_roles
+    owner to admin;
+
+create index idx_forum_allowed_roles_role_id
+    on forum_allowed_roles (role_id);
 
 create view user_profile_view
             (user_id, email, active, domain, admin_email, os_cislo, stpr_idno, user_name, jmeno, prijmeni, titul_pred,

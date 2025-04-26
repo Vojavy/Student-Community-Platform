@@ -2,13 +2,11 @@ package com.vojavy.AlmAgoraHub.controller;
 
 import com.vojavy.AlmAgoraHub.dto.responses.FriendResponse;
 import com.vojavy.AlmAgoraHub.dto.responses.UserProfileResponse;
-import com.vojavy.AlmAgoraHub.model.User;
-import com.vojavy.AlmAgoraHub.model.UserProfileView;
-import com.vojavy.AlmAgoraHub.repository.UserProfileViewRepository;
-import com.vojavy.AlmAgoraHub.service.JwtService;
-import com.vojavy.AlmAgoraHub.service.UserFriendService;
-import com.vojavy.AlmAgoraHub.service.UserProfileService;
-import com.vojavy.AlmAgoraHub.service.UserService;
+import com.vojavy.AlmAgoraHub.model.user.User;
+import com.vojavy.AlmAgoraHub.service.authentication.JwtService;
+import com.vojavy.AlmAgoraHub.service.User.UserFriendService;
+import com.vojavy.AlmAgoraHub.service.User.UserProfileService;
+import com.vojavy.AlmAgoraHub.service.User.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 

@@ -1,6 +1,6 @@
 package com.vojavy.AlmAgoraHub.repository;
 
-import com.vojavy.AlmAgoraHub.model.Role;
+import com.vojavy.AlmAgoraHub.model.user.Role;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

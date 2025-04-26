@@ -7,9 +7,9 @@
 <script setup>
 import { onMounted, inject } from 'vue'
 
-import createAuthModel from '@/models/authModel'
-import { checkTokenIntent } from '@/intents/authIntents'
-import { handleAuthIntent } from '@/actions/authActions'
+import createAuthModel from '@/iam/models/authModel'
+import { checkTokenIntent } from '@/iam/intents/authIntents'
+import { handleAuthIntent } from '@/iam/actions/authActions'
 
 const coordinator = inject('coordinator')
 const model = createAuthModel()

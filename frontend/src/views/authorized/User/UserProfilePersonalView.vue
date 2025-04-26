@@ -142,12 +142,12 @@
 <script setup>
 import { ref, onMounted, computed, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
-import createUserModel from '@/models/userModel'
-import createFriendModel from '@/models/friendModel'
-import { fetchUserProfileIntent } from '@/intents/userIntents'
-import { fetchMyFriendsIntent, removeFriendIntent } from '@/intents/friendIntents'
-import { handleUserIntent } from '@/actions/userActions'
-import { handleFriendIntent } from '@/actions/friendActions'
+import createUserModel from '@/iam/models/userModel'
+import createFriendModel from '@/iam/models/friendModel'
+import { fetchUserProfileIntent } from '@/iam/intents/userIntents'
+import { fetchMyFriendsIntent, removeFriendIntent } from '@/iam/intents/friendIntents'
+import { handleUserIntent } from '@/iam/actions/userActions'
+import { handleFriendIntent } from '@/iam/actions/friendActions'
 import { getUserIdFromToken } from '@/utils/jwt/getUserIdFromToken'
 
 const { t } = useI18n()

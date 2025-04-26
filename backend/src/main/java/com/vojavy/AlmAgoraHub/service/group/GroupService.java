@@ -1,24 +1,22 @@
 package com.vojavy.AlmAgoraHub.service.group;
 
 import com.vojavy.AlmAgoraHub.dto.requests.CreateGroupRequest;
+import com.vojavy.AlmAgoraHub.dto.requests.GroupPostRequest;
 import com.vojavy.AlmAgoraHub.dto.requests.GroupSettingsRequest;
-import com.vojavy.AlmAgoraHub.dto.responses.GroupDetailResponse;
-import com.vojavy.AlmAgoraHub.dto.responses.GroupMembershipResponse;
-import com.vojavy.AlmAgoraHub.dto.responses.GroupResponse;
-import com.vojavy.AlmAgoraHub.dto.responses.UserSummaryResponse;
+import com.vojavy.AlmAgoraHub.dto.responses.*;
 import com.vojavy.AlmAgoraHub.model.UniversityDomain;
-import com.vojavy.AlmAgoraHub.model.User;
-import com.vojavy.AlmAgoraHub.model.group.Group;
-import com.vojavy.AlmAgoraHub.model.group.GroupMembership;
+import com.vojavy.AlmAgoraHub.model.group.*;
+import com.vojavy.AlmAgoraHub.model.user.User;
 import com.vojavy.AlmAgoraHub.repository.group.GroupRepository;
 import com.vojavy.AlmAgoraHub.service.UniversityDomainService;
-import com.vojavy.AlmAgoraHub.service.UserISDataService;
-import com.vojavy.AlmAgoraHub.service.UserService;
+import com.vojavy.AlmAgoraHub.service.User.UserISDataService;
+import com.vojavy.AlmAgoraHub.service.User.UserService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -27,197 +25,257 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 public class GroupService {
 
-    private final GroupRepository           groupRepository;
-    private final GroupMembershipService    membershipService;
-    private final UniversityDomainService   domainService;
-    private final UserService               userService;
-    private final UserISDataService         userISDataService;
+    private final GroupRepository         groupRepository;
+    private final GroupMembershipService  membershipService;
+    private final UniversityDomainService domainService;
+    private final UserService             userService;
+    private final UserISDataService       userISDataService;
+    private final GroupPostService        groupPostService;
 
     public GroupService(
             GroupRepository groupRepository,
             GroupMembershipService membershipService,
             UniversityDomainService domainService,
             UserService userService,
-            UserISDataService userISDataService
+            UserISDataService userISDataService,
+            GroupPostService groupPostService
     ) {
-        this.groupRepository  = groupRepository;
+        this.groupRepository   = groupRepository;
         this.membershipService = membershipService;
-        this.domainService    = domainService;
-        this.userService      = userService;
+        this.domainService     = domainService;
+        this.userService       = userService;
         this.userISDataService = userISDataService;
+        this.groupPostService  = groupPostService;
     }
 
-    public List<Group> getAllGroups() {
-        return groupRepository.findAll();
-    }
+    // ----------------------------
+    // 1) Group driving
+    // ----------------------------
 
-    public Optional<Group> getGroupById(Long groupId) {
-        return groupRepository.findById(Math.toIntExact(groupId));
-    }
+    public Group createGroup(CreateGroupRequest req, Long creatorId) {
+        User creator   = findUserOrThrow(creatorId);
+        UniversityDomain domain = findDomainOrNull(req.getDomain());
 
-    public Group createGroup(CreateGroupRequest request, Long creatorUserId) {
-        User creator = findUserOrThrow(creatorUserId);
-        UniversityDomain domain = findDomainOrNull(request.getDomain());
+        Group g = new Group();
+        g.setName(req.getName());
+        g.setDescription(req.getDescription());
+        g.setTopics(req.getTopics());
+        g.setCreatedAt(Instant.now());
+        g.setPublic(req.isPublic());
+        g.setMinRoleForPosts(req.getMinRoleForPosts());
+        g.setMinRoleForEvents(req.getMinRoleForEvents());
+        g.setDomain(domain);
 
-        Group group = new Group();
-        group.setName(request.getName());
-        group.setDescription(request.getDescription());
-        group.setTopics(request.getTopics());
-        group.setCreatedAt(Instant.now());
-        group.setPublic(request.isPublic());
-        group.setMinRoleForPosts(request.getMinRoleForPosts());
-        group.setMinRoleForEvents(request.getMinRoleForEvents());
-        group.setDomain(domain);
-
-        Group saved = groupRepository.save(group);
-        // сразу добавляем владельца
+        Group saved = groupRepository.save(g);
         membershipService.saveMembership(
                 new GroupMembership(creator, saved, "owner", "approved", Instant.now())
         );
         return saved;
     }
 
-    public GroupMembershipResponse requestToJoinGroup(Long groupId, Long userId) {
-        GroupMembership groupMembership = membershipService.joinGroup(groupId, userId);
-        return new GroupMembershipResponse(
-                groupMembership.getId(),
-                toUserSummary(groupMembership.getUser()),
-                groupMembership.getRole(),
-                groupMembership.getStatus(),
-                groupMembership.getJoinedAt()
-        );
+    public void deleteGroup(Long actorId, Long groupId) {
+        Group group = findGroupOrThrow(groupId);
+        validatePermission(actorId, group, "owner");
+        groupRepository.deleteById(Math.toIntExact(groupId));
     }
 
-    public void handleMembershipRequest(
-            Long managerUserId,
-            Long groupId,
-            Long targetUserId,
-            boolean approve
-    ) {
-        Group group = findGroupOrThrow(groupId);
-        validateGroupPermission(managerUserId, group, group.getMinRoleForEvents());
-        membershipService.handleJoinRequest(groupId, managerUserId, targetUserId, approve);
+    // -----------------------------------
+    // 2) Join / Leave / Invite
+    // -----------------------------------
+
+    public GroupMembershipResponse requestToJoinGroup(Long groupId, Long userId) {
+        GroupMembership m = membershipService.joinGroup(groupId, userId);
+        return toDto(m);
     }
 
     public GroupMembershipResponse requestToLeaveGroup(Long groupId, Long userId) {
         membershipService.getMembershipInfo(groupId, userId)
                 .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.BAD_REQUEST,
-                        "User is not a member of this group"));
-
-        GroupMembership deleted = membershipService.leaveGroup(groupId, userId);
-
-        return new GroupMembershipResponse(
-                deleted.getId(),
-                toUserSummary(deleted.getUser()),
-                deleted.getRole(),
-                deleted.getStatus(),
-                deleted.getJoinedAt()
-        );
+                        HttpStatus.BAD_REQUEST, "Not a member"));
+        GroupMembership m = membershipService.leaveGroup(groupId, userId);
+        return toDto(m);
     }
 
-    public void removeMember(
-            Long managerUserId,
-            Long groupId,
-            Long targetUserId
+    public GroupMembershipResponse inviteUserToGroup(
+            Long inviterId, Long groupId, Long targetUserId, String role
     ) {
         Group group = findGroupOrThrow(groupId);
-        validateGroupPermission(managerUserId, group, group.getMinRoleForEvents());
-        membershipService.removeUserFromGroup(groupId, managerUserId, targetUserId);
+        validatePermission(inviterId, group, "admin");
+        GroupMembership m = membershipService.inviteUserToGroup(groupId, inviterId, targetUserId, role);
+        return toDto(m);
     }
+
+    // ----------------------------------
+    // 3) Members driving (admin)
+    // ----------------------------------
 
     public GroupMembershipResponse changeUserRole(
-            Long actingUserId,
-            Long groupId,
-            Long targetUserId,
-            String newRole
+            Long actorId, Long groupId, Long targetUserId, String newRole
     ) {
         Group group = findGroupOrThrow(groupId);
-
-        validateGroupPermission(actingUserId, group, group.getMinRoleForEvents());
-
-        GroupMembership updated = membershipService.changeUserRole(
-                groupId,
-                targetUserId,
-                newRole
-        );
-
-        return new GroupMembershipResponse(
-                updated.getId(),
-                toUserSummary(updated.getUser()),
-                updated.getRole(),
-                updated.getStatus(),
-                updated.getJoinedAt()
-        );
+        validatePermission(actorId, group, group.getMinRoleForEvents());
+        GroupMembership m = membershipService.changeUserRole(groupId, targetUserId, newRole);
+        return toDto(m);
     }
 
-    public Page<GroupResponse> browseGroups(
-            String name,
-            Long domainId,
-            Boolean isPublic,
-            List<String> topics,
-            int page,
-            int size
+    public GroupMembershipResponse handleJoinRequest(
+            Long managerId, Long groupId, Long targetUserId, boolean approve
     ) {
-        String[] topicsArray = (topics == null || topics.isEmpty())
+        Group group = findGroupOrThrow(groupId);
+        validatePermission(managerId, group, group.getMinRoleForEvents());
+        GroupMembership m = membershipService.handleJoinRequest(groupId, managerId, targetUserId, approve);
+        return toDto(m);
+    }
+
+    public void removeMember(Long managerId, Long groupId, Long targetUserId) {
+        Group group = findGroupOrThrow(groupId);
+        validatePermission(managerId, group, group.getMinRoleForEvents());
+        membershipService.removeUserFromGroup(groupId, managerId, targetUserId);
+    }
+
+    public void banMember(Long actorId, Long groupId, Long targetUserId) {
+        Group group = findGroupOrThrow(groupId);
+        validatePermission(actorId, group, group.getMinRoleForEvents());
+        membershipService.banMember(groupId, targetUserId);
+    }
+
+    public void unbanMember(Long actorId, Long groupId, Long targetUserId) {
+        Group group = findGroupOrThrow(groupId);
+        validatePermission(actorId, group, group.getMinRoleForEvents());
+        membershipService.unbanMember(groupId, targetUserId);
+    }
+
+    // ------------------------------------------------
+    // 4) Get: memberships, user groups, user group status
+    // ------------------------------------------------
+
+    public List<GroupMembershipResponse> getGroupMembers(
+            Long groupId, Long currentUserId, String status
+    ) {
+        Group group = findGroupOrThrow(groupId);
+        if (!group.isPublic()) {
+            membershipService.getMembershipInfo(groupId, currentUserId)
+                    .filter(m -> "approved".equals(m.getStatus()))
+                    .orElseThrow(() -> new ResponseStatusException(
+                            HttpStatus.FORBIDDEN, "Private group"));
+        }
+        List<GroupMembership> raw = (status == null)
+                ? membershipService.getMembershipsForGroup(groupId)
+                : membershipService.getMembershipsForGroupByStatus(groupId, status);
+        return raw.stream().map(this::toDto).toList();
+    }
+
+    public Page<GroupResponse> getUserGroups(Long userId, int page, int size) {
+        return membershipService.getUserGroups(userId, page, size);
+    }
+
+    public MembershipStatusResponse getMembershipStatus(
+            Long actorId, Long targetUserId, Long groupId
+    ) {
+        // actorId needed for Verification
+        return membershipService.getMembershipStatus(groupId, targetUserId);
+    }
+
+    // ----------------------------
+    // 5) Update group
+    // ----------------------------
+
+    public Group updateGroupSettings(
+            Long groupId, Long adminId, GroupSettingsRequest req
+    ) {
+        Group group = findGroupOrThrow(groupId);
+        validatePermission(adminId, group, "admin");
+
+        boolean wasPublic = group.isPublic();
+        group.setName(req.getName());
+        group.setDescription(req.getDescription());
+        group.setPublic(req.isPublic());
+        group.setMinRoleForPosts(req.getMinRoleForPosts());
+        group.setMinRoleForEvents(req.getMinRoleForEvents());
+        group.setTopics(req.getTopics());
+        group.setDomain(findDomainOrNull(req.getDomain()));
+
+        Group saved = groupRepository.save(group);
+        if (!wasPublic && saved.isPublic()) {
+            membershipService.approvePendingOnPublic(groupId);
+        }
+        return saved;
+    }
+
+    // ----------------------------
+    // 6) Browsing & details
+    // ----------------------------
+
+    public Page<GroupResponse> browseGroups(
+            String name, Long domainId, Boolean isPublic, List<String> topics, int page, int size
+    ) {
+        String[] tarr = (topics == null || topics.isEmpty())
                 ? null
                 : topics.toArray(String[]::new);
-
-        Pageable pageable = PageRequest.of(page, size);
-        List<Group> raw = groupRepository.findByFilters(
-                name, domainId, isPublic, topicsArray
-        );
-
-        int start = (int) Math.min(pageable.getOffset(), raw.size());
-        int end   = Math.min(start + pageable.getPageSize(), raw.size());
-
-        List<GroupResponse> content = raw.subList(start, end)
+        Pageable p = PageRequest.of(page, size);
+        List<Group> all = groupRepository.findByFilters(name, domainId, isPublic, tarr);
+        int start = (int)Math.min(p.getOffset(), all.size());
+        int end   = Math.min(start + p.getPageSize(), all.size());
+        List<GroupResponse> content = all.subList(start, end)
                 .stream()
                 .map(GroupResponse::fromEntity)
                 .toList();
-
-        return new PageImpl<>(content, pageable, raw.size());
+        return new PageImpl<>(content, p, all.size());
     }
 
-    public GroupDetailResponse getGroupDetails(Long groupId, Long currentUserId) {
+    public ResponseEntity<GroupDetailResponse> getGroupDetails(
+            Long groupId,
+            Long currentUserId
+    ) {
         Group group = findGroupOrThrow(groupId);
-        Optional<GroupMembership> membershipOpt =
+        Optional<GroupMembership> meOpt =
                 membershipService.getMembershipInfo(groupId, currentUserId);
 
-        if (group.isPublic()) {
-            if (membershipOpt.filter(m -> "banned".equals(m.getStatus())).isPresent()) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN,
-                        "Banned users can't see public groups");
-            }
-        } else {
-            if (membershipOpt.filter(m -> !"approved".equals(m.getStatus())).isPresent()
-                    || membershipOpt.isEmpty()
-            ) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN,
-                        "Only approved members can see private groups");
-            }
-        }
+        boolean isPrivateNonMember = !group.isPublic() &&
+                (meOpt.isEmpty() || !"approved".equals(meOpt.get().getStatus()));
+        boolean isBanned = meOpt.filter(m -> "banned".equals(m.getStatus())).isPresent();
 
-        List<GroupMembership> allApproved = membershipService
-                .getMembershipsForGroup(groupId).stream()
+        List<GroupMembership> approvedAll = membershipService.getMembershipsForGroup(groupId)
+                .stream()
                 .filter(m -> "approved".equals(m.getStatus()))
                 .toList();
 
-        UserSummaryResponse owner = findByRole(allApproved, "owner");
-        List<UserSummaryResponse> admins  = findAllByRole(allApproved, "admin");
-        List<UserSummaryResponse> helpers = findAllByRole(allApproved, "helper");
-        List<UserSummaryResponse> members = allApproved.stream()
-                .filter(m -> List.of("owner","admin","helper").contains(m.getRole()) == false)
+        UserSummaryResponse owner  = findByRole(approvedAll, "owner");
+        List<UserSummaryResponse> admins = findAllByRole(approvedAll, "admin");
+
+        if (isPrivateNonMember || isBanned) {
+            GroupDetailResponse limited = new GroupDetailResponse(
+                    group.getId(),
+                    group.getName(),
+                    /*Description=*/null,
+                    Collections.singletonList(group.getTopics()),
+                    group.isPublic(),
+                    /*minRoleForPosts=*/null,
+                    /*minRoleForEvents=*/null,
+                    group.getDomain(),
+                    group.getCreatedAt(),
+                    owner,
+                    admins,
+                    /*helpers=*/Collections.emptyList(),
+                    /*members=*/Collections.emptyList()
+            );
+            return ResponseEntity
+                    .status(HttpStatus.FORBIDDEN)
+                    .body(limited);
+        }
+
+        List<UserSummaryResponse> helpers = findAllByRole(approvedAll, "helper");
+        List<UserSummaryResponse> members = approvedAll.stream()
+                .filter(m -> !List.of("owner", "admin", "helper", "invited").contains(m.getRole()))
                 .sorted(Comparator.comparing(GroupMembership::getJoinedAt).reversed())
                 .map(m -> toUserSummary(m.getUser()))
                 .toList();
 
-        return new GroupDetailResponse(
+        GroupDetailResponse full = new GroupDetailResponse(
                 group.getId(),
                 group.getName(),
                 group.getDescription(),
@@ -232,119 +290,154 @@ public class GroupService {
                 helpers,
                 members
         );
+        return ResponseEntity.ok(full);
     }
 
-    public List<GroupMembershipResponse> getGroupMembers(
+    // ----------------------------
+    // 6) Posts
+    // ----------------------------
+
+    public Page<GroupPost> getPostsForGroup(
             Long groupId,
-            Long currentUserId,
-            String status
+            Long userId,
+            int page,
+            int size,
+            String search
     ) {
-        Group group = findGroupOrThrow(groupId);
+        Group g = findGroupOrThrow(groupId);
+        validateGroupVisibleOrMember(userId, g);
+        validatePermission(userId, g, g.getMinRoleForPosts());
+        return groupPostService.getPostsForGroup(g, page, size, search);
+    }
 
-        if (!group.isPublic()) {
-            membershipService.getMembershipInfo(groupId, currentUserId)
-                    .filter(m -> "approved".equals(m.getStatus()))
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN));
+    public GroupPost getPost(
+            Long groupId, Long postId, Long userId
+    ) {
+        Group g = findGroupOrThrow(groupId);
+        validateGroupVisibleOrMember(userId, g);
+        return groupPostService.getPost(g, postId);
+    }
+
+    public GroupPost createPost(
+            Long groupId, Long userId, GroupPostRequest req
+    ) {
+        Group g = findGroupOrThrow(groupId);
+        validateGroupVisibleOrMember(userId, g);
+        validatePermission(userId, g, g.getMinRoleForPosts());
+        User u = findUserOrThrow(userId);
+        return groupPostService.createPost(g, u, req);
+    }
+
+    public GroupPost updatePost(
+            Long groupId, Long postId, Long userId, GroupPostRequest req
+    ) {
+        Group g = findGroupOrThrow(groupId);
+        validateGroupVisibleOrMember(userId, g);
+        GroupPost existing = groupPostService.getPost(g, postId);
+        // only author or event-level:
+        if (! existing.getUser().getId().equals(userId)) {
+            validatePermission(userId, g, g.getMinRoleForEvents());
         }
+        return groupPostService.updatePost(existing, req);
+    }
 
-        List<GroupMembership> raw = status == null
-                ? membershipService.getMembershipsForGroup(groupId)
-                : membershipService.getMembershipsForGroupByStatus(groupId, status);
+    public void deletePost(
+            Long groupId, Long postId, Long userId
+    ) {
+        Group g = findGroupOrThrow(groupId);
+        validateGroupVisibleOrMember(userId, g);
+        GroupPost existing = groupPostService.getPost(g, postId);
+        if (! existing.getUser().getId().equals(userId)) {
+            validatePermission(userId, g, g.getMinRoleForEvents());
+        }
+        groupPostService.deletePost(postId);
+    }
 
-        return raw.stream()
-                .map(m -> new GroupMembershipResponse(
-                        m.getId(),
-                        toUserSummary(m.getUser()),
-                        m.getRole(),
-                        m.getStatus(),
-                        m.getJoinedAt()
+
+    public UserSummaryResponse toUserSummary(User u) {
+        return userISDataService.getByUserId(u.getId())
+                .map(d -> new UserSummaryResponse(
+                        u.getId(),
+                        u.getUsername(),
+                        d.getJmeno() + " " + d.getPrijmeni()
                 ))
-                .toList();
+                .orElseGet(() -> new UserSummaryResponse(
+                        u.getId(),
+                        null,
+                        u.getUsername()
+                ));
     }
 
-    public Group updateGroupSettings(
-            Long groupId,
-            Long adminUserId,
-            GroupSettingsRequest request
-    ) {
-        Group group = findGroupOrThrow(groupId);
-        validateGroupPermission(adminUserId, group, "admin");
+    // ================
+    // private helpers
+    // ================
 
-        boolean wasPublic = group.isPublic();
-        group.setName(request.getName());
-        group.setDescription(request.getDescription());
-        group.setPublic(request.isPublic());
-        group.setMinRoleForPosts(request.getMinRoleForPosts());
-        group.setMinRoleForEvents(request.getMinRoleForEvents());
-        group.setTopics(request.getTopics());
-        group.setDomain(findDomainOrNull(request.getDomain()));
-
-        Group saved = groupRepository.save(group);
-        if (!wasPublic && saved.isPublic()) {
-            membershipService.approvePendingOnPublic(groupId);
+    private void validateGroupVisibleOrMember(Long userId, Group g) {
+        Optional<GroupMembership> me = membershipService.getMembershipInfo(g.getId(), userId);
+        if (g.isPublic()) {
+            if (me.filter(m -> "banned".equals(m.getStatus())).isPresent()) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are banned");
+            }
+        } else {
+            if (me.isEmpty() || !"approved".equals(me.get().getStatus())) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Private group");
+            }
         }
-        return saved;
     }
 
-    // === Private helpful methods ===
-
-    private Group findGroupOrThrow(Long groupId) {
-        return groupRepository.findById(Math.toIntExact(groupId))
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Group not found"));
-    }
-
-    private User findUserOrThrow(Long userId) {
-        return userService.findById(userId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
-    }
-
-    private UniversityDomain findDomainOrNull(String domainCode) {
-        if (domainCode == null) return null;
-        return domainService.getDomainByCode(domainCode)
+    private Group findGroupOrThrow(Long id) {
+        return groupRepository.findById(Math.toIntExact(id))
                 .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.BAD_REQUEST, "University domain not found"));
+                        HttpStatus.NOT_FOUND, "Group not found"));
     }
 
-    private void validateGroupPermission(
-            Long userId, Group group, String requiredRole
-    ) {
-        User user = findUserOrThrow(userId);
-        if (!membershipService.hasPermission(user, group, requiredRole)) {
+    private User findUserOrThrow(Long id) {
+        return userService.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "User not found"));
+    }
+
+    private UniversityDomain findDomainOrNull(String code) {
+        if (code == null) return null;
+        return domainService.getDomainByCode(code)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST, "Domain not found"));
+    }
+
+    private void validatePermission(Long userId, Group group, String requiredRole) {
+        User u = findUserOrThrow(userId);
+        if (!membershipService.hasPermission(u, group, requiredRole)) {
             throw new ResponseStatusException(
-                    HttpStatus.FORBIDDEN, "Insufficient group permissions");
+                    HttpStatus.FORBIDDEN, "Insufficient permissions");
         }
     }
 
-    private UserSummaryResponse findByRole(
-            List<GroupMembership> memberships, String role
-    ) {
-        return memberships.stream()
-                .filter(m -> role.equals(m.getRole()))
-                .findFirst()
-                .map(m -> toUserSummary(m.getUser()))
-                .orElse(null);
+    private GroupMembershipResponse toDto(GroupMembership m) {
+        return new GroupMembershipResponse(
+                m.getId(),
+                toUserSummary(m.getUser()),
+                m.getRole(),
+                m.getStatus(),
+                m.getJoinedAt()
+        );
     }
 
     private List<UserSummaryResponse> findAllByRole(
-            List<GroupMembership> memberships, String role
+            List<GroupMembership> list, String role
     ) {
-        return memberships.stream()
+        return list.stream()
                 .filter(m -> role.equals(m.getRole()))
-                .map(m -> toUserSummary(m.getUser()))
+                .map(gm -> toUserSummary(gm.getUser()))
                 .toList();
     }
 
-    private UserSummaryResponse toUserSummary(User user) {
-        return userISDataService.getByUserId(user.getId())
-                .map(data -> new UserSummaryResponse(
-                        user.getId(),
-                        user.getUsername(),
-                        data.getJmeno() + " " + data.getPrijmeni()
-                ))
-                .orElseGet(() -> new UserSummaryResponse(
-                        user.getId(),
-                        null,
-                        user.getUsername()
-                ));
+    private UserSummaryResponse findByRole(
+            List<GroupMembership> list, String role
+    ) {
+        return list.stream()
+                .filter(m -> role.equals(m.getRole()))
+                .findFirst()
+                .map(gm -> toUserSummary(gm.getUser()))
+                .orElse(null);
     }
 }

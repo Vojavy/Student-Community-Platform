@@ -1,11 +1,10 @@
 // src/main/java/com/vojavy/AlmAgoraHub/controller/StagController.java
 package com.vojavy.AlmAgoraHub.controller;
 
-import com.vojavy.AlmAgoraHub.service.UserService;
+import com.vojavy.AlmAgoraHub.service.User.UserService;
 
-import com.vojavy.AlmAgoraHub.service.StagService;
-import com.vojavy.AlmAgoraHub.model.User;
-import com.vojavy.AlmAgoraHub.dto.responses.StudentInfoResponse;
+import com.vojavy.AlmAgoraHub.service.authentication.StagService;
+import com.vojavy.AlmAgoraHub.model.user.User;
 
 
 import org.springframework.beans.factory.annotation.Autowired;

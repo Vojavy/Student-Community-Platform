@@ -80,13 +80,13 @@ import {
   deleteStagTicket,
   saveStagToken,
   startStagLoginIntent
-} from '@/intents/stagIntents.js'
-import { handleStagIntent }   from '@/actions/stagActions.js'
-import createStagModel        from '@/models/stagModel.js'
+} from '@/iam/intents/stagIntents.js'
+import { handleStagIntent }   from '@/iam/actions/stagActions.js'
+import createStagModel        from '@/iam/models/stagModel.js'
 
-import { fetchDomainsIntent } from '@/intents/domainIntents.js'
-import { handleDomainIntent } from '@/actions/domainActions.js'
-import createDomainModel      from '@/models/domainModel.js'
+import { fetchDomainsIntent } from '@/iam/intents/domainIntents.js'
+import { handleDomainIntent } from '@/iam/actions/domainActions.js'
+import createDomainModel      from '@/iam/models/domainModel.js'
 
 const { t }      = useI18n()
 const coordinator= inject('coordinator')

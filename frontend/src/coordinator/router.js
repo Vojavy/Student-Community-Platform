@@ -23,20 +23,22 @@ import GroupMembersView     from '@/views/authorized/group/GroupMembersView.vue'
 import GroupCalendarView    from '@/views/authorized/group/GroupCalendarView.vue'
 import GroupSettingsView    from '@/views/authorized/group/GroupSettingsView.vue'
 
-import { checkTokenIntent } from '@/intents/authIntents'
-import { handleAuthIntent } from '@/actions/authActions'
-import createAuthModel      from '@/models/authModel'
+import { checkTokenIntent } from '@/iam/intents/authIntents'
+import { handleAuthIntent } from '@/iam/actions/authActions'
+import createAuthModel      from '@/iam/models/authModel'
 import createCoordinator    from '@/coordinator/coordinator'
 import GroupView from "@/views/authorized/group/GroupView.vue";
+import GroupPostsView from "@/views/authorized/group/GroupPostsView.vue";
+import GroupNewPostView from "@/views/authorized/group/GroupNewPostView.vue";
 
 const routes = [
     {
         path: '/',
         component: PublicLayout,
         children: [
-            { path: '',        name: 'landing',        component: LandingView },
-            { path: 'login',   name: 'login',          component: LoginView,        meta: { requiresUnauth: true } },
-            { path: 'register',name: 'register',       component: RegistrationView, meta: { requiresUnauth: true } },
+            {path: '',        name: 'landing',        component: LandingView },
+            {path: 'login',   name: 'login',          component: LoginView,        meta: { requiresUnauth: true }},
+            {path: 'register',name: 'register',       component: RegistrationView, meta: { requiresUnauth: true }},
             {
                 path: 'verify',
                 name: 'verify',
@@ -47,60 +49,42 @@ const routes = [
                     next()
                 }
             },
-            { path: 'groups',         name: 'groups-blocked', component: GroupsBlockedView },
-            { path: 'access-denied',  name: 'access-denied',  component: AccessDeniedView }
+            {path: 'groups',         name: 'groups-blocked', component: GroupsBlockedView},
+            {path: 'access-denied',  name: 'access-denied',  component: AccessDeniedView}
         ]
     },
     {
         path: '/',
         component: HomeLayout,
         children: [
-            { path: 'home', name: 'home', component: HomeView, meta: { requiresAuth: true } },
+            {path: 'home', name: 'home', component: HomeView, meta: {requiresAuth: true}},
             {
                 path: 'user',
                 component: UserLayout,
                 children: [
-                    { path: ':id',      name: 'user-profile',  component: UserProfileWrapper, meta: { requiresAuth: true } },
-                    { path: 'settings', name: 'user-settings', component: UserSettingsView,   meta: { requiresAuth: true } },
-                    { path: 'stag',     name: 'user-stag',     component: UserStagView,       meta: { requiresAuth: true } }
+                    {path: ':id', name: 'user-profile', component: UserProfileWrapper, meta: {requiresAuth: true}},
+                    {path: 'settings', name: 'user-settings', component: UserSettingsView, meta: {requiresAuth: true}},
+                    {path: 'stag', name: 'user-stag', component: UserStagView, meta: {requiresAuth: true}}
                 ]
             },
-            { path: 'app/groups',          name: 'groups',        component: GroupsView,      meta: { requiresAuth: true } },
-            { path: 'app/groups/create',   name: 'create-group',  component: CreateGroupView, meta: { requiresAuth: true } },
+            {path: 'app/groups', name: 'groups', component: GroupsView, meta: {requiresAuth: true}},
+            {path: 'app/groups/create', name: 'create-group', component: CreateGroupView, meta: {requiresAuth: true}},
 
-            // Новый вложенный маршрут для конкретной группы
             {
-                path: 'app/groups/:groupId',
-                component: GroupWrapper,
-                meta: { requiresAuth: true },
-                children: [
-                    {
-                        path: '',
-                        name: 'group-overview',
-                        component: GroupView
-                    },
-                    {
-                        path: 'members',
-                        name: 'group-members',
-                        component: GroupMembersView
-                    },
-                    {
-                        path: 'calendar',
-                        name: 'group-calendar',
-                        component: GroupCalendarView
-                    },
-                    {
-                        path: 'settings',
-                        name: 'group-settings',
-                        component: GroupSettingsView
-                    }
+                path: 'app/groups/:groupId', component: GroupWrapper, meta: {requiresAuth: true}, children: [
+                    {path: '', name: 'group-overview', component: GroupView},
+                    {path: 'members', name: 'group-members', component: GroupMembersView},
+                    {path: 'calendar', name: 'group-calendar', component: GroupCalendarView},
+                    {path: 'settings', name: 'group-settings', component: GroupSettingsView},
+                    {path: 'posts', name: 'group-posts', component: GroupPostsView},
+                    {path: 'post-edit', name: 'group-new-post', component: GroupNewPostView},
                 ]
+            },
+            {
+                path: '/:pathMatch(.*)*',
+                redirect: '/'
             }
         ]
-    },
-    {
-        path: '/:pathMatch(.*)*',
-        redirect: '/'
     }
 ]
 

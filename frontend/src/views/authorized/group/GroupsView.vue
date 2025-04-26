@@ -174,13 +174,13 @@
 import { ref, computed, onMounted, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-import createGroupModel from '@/models/groupModel'
-import { fetchUserGroupsIntent, fetchBrowseGroupsIntent } from '@/intents/groupIntents'
-import { handleGroupIntent } from '@/actions/groupActions'
+import createGroupModel from '@/iam/models/group/groupModel.js'
+import { fetchUserGroupsIntent, fetchBrowseGroupsIntent } from '@/iam/intents/groupIntents'
+import { handleGroupIntent } from '@/iam/actions/groupActions'
 
-import createDomainModel from '@/models/domainModel'
-import { fetchDomainsIntent } from '@/intents/domainIntents'
-import { handleDomainIntent } from '@/actions/domainActions'
+import createDomainModel from '@/iam/models/domainModel'
+import { fetchDomainsIntent } from '@/iam/intents/domainIntents'
+import { handleDomainIntent } from '@/iam/actions/domainActions'
 
 const { t } = useI18n()
 const coordinator = inject('coordinator')

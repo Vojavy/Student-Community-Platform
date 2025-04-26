@@ -5,7 +5,8 @@ export default {
         add: 'Add',
         change: 'Change',
         delete: 'Delete',
-        loading: 'Loading...'
+        loading: 'Loading...',
+        search: 'Search'
     },
     verification: {
         title: 'Email Verification',
@@ -194,10 +195,17 @@ export default {
     },
     groups: {
         title: 'Groups',
-        tabs: {
-            my: 'My Groups',
-            browse: 'Browse'
-        },
+        domain: 'Domain',
+        name: 'Name',
+        description: 'Description',
+        topics: 'Topics',
+
+        overview: 'Overview',
+        calendar: 'Calendar',
+        settings: 'Settings',
+        posts: 'Posts',
+
+        tabs: { my: 'My Groups', browse: 'Browse' },
         searchPlaceholder: 'Search by name or topic…',
         noMyGroups: 'You have no groups yet',
         noBrowseResults: 'No results found',
@@ -213,16 +221,52 @@ export default {
             topics: 'Topics',
             apply: 'Apply'
         },
-
-        pagination: {
-            prev: '← Prev',
-            next: 'Next →',
-            size: 'Per page'
-        },
+        pagination: { prev: '← Prev', next: 'Next →', size: 'Per page' },
 
         domainUnknown: 'No domain',
         public: 'Public',
         private: 'Private',
+        createdAt: 'Created',
+        owner: 'Owner',
+        admins: 'Admins',
+        helpers: 'Helpers',
+
+        deleteGroup: 'Delete Group',
+        leave: 'Leave',
+        join: 'Join',
+
+        members: 'Members',
+        filterStatus: 'Status',
+        filterRole: 'Role',
+        approve: 'Approve',
+        decline: 'Decline',
+        cancelInvitation: 'Cancel invitation',
+        kick: 'Kick',
+        ban: 'Ban',
+        unban: 'Unban',
+
+        role: {
+            role: 'Role',
+            member: 'Member',
+            helper: 'Helper',
+            admin: 'Admin',
+            owner: 'Owner',
+            invited: 'Invited',
+        },
+        status: {
+            status: 'Status',
+            approved: 'Member',
+            pending: 'Pending',
+            banned: 'Banned'
+        },
+
+        pending: 'Membership request sent',
+        banned: 'Banned',
+        notFound: 'Group not found',
+
+        minRoleForPosts: 'Min. role to post',
+        minRoleForEvents: 'Min. role to create events',
+        noDomain: 'No domain',
 
         createTitle: 'Create New Group',
         form: {
@@ -232,7 +276,30 @@ export default {
             description: 'Description',
             topics: 'Topics (comma separated)',
             createButton: 'Create Group',
-            public: 'Public',
+            public: 'Public'
         }
-    }
+    },
+    posts: {
+        newPost:        'New post',
+        title:          'Title',
+        titlePlaceholder:'Enter a title…',
+        topics:         'Topics',
+        topicsPlaceholder:'Comma-separated topics…',
+        bold:            '🅱️ Bold',
+        italic:          '𝘐 Italic',
+        underline:       '〰️ Underline',
+        strikethrough:   '❌ Strikethrough',
+        h1:              '🔢 Heading 1',
+        h2:              '🔢 Heading 2',
+        insertLink:      '🔗 Insert link',
+        linkPrompt:      'URL',
+        insertImage:     '🖼️ Insert image',
+        submit:         'Publish',
+        expand:         'Expand',
+        hide:           'Hide',
+        by:             'by',
+        on:             'on',
+        edit:           'Edit',
+        delete:         'Delete'
+    },
 }

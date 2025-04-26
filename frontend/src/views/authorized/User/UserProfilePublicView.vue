@@ -153,11 +153,11 @@ import { ref, onMounted, computed, inject } from 'vue'
 import { useRoute }     from 'vue-router'
 import { useI18n }      from 'vue-i18n'
 
-import createUserModel     from '@/models/userModel'
-import { fetchUserProfileIntent } from '@/intents/userIntents'
-import { handleUserIntent }      from '@/actions/userActions'
+import createUserModel     from '@/iam/models/userModel'
+import { fetchUserProfileIntent } from '@/iam/intents/userIntents'
+import { handleUserIntent }      from '@/iam/actions/userActions'
 
-import createFriendModel from '@/models/friendModel'
+import createFriendModel from '@/iam/models/friendModel'
 import {
   fetchFriendsIntent,
   fetchMyFriendsIntent,
@@ -166,8 +166,8 @@ import {
   approveFriendRequestIntent,
   declineFriendRequestIntent,
   removeFriendIntent
-} from '@/intents/friendIntents'
-import { handleFriendIntent } from '@/actions/friendActions'
+} from '@/iam/intents/friendIntents'
+import { handleFriendIntent } from '@/iam/actions/friendActions'
 
 import { getUserIdFromToken } from '@/utils/jwt/getUserIdFromToken'
 

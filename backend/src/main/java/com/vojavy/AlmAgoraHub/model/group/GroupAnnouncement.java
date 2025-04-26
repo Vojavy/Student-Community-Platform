@@ -1,6 +1,6 @@
 package com.vojavy.AlmAgoraHub.model.group;
 
-import com.vojavy.AlmAgoraHub.model.User;
+import com.vojavy.AlmAgoraHub.model.user.User;
 import jakarta.persistence.*;
 
 import java.time.Instant;

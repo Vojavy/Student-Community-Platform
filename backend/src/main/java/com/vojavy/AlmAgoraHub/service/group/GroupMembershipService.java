@@ -2,12 +2,12 @@ package com.vojavy.AlmAgoraHub.service.group;
 
 import com.vojavy.AlmAgoraHub.dto.responses.GroupResponse;
 import com.vojavy.AlmAgoraHub.dto.responses.MembershipStatusResponse;
-import com.vojavy.AlmAgoraHub.model.User;
+import com.vojavy.AlmAgoraHub.model.user.User;
 import com.vojavy.AlmAgoraHub.model.group.Group;
 import com.vojavy.AlmAgoraHub.model.group.GroupMembership;
 import com.vojavy.AlmAgoraHub.repository.group.GroupMembershipRepository;
 import com.vojavy.AlmAgoraHub.repository.group.GroupRepository;
-import com.vojavy.AlmAgoraHub.service.UserService;
+import com.vojavy.AlmAgoraHub.service.User.UserService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -26,7 +26,7 @@ public class GroupMembershipService {
     private final GroupRepository           groupRepository;
     private final UserService               userService;
 
-    public GroupMembershipService(
+    protected GroupMembershipService(
             GroupMembershipRepository membershipRepository,
             GroupRepository groupRepository,
             UserService userService
@@ -36,11 +36,11 @@ public class GroupMembershipService {
         this.userService          = userService;
     }
 
-    public GroupMembership saveMembership(GroupMembership membership) {
+    protected GroupMembership saveMembership(GroupMembership membership) {
         return membershipRepository.save(membership);
     }
 
-    public GroupMembership joinGroup(Long groupId, Long userId) {
+    protected GroupMembership joinGroup(Long groupId, Long userId) {
         Group group = findGroupOrThrow(groupId);
         User  user  = findUserOrThrow(userId);
 
@@ -55,13 +55,26 @@ public class GroupMembershipService {
                         m.setRole("member");
                     } else {
                         m.setStatus("pending");
-                        m.setRole("pending");
+                        m.setRole("member");
                     }
                     return membershipRepository.save(m);
                 });
     }
 
-    public GroupMembership inviteUserToGroup(
+    protected void banMember(Long groupId, Long targetUserId) {
+        GroupMembership m = findMembershipOrThrow(targetUserId, groupId);
+        m.setStatus("banned");
+        membershipRepository.save(m);
+    }
+
+    protected void unbanMember(Long groupId, Long targetUserId) {
+        GroupMembership m = findMembershipOrThrow(targetUserId, groupId);
+        m.setStatus("approved");
+        m.setRole("member");
+        membershipRepository.save(m);
+    }
+
+    protected GroupMembership inviteUserToGroup(
             Long groupId,
             Long inviterId,
             Long targetUserId,
@@ -83,13 +96,13 @@ public class GroupMembershipService {
         return membershipRepository.save(m);
     }
 
-    public GroupMembership leaveGroup(Long groupId, Long userId) {
+    protected GroupMembership leaveGroup(Long groupId, Long userId) {
         GroupMembership m = findMembershipOrThrow(userId, groupId);
         membershipRepository.delete(m);
         return m;
     }
 
-    public GroupMembership handleJoinRequest(
+    protected GroupMembership handleJoinRequest(
             Long groupId,
             Long managerUserId,
             Long targetUserId,
@@ -106,7 +119,7 @@ public class GroupMembershipService {
         }
     }
 
-    public void removeUserFromGroup(
+    protected void removeUserFromGroup(
             Long groupId,
             Long managerUserId,
             Long targetUserId
@@ -115,7 +128,7 @@ public class GroupMembershipService {
         membershipRepository.delete(m);
     }
 
-    public GroupMembership changeUserRole(
+    protected GroupMembership changeUserRole(
             Long groupId,
             Long targetUserId,
             String newRole
@@ -126,13 +139,13 @@ public class GroupMembershipService {
     }
 
     @Transactional(readOnly = true)
-    public List<GroupMembership> getMembershipsForGroup(Long groupId) {
+    protected List<GroupMembership> getMembershipsForGroup(Long groupId) {
         Group group = findGroupOrThrow(groupId);
         return membershipRepository.findByGroup(group);
     }
 
     @Transactional(readOnly = true)
-    public List<GroupMembership> getMembershipsForGroupByStatus(
+    protected List<GroupMembership> getMembershipsForGroupByStatus(
             Long groupId,
             String status
     ) {
@@ -142,7 +155,7 @@ public class GroupMembershipService {
     }
 
     @Transactional(readOnly = true)
-    public Page<GroupResponse> getGroupsForUser(
+    protected Page<GroupResponse> getUserGroups(
             Long userId,
             int page,
             int size
@@ -154,7 +167,7 @@ public class GroupMembershipService {
     }
 
     @Transactional(readOnly = true)
-    public Optional<GroupMembership> getMembershipInfo(
+    protected Optional<GroupMembership> getMembershipInfo(
             Long groupId,
             Long userId
     ) {
@@ -163,7 +176,7 @@ public class GroupMembershipService {
         return membershipRepository.findByUserAndGroup(user, group);
     }
 
-    public MembershipStatusResponse getMembershipStatus(
+    protected MembershipStatusResponse getMembershipStatus(
             Long groupId,
             Long userId
     ) {
@@ -172,7 +185,7 @@ public class GroupMembershipService {
                 .orElse(new MembershipStatusResponse(null, null));
     }
 
-    public void approvePendingOnPublic(Long groupId) {
+    protected void approvePendingOnPublic(Long groupId) {
         Group group = findGroupOrThrow(groupId);
         List<GroupMembership> toApprove = membershipRepository.findByGroup(group)
                 .stream()

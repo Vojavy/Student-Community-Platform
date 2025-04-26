@@ -2,7 +2,7 @@ package com.vojavy.AlmAgoraHub.repository.group;
 
 import com.vojavy.AlmAgoraHub.model.group.GroupMembership;
 import com.vojavy.AlmAgoraHub.model.group.Group;
-import com.vojavy.AlmAgoraHub.model.User;
+import com.vojavy.AlmAgoraHub.model.user.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

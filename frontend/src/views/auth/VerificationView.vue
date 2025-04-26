@@ -51,9 +51,9 @@ import { ref, inject, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 
-import { verifyIntent, resendIntent } from '@/intents/authIntents'
-import { handleAuthIntent } from '@/actions/authActions'
-import createAuthModel from '@/models/authModel'
+import { verifyIntent, resendIntent } from '@/iam/intents/authIntents'
+import { handleAuthIntent } from '@/iam/actions/authActions'
+import createAuthModel from '@/iam/models/authModel'
 
 const { t } = useI18n()
 const route = useRoute()

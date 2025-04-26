@@ -79,17 +79,17 @@ import { reactive, ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { inject } from 'vue'
 
-import createGroupModel from '@/models/groupModel'
-import { createGroupIntent } from '@/intents/groupIntents'
-import { handleGroupIntent } from '@/actions/groupActions'
+import createGroupModel from '@/iam/models/group/groupModel.js'
+import { createGroupIntent } from '@/iam/intents/groupIntents'
+import { handleGroupIntent } from '@/iam/actions/groupActions'
 
-import createDomainModel from '@/models/domainModel'
-import { fetchDomainsIntent } from '@/intents/domainIntents'
-import { handleDomainIntent } from '@/actions/domainActions'
+import createDomainModel from '@/iam/models/domainModel'
+import { fetchDomainsIntent } from '@/iam/intents/domainIntents'
+import { handleDomainIntent } from '@/iam/actions/domainActions'
 
-import createUserModel from '@/models/userModel'
-import { fetchUserProfileIntent } from '@/intents/userIntents'
-import { handleUserIntent } from '@/actions/userActions'
+import createUserModel from '@/iam/models/userModel'
+import { fetchUserProfileIntent } from '@/iam/intents/userIntents'
+import { handleUserIntent } from '@/iam/actions/userActions'
 
 import { getUserIdFromToken } from '@/utils/jwt/getUserIdFromToken'
 

@@ -106,13 +106,13 @@
 import { inject, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { getUserIdFromToken } from '@/utils/jwt/getUserIdFromToken'
-import createGroupModel from '@/models/groupModel'
+import createGroupModel from '@/iam/models/group/groupModel.js'
 import {
   joinGroupIntent,
   leaveGroupIntent,
   deleteGroupIntent
-} from '@/intents/groupIntents'
-import { handleGroupIntent } from '@/actions/groupActions'
+} from '@/iam/intents/groupIntents'
+import { handleGroupIntent } from '@/iam/actions/groupActions'
 
 const { t } = useI18n()
 const coordinator = inject('coordinator')
