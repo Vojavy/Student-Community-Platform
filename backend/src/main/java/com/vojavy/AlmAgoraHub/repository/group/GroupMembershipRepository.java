@@ -17,4 +17,6 @@ public interface GroupMembershipRepository extends JpaRepository<GroupMembership
     List<GroupMembership> findByUser(User user);
     Page<GroupMembership> findByUser(User user, Pageable pageable);
     List<GroupMembership> findByGroup(Group group);
+    Optional<GroupMembership> findByUserAndGroup_Id(User user, Long groupId);
+    Optional<GroupMembership> findByUser_IdAndGroup_Id(Long userId, Long groupId);
 }
