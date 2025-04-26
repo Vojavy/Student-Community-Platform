@@ -3,6 +3,7 @@ package com.vojavy.AlmAgoraHub.service;
 import com.vojavy.AlmAgoraHub.dto.requests.LoginUserRequest;
 import com.vojavy.AlmAgoraHub.dto.requests.RegisterUserRequest;
 import com.vojavy.AlmAgoraHub.dto.VerifyUserDto;
+import com.vojavy.AlmAgoraHub.model.Role;
 import com.vojavy.AlmAgoraHub.model.User;
 import com.vojavy.AlmAgoraHub.model.UserDetailsExtended;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -12,6 +13,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.*;
@@ -94,29 +96,29 @@ public class AuthenticationService {
     }
 
     public void verifyUserLocal(VerifyUserDto input) {
-        Optional<User> optionalUser = userService.findByEmail(input.getEmail());
-        if (optionalUser.isPresent()) {
-            User user = optionalUser.get();
+        User user = userService.findByEmail(input.getEmail())
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
-            if (user.getVerificationExpires().isBefore(LocalDateTime.now().toInstant(ZoneOffset.UTC))) {
-                throw new RuntimeException("Verification expired");
-            }
-
-            if (user.getVerificationCode().equals(input.getVerificationCode())) {
-                user.setActive(true);
-                user.setVerificationCode(null);
-                user.setVerificationExpires(null);
-                user.setRoles(Set.of(
-                        roleService.getByName("ROLE_USER"),
-                        roleService.getByName("ROLE_LIMITED")));
-                userService.update(user);
-            } else {
-                throw new RuntimeException("Invalid verification code");
-            }
-        } else {
-            throw new RuntimeException("User not found");
+        Instant now = Instant.now();
+        if (user.getVerificationExpires().isBefore(now)) {
+            throw new RuntimeException("Verification expired");
         }
+
+        if (!input.getVerificationCode().equals(user.getVerificationCode())) {
+            throw new RuntimeException("Invalid verification code");
+        }
+        user.setActive(true);
+        user.setVerificationCode(null);
+        user.setVerificationExpires(null);
+
+        Set<Role> newRoles = new HashSet<>();
+        newRoles.add(roleService.getByName("ROLE_USER"));
+        newRoles.add(roleService.getByName("ROLE_LIMITED"));
+        user.setRoles(newRoles);
+
+        userService.update(user);
     }
+
 
     public void resendVerificationEmailLocal(String email, String baseUrl) {
         Optional<User> optionalUser = userService.findByEmail(email);

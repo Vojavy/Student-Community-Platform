@@ -1,6 +1,7 @@
 package com.vojavy.AlmAgoraHub.service.group;
 
 import com.vojavy.AlmAgoraHub.dto.responses.GroupResponse;
+import com.vojavy.AlmAgoraHub.dto.responses.MembershipStatusResponse;
 import com.vojavy.AlmAgoraHub.model.User;
 import com.vojavy.AlmAgoraHub.model.group.Group;
 import com.vojavy.AlmAgoraHub.model.group.GroupMembership;
@@ -16,34 +17,34 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 @Transactional
 public class GroupMembershipService {
 
-    private final GroupMembershipRepository membershipRepo;
-    private final GroupRepository           groupRepo;
-    private final UserService                userService;
+    private final GroupMembershipRepository membershipRepository;
+    private final GroupRepository           groupRepository;
+    private final UserService               userService;
 
     public GroupMembershipService(
-            GroupMembershipRepository membershipRepo,
-            GroupRepository           groupRepo,
-            UserService               userService
+            GroupMembershipRepository membershipRepository,
+            GroupRepository groupRepository,
+            UserService userService
     ) {
-        this.membershipRepo = membershipRepo;
-        this.groupRepo      = groupRepo;
-        this.userService    = userService;
+        this.membershipRepository = membershipRepository;
+        this.groupRepository      = groupRepository;
+        this.userService          = userService;
     }
 
-    /** 1) Заявка на вступление */
-    public GroupMembership requestToJoinGroup(Long groupId, Long userId) {
-        Group group = groupRepo.findById(Math.toIntExact(groupId))
-                .orElseThrow(() -> new IllegalArgumentException("Group not found"));
-        User  user  = userService.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+    public GroupMembership saveMembership(GroupMembership membership) {
+        return membershipRepository.save(membership);
+    }
 
-        return membershipRepo.findByUserAndGroup(user, group)
+    public GroupMembership joinGroup(Long groupId, Long userId) {
+        Group group = findGroupOrThrow(groupId);
+        User  user  = findUserOrThrow(userId);
+
+        return membershipRepository.findByUserAndGroup(user, group)
                 .orElseGet(() -> {
                     GroupMembership m = new GroupMembership();
                     m.setGroup(group);
@@ -56,176 +57,174 @@ public class GroupMembershipService {
                         m.setStatus("pending");
                         m.setRole("pending");
                     }
-                    return membershipRepo.save(m);
+                    return membershipRepository.save(m);
                 });
     }
 
-    /** 2) Приглашение пользователя (сразу approved) */
-    public GroupMembership inviteUserToGroup(Long groupId, Long inviterId, Long targetUserId, String role) {
-        Group inviterGroup = groupRepo.findById(Math.toIntExact(groupId))
-                .orElseThrow(() -> new IllegalArgumentException("Group not found"));
-        User inviter = userService.findById(inviterId)
-                .orElseThrow(() -> new IllegalArgumentException("Inviter not found"));
-        if (!hasPermission(inviter, inviterGroup, "admin")) {
-            throw new IllegalStateException("No permission to invite members");
-        }
+    public GroupMembership inviteUserToGroup(
+            Long groupId,
+            Long inviterId,
+            Long targetUserId,
+            String role
+    ) {
+        Group group   = findGroupOrThrow(groupId);
+        User  target  = findUserOrThrow(targetUserId);
 
-        User target = userService.findById(targetUserId)
-                .orElseThrow(() -> new IllegalArgumentException("Target user not found"));
-
-        if (membershipRepo.findByUserAndGroup(target, inviterGroup).isPresent()) {
+        if (membershipRepository.findByUserAndGroup(target, group).isPresent()) {
             throw new IllegalStateException("User is already in group");
         }
 
         GroupMembership m = new GroupMembership();
-        m.setGroup(inviterGroup);
+        m.setGroup(group);
         m.setUser(target);
         m.setJoinedAt(Instant.now());
         m.setStatus("approved");
         m.setRole(role);
-        return membershipRepo.save(m);
+        return membershipRepository.save(m);
     }
 
-    /** 3) Изменение роли участника */
-    public GroupMembership changeUserRole(Long groupId, Long actorId, Long targetUserId, String newRole) {
-        Group group = groupRepo.findById(Math.toIntExact(groupId))
-                .orElseThrow(() -> new IllegalArgumentException("Group not found"));
-        User  actor = userService.findById(actorId)
-                .orElseThrow(() -> new IllegalArgumentException("Actor not found"));
-
-        GroupMembership actorM = membershipRepo.findByUserAndGroup(actor, group)
-                .orElseThrow(() -> new IllegalArgumentException("Actor not in group"));
-        if (!hasPermission(actorM.getRole(), "admin")) {
-            throw new IllegalStateException("Insufficient permissions to change roles");
-        }
-
-        User target = userService.findById(targetUserId)
-                .orElseThrow(() -> new IllegalArgumentException("Target user not found"));
-        GroupMembership targetM = membershipRepo.findByUserAndGroup(target, group)
-                .orElseThrow(() -> new IllegalArgumentException("Target user not in group"));
-
-        targetM.setRole(newRole);
-        return membershipRepo.save(targetM);
+    public GroupMembership leaveGroup(Long groupId, Long userId) {
+        GroupMembership m = findMembershipOrThrow(userId, groupId);
+        membershipRepository.delete(m);
+        return m;
     }
 
-    /** 4) Обработка заявки (approve/reject) */
-    public GroupMembership handleJoinRequest(Long groupId,
-                                             Long actorId,
-                                             Long targetUserId,
-                                             boolean approve) {
-        Group group = groupRepo.findById(Math.toIntExact(groupId))
-                .orElseThrow(() -> new IllegalArgumentException("Group not found"));
-        User  actor = userService.findById(actorId)
-                .orElseThrow(() -> new IllegalArgumentException("Actor not found"));
-
-        GroupMembership actorM = membershipRepo.findByUserAndGroup(actor, group)
-                .orElseThrow(() -> new IllegalArgumentException("Actor not in group"));
-        if (!hasPermission(actorM.getRole(), group.getMinRoleForEvents())) {
-            throw new IllegalStateException("Insufficient permissions to approve requests");
-        }
-
-        User target = userService.findById(targetUserId)
-                .orElseThrow(() -> new IllegalArgumentException("Target user not found"));
-        GroupMembership tm = membershipRepo.findByUserAndGroup(target, group)
-                .orElseThrow(() -> new IllegalArgumentException("Join request not found"));
-
-        if (!"pending".equals(tm.getStatus())) {
-            throw new IllegalStateException("User is not in pending state");
-        }
-
+    public GroupMembership handleJoinRequest(
+            Long groupId,
+            Long managerUserId,
+            Long targetUserId,
+            boolean approve
+    ) {
+        GroupMembership m = findMembershipOrThrow(targetUserId, groupId);
         if (approve) {
-            tm.setStatus("approved");
-            tm.setRole("member");
-            return membershipRepo.save(tm);
+            m.setStatus("approved");
+            m.setRole("member");
+            return membershipRepository.save(m);
         } else {
-            membershipRepo.delete(tm);
-            return tm;
+            membershipRepository.delete(m);
+            return m;
         }
     }
 
-    /** 5) Удаление участника из группы */
-    public void removeUserFromGroup(Long groupId, Long actorId, Long targetUserId) {
-        Group group = groupRepo.findById(Math.toIntExact(groupId))
-                .orElseThrow(() -> new IllegalArgumentException("Group not found"));
-        User  actor = userService.findById(actorId)
-                .orElseThrow(() -> new IllegalArgumentException("Actor not found"));
-
-        GroupMembership actorM = membershipRepo.findByUserAndGroup(actor, group)
-                .orElseThrow(() -> new IllegalArgumentException("Actor not in group"));
-        if (!hasPermission(actorM.getRole(), group.getMinRoleForEvents())) {
-            throw new IllegalStateException("Insufficient permissions to remove members");
-        }
-
-        User target = userService.findById(targetUserId)
-                .orElseThrow(() -> new IllegalArgumentException("Target not found"));
-        GroupMembership tm = membershipRepo.findByUserAndGroup(target, group)
-                .orElseThrow(() -> new IllegalArgumentException("Target not in group"));
-
-        membershipRepo.delete(tm);
+    public void removeUserFromGroup(
+            Long groupId,
+            Long managerUserId,
+            Long targetUserId
+    ) {
+        GroupMembership m = findMembershipOrThrow(targetUserId, groupId);
+        membershipRepository.delete(m);
     }
 
-    /** 6) Все участники по ID группы */
+    public GroupMembership changeUserRole(
+            Long groupId,
+            Long targetUserId,
+            String newRole
+    ) {
+        GroupMembership m = findMembershipOrThrow(targetUserId, groupId);
+        m.setRole(newRole);
+        return membershipRepository.save(m);
+    }
+
     @Transactional(readOnly = true)
     public List<GroupMembership> getMembershipsForGroup(Long groupId) {
-        Group group = groupRepo.findById(Math.toIntExact(groupId))
-                .orElseThrow(() -> new IllegalArgumentException("Group not found"));
-        return membershipRepo.findByGroup(group);
+        Group group = findGroupOrThrow(groupId);
+        return membershipRepository.findByGroup(group);
     }
 
-    /** 6.1) По статусу */
     @Transactional(readOnly = true)
-    public List<GroupMembership> getMembershipsForGroupByStatus(Long groupId, String status) {
+    public List<GroupMembership> getMembershipsForGroupByStatus(
+            Long groupId,
+            String status
+    ) {
         return getMembershipsForGroup(groupId).stream()
                 .filter(m -> status.equals(m.getStatus()))
-                .collect(Collectors.toList());
+                .toList();
     }
 
-    /** 7) Все группы по ID пользователя с пагинацией и в DTO */
     @Transactional(readOnly = true)
-    public Page<GroupResponse> getGroupsForUser(Long userId, int page, int size) {
-        User user = userService.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
-
-        Pageable pageable = PageRequest.of(page, size);
-        return membershipRepo
-                .findByUser(user, pageable)
+    public Page<GroupResponse> getGroupsForUser(
+            Long userId,
+            int page,
+            int size
+    ) {
+        User     user    = findUserOrThrow(userId);
+        Pageable pageReq = PageRequest.of(page, size);
+        return membershipRepository.findByUser(user, pageReq)
                 .map(m -> GroupResponse.fromEntity(m.getGroup()));
     }
 
-    /** 8) Информация о статусе/роли конкретного пользователя в группе */
     @Transactional(readOnly = true)
-    public Optional<GroupMembership> getMembershipInfo(Long groupId, Long userId) {
-        Group group = groupRepo.findById(Math.toIntExact(groupId))
-                .orElseThrow(() -> new IllegalArgumentException("Group not found"));
-        User  user  = userService.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
-        return membershipRepo.findByUserAndGroup(user, group);
+    public Optional<GroupMembership> getMembershipInfo(
+            Long groupId,
+            Long userId
+    ) {
+        Group group = findGroupOrThrow(groupId);
+        User  user  = findUserOrThrow(userId);
+        return membershipRepository.findByUserAndGroup(user, group);
     }
 
-    /** 8.1) Только статус */
-    @Transactional(readOnly = true)
-    public String getMembershipStatus(Long groupId, Long userId) {
+    public MembershipStatusResponse getMembershipStatus(
+            Long groupId,
+            Long userId
+    ) {
         return getMembershipInfo(groupId, userId)
-                .map(GroupMembership::getStatus)
-                .orElse(null);
+                .map(m -> new MembershipStatusResponse(m.getStatus(), m.getRole()))
+                .orElse(new MembershipStatusResponse(null, null));
     }
 
-    // === вспомогательные методы ===
-
-    /** Сохранить произвольную запись */
-    public GroupMembership saveMembership(GroupMembership membership) {
-        return membershipRepo.save(membership);
+    public void approvePendingOnPublic(Long groupId) {
+        Group group = findGroupOrThrow(groupId);
+        List<GroupMembership> toApprove = membershipRepository.findByGroup(group)
+                .stream()
+                .filter(m -> "pending".equals(m.getStatus()) && !"invited".equals(m.getRole()))
+                .peek(m -> {
+                    m.setStatus("approved");
+                    m.setRole("member");
+                })
+                .toList();
+        membershipRepository.saveAll(toApprove);
     }
 
-    /** Проверка прав по иерархии ролей */
-    public boolean hasPermission(String role, String required) {
-        List<String> hierarchy = List.of("pending", "member", "editor", "helper", "admin", "owner");
-        return hierarchy.indexOf(role) >= hierarchy.indexOf(required);
+    // --- private helpers ---
+
+    protected boolean hasPermission(String role, String requiredRole) {
+        List<String> hierarchy = List.of(
+                "pending",
+                "member",
+//              "editor",
+                "helper",
+                "admin",
+                "owner"
+        );
+
+        int currentLevel  = hierarchy.indexOf(role);
+        int requiredLevel = hierarchy.indexOf(requiredRole);
+
+        if (currentLevel == -1 || requiredLevel == -1) {
+            return false;
+        }
+        return currentLevel >= requiredLevel;
     }
 
-    public boolean hasPermission(User user, Group group, String requiredRole) {
+    protected boolean hasPermission(User user, Group group, String requiredRole) {
         return getMembershipInfo(group.getId(), user.getId())
-                .map(m -> hasPermission(m.getRole(), requiredRole))
+                .map(membership -> hasPermission(membership.getRole(), requiredRole))
                 .orElse(false);
+    }
+
+    private Group findGroupOrThrow(Long groupId) {
+        return groupRepository.findById(Math.toIntExact(groupId))
+                .orElseThrow(() -> new IllegalArgumentException("Group not found"));
+    }
+
+    private User findUserOrThrow(Long userId) {
+        return userService.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+    }
+
+    private GroupMembership findMembershipOrThrow(Long userId, Long groupId) {
+        return membershipRepository
+                .findByUser_IdAndGroup_Id(userId, groupId)
+                .orElseThrow(() -> new IllegalArgumentException("Membership not found"));
     }
 }

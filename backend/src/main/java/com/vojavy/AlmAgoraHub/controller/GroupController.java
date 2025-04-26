@@ -1,9 +1,11 @@
 package com.vojavy.AlmAgoraHub.controller;
 
 import com.vojavy.AlmAgoraHub.dto.requests.CreateGroupRequest;
+import com.vojavy.AlmAgoraHub.dto.requests.GroupSettingsRequest;
 import com.vojavy.AlmAgoraHub.dto.responses.GroupDetailResponse;
 import com.vojavy.AlmAgoraHub.dto.responses.GroupMembershipResponse;
 import com.vojavy.AlmAgoraHub.dto.responses.GroupResponse;
+import com.vojavy.AlmAgoraHub.dto.responses.MembershipStatusResponse;
 import com.vojavy.AlmAgoraHub.model.group.Group;
 import com.vojavy.AlmAgoraHub.model.group.GroupMembership;
 import com.vojavy.AlmAgoraHub.service.UserService;
@@ -43,12 +45,12 @@ public class GroupController {
     }
 
     @PostMapping("/{groupId}/join")
-    public GroupMembership joinGroup(
+    public GroupMembershipResponse joinGroup(
             @PathVariable Long groupId,
             @RequestHeader("Authorization") String authHeader
     ) {
         Long userId = userService.extractUserId(authHeader);
-        return membershipService.requestToJoinGroup(groupId, userId);
+        return groupService.requestToJoinGroup(groupId, userId);
     }
 
     @PostMapping("/{groupId}/invite")
@@ -62,19 +64,26 @@ public class GroupController {
         return membershipService.inviteUserToGroup(groupId, inviterId, targetUserId, role);
     }
 
-    @PutMapping("/{groupId}/members/{targetUserId}/role")
-    public GroupMembership changeRole(
+    @PostMapping("/{groupId}/leave")
+    public GroupMembershipResponse leaveGroup(
             @PathVariable Long groupId,
-            @RequestHeader("Authorization") String authHeader,
-            @PathVariable Long targetUserId,
-            @RequestParam String newRole
+            @RequestHeader("Authorization") String authHeader
     ) {
-        Long actorId = userService.extractUserId(authHeader);
-        membershipService.changeUserRole(groupId, actorId, targetUserId, newRole);
-        return membershipService
-                .getMembershipInfo(groupId, targetUserId)
-                .orElseThrow(() -> new IllegalStateException("Membership not found after role change"));
+        Long userId = userService.extractUserId(authHeader);
+        return groupService.requestToLeaveGroup(groupId, userId);
     }
+
+    @PutMapping("/{groupId}/members/{targetUserId}/role")
+    public GroupMembershipResponse changeRole(
+            @PathVariable Long groupId,
+            @PathVariable Long targetUserId,
+            @RequestParam String newRole,
+            @RequestHeader("Authorization") String authHeader
+            ) {
+        Long userId = userService.extractUserId(authHeader);
+        return groupService.changeUserRole(userId, groupId, targetUserId, newRole);
+    }
+
 
     @PutMapping("/{groupId}/members/{targetUserId}/status")
     public GroupMembership handleRequest(
@@ -101,9 +110,6 @@ public class GroupController {
         return ResponseEntity.noContent().build();
     }
 
-    /**
-     * GET /groups/{groupId}/members?status=approved
-     */
     @GetMapping("/{groupId}/members")
     public List<GroupMembershipResponse> listMembers(
             @PathVariable Long groupId,
@@ -127,20 +133,31 @@ public class GroupController {
     }
 
     @GetMapping("/{groupId}/members/{userId}/status")
-    public String getStatus(
+    public ResponseEntity<MembershipStatusResponse> getMembershipStatus(
             @PathVariable Long groupId,
             @PathVariable Long userId
     ) {
-        return membershipService.getMembershipStatus(groupId, userId);
+        MembershipStatusResponse resp =
+                membershipService.getMembershipStatus(groupId, userId);
+        if (resp == null) {
+            resp = new MembershipStatusResponse();
+        }
+        return ResponseEntity.ok(resp);
     }
 
+
     @GetMapping("/{groupId}/members/status")
-    public String getStatus(
+    public ResponseEntity<MembershipStatusResponse> getMembershipStatus(
             @PathVariable Long groupId,
             @RequestHeader("Authorization") String authHeader
     ) {
         Long currentUserId = userService.extractUserId(authHeader);
-        return membershipService.getMembershipStatus(groupId, currentUserId);
+        MembershipStatusResponse resp =
+                membershipService.getMembershipStatus(groupId, currentUserId);
+        if (resp == null) {
+            resp = new MembershipStatusResponse();
+        }
+        return ResponseEntity.ok(resp);
     }
 
     @GetMapping
@@ -164,5 +181,17 @@ public class GroupController {
         Long currentUserId = userService.extractUserId(authHeader);
         GroupDetailResponse detail = groupService.getGroupDetails(groupId, currentUserId);
         return ResponseEntity.ok(detail);
+    }
+
+    @PutMapping("/{groupId}/settings")
+    public ResponseEntity<GroupResponse> updateSettings(
+            @PathVariable Long groupId,
+            @RequestBody GroupSettingsRequest req,
+            @RequestHeader("Authorization") String authHeader
+    ) {
+        Long currentUserId = userService.extractUserId(authHeader);
+        Group updated = groupService.updateGroupSettings(groupId, currentUserId, req);
+
+        return ResponseEntity.ok(GroupResponse.fromEntity(updated));
     }
 }

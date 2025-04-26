@@ -1,1 +1,1 @@
-[]
+[{"name":"com.vojavy.AlmAgoraHub.service.group.GroupService","methods":[{"name":"findGroupsByDomainAndTopics","signature":"findGroupsByDomainAndTopics(java.lang.Long, java.lang.String)","comment":"Найти по домену и топикам"}]}]

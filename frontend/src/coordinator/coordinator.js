@@ -56,11 +56,23 @@ export default function createCoordinator(router) {
                 router.push('/app/groups');        // реальная страница для авторизованных
             }
         },
-        navigateToGroup(id) {
-            router.push(`/app/groups/${id}`);    // детальная страница конкретной группы
-        },
         navigateToCreateGroup() {
             router.push('/app/groups/create')
         },
+        navigateToGroup(id) {
+            router.push(`/app/groups/${id}`);    // детальная страница конкретной группы
+        },
+        navigateToGroupMembers(groupId) {
+            router.push(`/app/groups/${groupId}/members`);
+        },
+        navigateToGroupCalendar(groupId) {
+            router.push(`/app/groups/${groupId}/calendar`);
+        },
+        navigateToGroupSettings(groupId) {
+            router.push(`/app/groups/${groupId}/settings`);
+        },
+        refreshPage() {
+            router.go(0);
+        }
     }
 }

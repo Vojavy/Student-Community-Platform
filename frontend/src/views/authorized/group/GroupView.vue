@@ -1,29 +1,37 @@
 <template>
   <div class="p-6 bg-secondary rounded-lg shadow space-y-6">
-    <!-- Заголовок и кнопка действия -->
+    <!-- Header with actions -->
     <div class="flex justify-between items-center">
       <h2 class="text-2xl font-semibold">{{ group.name }}</h2>
-      <div>
-        <!-- Если текущий пользователь — владелец -->
+      <div class="space-x-2">
+        <!-- Owner can delete -->
         <button
             v-if="isOwner"
-            @click="$emit('delete')"
+            @click="onDelete"
             class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition"
         >
           {{ t('groups.deleteGroup') }}
         </button>
-        <!-- Иначе, если участник -->
+        <!-- Member can leave -->
         <button
             v-else-if="isMember"
-            @click="$emit('leave')"
+            @click="onLeave"
             class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition"
         >
           {{ t('groups.leave') }}
         </button>
+        <!-- Non-member in public group can join -->
+        <button
+            v-else-if="!isMember && group.isPublic"
+            @click="onJoin"
+            class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
+        >
+          {{ t('groups.join') }}
+        </button>
       </div>
     </div>
 
-    <!-- Метаданные группы -->
+    <!-- Group metadata -->
     <div class="flex flex-wrap gap-4 text-sm text-text/70">
       <span>{{ t('groups.createdAt') }}: {{ formattedDate }}</span>
       <span>
@@ -31,15 +39,15 @@
         <span v-if="group.domain">{{ group.domain.domainName }}</span>
         <span v-else>—</span>
       </span>
-      <span :class="group.public ? 'text-green-600' : 'text-red-600'">
-        {{ group.public ? t('groups.public') : t('groups.private') }}
+      <span :class="group.isPublic ? 'text-green-600' : 'text-red-600'">
+        {{ group.isPublic ? t('groups.public') : t('groups.private') }}
       </span>
     </div>
 
-    <!-- Описание -->
+    <!-- Description -->
     <p class="text-text">{{ group.description }}</p>
 
-    <!-- Теги -->
+    <!-- Tags -->
     <div v-if="Array.isArray(group.topics) && group.topics.length" class="flex flex-wrap gap-2">
       <span
           v-for="tag in group.topics"
@@ -50,46 +58,44 @@
       </span>
     </div>
 
-    <!-- Владелец, админы, помощники -->
+    <!-- Owner, Admins, Helpers -->
     <div class="space-y-4 text-text">
       <div>
         <strong>{{ t('groups.owner') }}:</strong>
-        {{ group.owner.firstName }} {{ group.owner.lastName }}
+        {{ group.owner.name }}
       </div>
-
       <div v-if="group.admins?.length">
         <strong>{{ t('groups.admins') }}:</strong>
-        <span v-for="(u, i) in group.admins" :key="u.userId">
-          {{ u.firstName }} {{ u.lastName }}<span v-if="i+1<group.admins.length">, </span>
+        <span v-for="(u, i) in group.admins" :key="u.id">
+          {{ u.name }}<span v-if="i+1 < group.admins.length">, </span>
         </span>
       </div>
-
       <div v-if="group.helpers?.length">
         <strong>{{ t('groups.helpers') }}:</strong>
-        <span v-for="(u, i) in group.helpers" :key="u.userId">
-          {{ u.firstName }} {{ u.lastName }}<span v-if="i+1<group.helpers.length">, </span>
+        <span v-for="(u, i) in group.helpers" :key="u.id">
+          {{ u.name }}<span v-if="i+1 < group.helpers.length">, </span>
         </span>
       </div>
     </div>
 
-    <!-- Список участников -->
+    <!-- Members list -->
     <div v-if="members.length" class="space-y-1">
       <strong>{{ t('groups.members') }}:</strong>
       <ul class="list-disc list-inside ml-4">
         <li
-            v-for="m in members"
-            :key="m.id"
+            v-for="member in members"
+            :key="member.id"
             class="flex items-center justify-between"
         >
-          <!-- Кликабельное имя -->
           <button
-              @click="goToUser(m.user.id)"
+              @click="goToUser(member.user.id)"
               class="text-accent-primary hover:underline"
           >
-            {{ m.user.name }}
+            {{ member.user.name }}
           </button>
-          <!-- Опционально: показать роль участника -->
-          <span class="text-text/60 text-xs">{{ t(`groups.role.${m.role}`) }}</span>
+          <span class="text-text/60 text-xs">
+            {{ t(`groups.role.${member.role}`) }}
+          </span>
         </li>
       </ul>
     </div>
@@ -97,32 +103,59 @@
 </template>
 
 <script setup>
-import { defineProps, computed } from 'vue'
+import { inject, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { inject } from 'vue'
 import { getUserIdFromToken } from '@/utils/jwt/getUserIdFromToken'
+import createGroupModel from '@/models/groupModel'
+import {
+  joinGroupIntent,
+  leaveGroupIntent,
+  deleteGroupIntent
+} from '@/intents/groupIntents'
+import { handleGroupIntent } from '@/actions/groupActions'
 
 const { t } = useI18n()
 const coordinator = inject('coordinator')
+const group = inject('group')
+const members = inject('members')
+const status = inject('status')
 
-const props = defineProps({
-  group:    Object,
-  members:  Array,
-  isMember: Boolean
-})
+const model = createGroupModel()
 
-// Определяем, владелец ли текущий пользователь
+const isMember = computed(() => status.value === 'approved')
 const currentUserId = getUserIdFromToken()
-const isOwner = computed(() => props.group.owner?.userId === currentUserId)
+const isOwner = computed(() => group.value.owner.id === currentUserId)
 
-// Форматирование даты создания
 const formattedDate = computed(() =>
-    props.group.createdAt
-        ? new Date(props.group.createdAt).toLocaleDateString()
+    group.value.createdAt
+        ? new Date(group.value.createdAt).toLocaleDateString()
         : ''
 )
 
-// Переход на страницу пользователя
+async function onJoin() {
+  await handleGroupIntent(
+      joinGroupIntent(group.value.id),
+      { model, coordinator }
+  )
+  coordinator.refreshPage()
+}
+
+async function onLeave() {
+  await handleGroupIntent(
+      leaveGroupIntent(group.value.id),
+      { model, coordinator }
+  )
+  coordinator.refreshPage()
+}
+
+async function onDelete() {
+  await handleGroupIntent(
+      deleteGroupIntent(group.value.id),
+      { model, coordinator }
+  )
+  coordinator.navigateToGroups()
+}
+
 function goToUser(userId) {
   coordinator.navigateToUser(userId)
 }
