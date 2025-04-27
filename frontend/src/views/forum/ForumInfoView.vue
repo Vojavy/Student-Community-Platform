@@ -2,6 +2,7 @@
 <template>
   <div class="space-y-6">
     <!-- Filters grid: Name, Domain, Visibility, Sort -->
+<!--    TODO Добавить фильтрацию по закрытости форума. Добавить по решенности вопроса-->
     <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
       <!-- by name -->
       <input
@@ -193,6 +194,7 @@ function changePage(n) {
   load()
 }
 function goDetails(id) {
+  console.log('goDetails', id)
   coord.navigateToForum(id)
 }
 function formatDate(s) {

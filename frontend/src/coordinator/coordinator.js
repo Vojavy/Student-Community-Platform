@@ -77,12 +77,14 @@ export default function createCoordinator(router) {
         navigateToGroupEditPost(groupId, postId) {
             router.push(`/app/groups/${groupId}/post-edit/${postId}`)
         },
-        navigateToForum() {
+        navigateToForum(id = null) {
             const userId = getUserIdFromToken();
+            console.log('User ID:', userId)
+            console.log('Forum ID:', id)
             if (userId) {
-                router.push('/app/forum');
+                id !== null ? router.push(`/app/forum/${id}`) : router.push('/app/forum');
             } else {
-                router.push('/forum');
+                id !== null ? router.push(`/forum/${id}`) : router.push('/forum');
             }
         },
         navigateToForumPublic() {

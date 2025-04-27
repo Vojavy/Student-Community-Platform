@@ -26,11 +26,11 @@ import GroupView            from '@/views/authorized/group/GroupView.vue'
 import GroupPostsView       from '@/views/authorized/group/GroupPostsView.vue'
 import GroupNewPostView     from '@/views/authorized/group/GroupNewPostView.vue'
 
-import PublicForumWrapper   from '@/views/forum/public/PublicForumWrapper.vue'
+import PublicForumsWrapper   from '@/views/forum/public/PublicForumsWrapper.vue'
 import ForumSearchView      from '@/views/forum/ForumSearchView.vue'
 import ForumInfoView        from '@/views/forum/ForumInfoView.vue'
 
-import ForumWrapper         from '@/views/forum/authorized/ForumWrapper.vue'
+import ForumsWrapper         from '@/views/forum/authorized/ForumsWrapper.vue'
 import ForumFollowingView   from '@/views/forum/authorized/ForumFollowingView.vue'
 import ForumArchivedView    from '@/views/forum/authorized/ForumArchivedView.vue'
 import ForumBannedView      from '@/views/forum/authorized/ForumBannedView.vue'
@@ -40,6 +40,8 @@ import { checkTokenIntent } from '@/iam/intents/authIntents'
 import { handleAuthIntent } from '@/iam/actions/authActions'
 import createAuthModel      from '@/iam/models/authModel'
 import createCoordinator    from '@/coordinator/coordinator'
+import ForumDetailPublicView from "@/views/forum/public/ForumDetailPublicView.vue";
+import ForumDetailView from "@/views/forum/authorized/ForumDetailView.vue";
 
 const routes = [
     // --- Публичная часть ---
@@ -60,18 +62,19 @@ const routes = [
                     next()
                 }
             },
-            { path: 'groups',        name: 'groups-blocked', component: GroupsBlockedView },
-            { path: 'access-denied', name: 'access-denied',  component: AccessDeniedView },
+            { path: 'groups',        name: 'groups-blocked', component: GroupsBlockedView, meta: { requiresUnauth: true }  },
+            { path: 'access-denied', name: 'access-denied',  component: AccessDeniedView, meta: { requiresUnauth: true }  },
 
             // Публичный форум
             {
-                path: 'forum',
-                component: PublicForumWrapper,
+                path: 'forum/',
+                component: PublicForumsWrapper,
                 children: [
-                    { path: '',     name: 'forum-search-public', component: ForumSearchView },
-                    { path: 'info', name: 'forum-info-public',   component: ForumInfoView }
+                    {path: '',         name: 'forum-search-public', component: ForumSearchView, meta: { requiresUnauth: true }  },
+                    {path: 'info',     name: 'forum-info-public',   component: ForumInfoView, meta: { requiresUnauth: true }  },
                 ]
-            }
+            },
+            {path: ':id', name: 'forum-public', component: ForumDetailPublicView, meta: { requiresUnauth: true }  }
         ]
     },
 
@@ -112,19 +115,19 @@ const routes = [
 
             // Форум (авторизованная часть)
             {
-                path: 'app/forum',
-                component: ForumWrapper,
+                path: 'app/forum/',
+                component: ForumsWrapper,
                 meta: { requiresAuth: true },
                 children: [
                     { path: '',          name: 'forum-search',    component: ForumSearchView },
                     { path: 'following', name: 'forum-following', component: ForumFollowingView },
                     { path: 'info',      name: 'forum-info',      component: ForumInfoView },
                     { path: 'archived',  name: 'forum-archived',  component: ForumArchivedView },
-                    { path: 'banned',    name: 'forum-banned',    component: ForumBannedView }
+                    { path: 'banned',    name: 'forum-banned',    component: ForumBannedView },
                 ]
             },
             { path: 'app/forum/create', name: 'forum-create', component: ForumCreateView, meta: { requiresAuth: true } },
-
+            { path: 'app/forum/:id',    name: 'forum',        component: ForumDetailView, meta: { requiresAuth: true } },
             // catch-all
             { path: '/:pathMatch(.*)*', redirect: '/' }
         ]

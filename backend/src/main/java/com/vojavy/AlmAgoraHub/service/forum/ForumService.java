@@ -20,6 +20,7 @@ import com.vojavy.AlmAgoraHub.service.user.RoleService;
 import com.vojavy.AlmAgoraHub.service.user.UserService;
 import org.springframework.data.domain.*;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -90,6 +91,63 @@ public class ForumService {
         forum.setAllowedRoles(roles);
 
         return forumRepo.save(forum);
+    }
+
+    public void updateForum(Integer forumId, CreateForumRequest req, Long actorUserId) {
+
+        User user = userService.findById(actorUserId)
+                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "User not found"));
+
+        Forum forum = forumRepo.findById(forumId)
+                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Forum not found"));
+
+        if (!forum.getCreatedBy().equals(user) && !user.getRoles().contains(RoleType.ROLE_ADMIN)) {
+            throw new ResponseStatusException(FORBIDDEN, "Only creators or admins can update forums");
+        };
+
+
+
+        forum.setName(req.getName());
+        forum.setDescription(req.getDescription());
+        forum.setStatus(req.getStatus());
+        forum.setPinned(req.isPinned());
+        forum.setPublic(req.isPublic());
+        forum.setClosed(req.isClosed());
+        try {
+            String topicsJson = objectMapper.writeValueAsString(req.getTopics());
+            forum.setTopics(topicsJson);
+        } catch (JsonProcessingException e) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Invalid topics format: expected array of strings",
+                    e
+            );
+        }
+        forum.setAllowedRoles(req.getAllowedRoles().stream()
+                .map(roleService::getByName)
+                .collect(Collectors.toSet()));
+
+        if (req.getUniversityDomain() == null)
+            forum.setUniversityDomain(null);
+        else {
+            UniversityDomain domain = domainService.getDomainByCode(req.getUniversityDomain())
+                    .orElseThrow(() -> new ResponseStatusException(BAD_REQUEST, "Domain not found"));
+            forum.setUniversityDomain(domain);
+        }
+        forumRepo.save(forum);
+    }
+
+    public void deleteForum(Integer forumId, Long actorUserId) {
+        User user = userService.findById(actorUserId)
+                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "User not found"));
+        Forum forum = forumRepo.findById(forumId)
+                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Forum not found"));
+
+        if (!forum.getCreatedBy().equals(user) && !user.getRoles().contains(RoleType.ROLE_ADMIN)) {
+            throw new ResponseStatusException(FORBIDDEN, "Only creators or admins can delete forums");
+        }
+
+        forumRepo.delete(forum);
     }
 
     public Page<Forum> browseForums(
@@ -270,18 +328,11 @@ public class ForumService {
 
         // closed forums: only domain members
         if (forum.isClosed()
-                && !forum.getUniversityDomain().getId().equals(user.getDomain().getId())) {
+                && !forum.getUniversityDomain().getId().equals(user.getDomain().getId())
+                && !user.getRoles().contains(RoleType.ROLE_ADMIN)) {
             throw new ResponseStatusException(
                     FORBIDDEN,
                     "Forum is closed — only domain members may access");
-        }
-
-        // non-public forums: only domain members
-        if (!forum.isPublic()
-                && !forum.getUniversityDomain().getId().equals(user.getDomain().getId())) {
-            throw new ResponseStatusException(
-                    FORBIDDEN,
-                    "Forum restricted to domain members only");
         }
 
         return forum;

@@ -49,6 +49,28 @@ public class ForumController {
                 ));
     }
 
+    @PutMapping("/{forumId}")
+    public ResponseEntity updateForum(
+            @PathVariable Integer forumId,
+            @Valid @RequestBody CreateForumRequest req,
+            @RequestHeader("Authorization") String authHeader
+    ){
+        Long userId = userService.extractUserId(authHeader);
+        forumService.updateForum(forumId, req, userId);
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/{forumId}")
+    public ResponseEntity<Void> deleteForum(
+            @PathVariable Integer forumId,
+            @RequestHeader("Authorization") String authHeader
+    ){
+        Long userId = userService.extractUserId(authHeader);
+        forumService.deleteForum(forumId, userId);
+        return ResponseEntity.ok().build();
+    }
+
+
     @GetMapping
     public Page<ForumResponse> listForums(
             @RequestHeader("Authorization") String authHeader,

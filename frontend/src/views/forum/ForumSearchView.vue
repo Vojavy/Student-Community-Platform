@@ -223,6 +223,7 @@ function changePage(n) {
 }
 
 function goDetails(id) {
+  console.log('goDetails', id)
   coord.navigateToForum(id)
 }
 
