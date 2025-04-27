@@ -302,4 +302,78 @@ export default {
         edit:           'Edit',
         delete:         'Delete'
     },
+    forum: {
+        filters: {
+            searchPlaceholder: 'Search by name…',
+            topicsPlaceholder: 'Comma-separated topics…',
+            publicAll: 'All',
+            public: 'Public',
+            private: 'Private',
+            domainAll: 'All domains',
+            statusAll: 'All statuses',
+            visibilityAll: 'All'
+        },
+        sort: {
+            newest: 'Newest first',
+            oldest: 'Oldest first'
+        },
+        actions: {
+            showFilters: 'Show filters',
+            hideFilters: 'Hide filters',
+            editForum: 'Edit forum',
+            archive: 'Archive forum',
+            activate: 'Activate forum',
+            deleteForum: 'Delete forum',
+            reply: 'Reply',
+            viewParent: 'View parent post'
+        },
+        columns: {
+            domain: 'Domain',
+            visibility: 'Visibility',
+            public: 'Public',
+            private: 'Private',
+            status: 'Status',
+            pinned: 'Pinned',
+            createdAt: 'Created at'
+        },
+        tabs: {
+            search: 'Search',
+            following: 'Following',
+            info: 'Informational',
+            archived: 'Archived',
+            banned: 'Banned',
+            posts: 'Posts',
+            newPost: 'New Post'
+        },
+        create: {
+            title: 'Create Forum',
+            name: 'Name',
+            namePlaceholder: 'Enter forum name…',
+            description: 'Description',
+            descriptionPlaceholder: 'Enter description…',
+            topics: 'Topics',
+            topicsPlaceholder: 'Comma-separated topics…',
+            topicsHelper: 'Separate topics with commas',
+            domain: 'Domain (optional)',
+            domainNone: 'None',
+            informational: 'Informational',
+            public: 'Public',
+            pinned: 'Pinned',
+            minAllowedRole: 'Min. role to post',
+            roleNone: 'No restriction',
+            minAllowedRoleHelper: 'Users with this role and above can post',
+            allowedUpTo: 'Up to roles',
+            postPlaceholder: 'Your message…',
+            submit: 'Create'
+        },
+        confirm: {
+            deleteForum: 'Are you sure you want to delete this forum?'
+        },
+        status: {
+            active: 'Active',
+            informational: 'Informational',
+            archived: 'Archived',
+            banned: 'Banned'
+        }
+    },
 }

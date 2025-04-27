@@ -302,4 +302,78 @@ export default {
         edit:           'Upravit',
         delete:         'Smazat'
     },
+    forum: {
+        filters: {
+            searchPlaceholder: 'Hledat podle názvu…',
+            topicsPlaceholder: 'Témata oddělená čárkou…',
+            publicAll: 'Vše',
+            public: 'Veřejné',
+            private: 'Soukromé',
+            domainAll: 'Všechny domény',
+            statusAll: 'Všechny stavy',
+            visibilityAll: 'Vše'
+        },
+        sort: {
+            newest: 'Nejnovější',
+            oldest: 'Nejstarší'
+        },
+        actions: {
+            showFilters: 'Zobrazit filtry',
+            hideFilters: 'Skrýt filtry',
+            editForum: 'Upravit fórum',
+            archive: 'Archivovat fórum',
+            activate: 'Aktivovat fórum',
+            deleteForum: 'Smazat fórum',
+            reply: 'Odpovědět',
+            viewParent: 'Zobrazit rodičovský příspěvek'
+        },
+        columns: {
+            domain: 'Doména',
+            visibility: 'Viditelnost',
+            public: 'Veřejné',
+            private: 'Soukromé',
+            status: 'Stav',
+            pinned: 'Připnuté',
+            createdAt: 'Vytvořeno'
+        },
+        tabs: {
+            search: 'Hledání',
+            following: 'Sleduji',
+            info: 'Informační',
+            archived: 'Archivované',
+            banned: 'Zabanované',
+            posts: 'Příspěvky',
+            newPost: 'Nový příspěvek'
+        },
+        create: {
+            title: 'Vytvořit fórum',
+            name: 'Název',
+            namePlaceholder: 'Zadejte název fóra…',
+            description: 'Popis',
+            descriptionPlaceholder: 'Zadejte popis…',
+            topics: 'Témata',
+            topicsPlaceholder: 'Témata oddělená čárkou…',
+            topicsHelper: 'Témata oddělujte čárkou',
+            domain: 'Doména (volitelně)',
+            domainNone: 'Žádná',
+            informational: 'Informační',
+            public: 'Veřejné',
+            pinned: 'Připnout',
+            minAllowedRole: 'Min. role pro psaní',
+            roleNone: 'Bez omezení',
+            minAllowedRoleHelper: 'Uživatelé s touto rolí a výše mohou psát',
+            allowedUpTo: 'Až role',
+            postPlaceholder: 'Váš příspěvek…',
+            submit: 'Vytvořit'
+        },
+        confirm: {
+            deleteForum: 'Opravdu chcete smazat toto fórum?'
+        },
+        status: {
+            active: 'Aktivní',
+            informational: 'Informační',
+            archived: 'Archivované',
+            banned: 'Zabanované'
+        }
+    },
 }

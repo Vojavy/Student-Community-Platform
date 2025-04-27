@@ -303,4 +303,78 @@ export default {
         edit:           'Редактировать',
         delete:         'Удалить'
     },
+    forum: {
+        filters: {
+            searchPlaceholder: 'Поиск по названию…',
+            topicsPlaceholder: 'Темы через запятую…',
+            publicAll: 'Все',
+            public: 'Открытые',
+            private: 'Закрытые',
+            domainAll: 'Все домены',
+            statusAll: 'Все статусы',
+            visibilityAll: 'Все'
+        },
+        sort: {
+            newest: 'Сначала новые',
+            oldest: 'Сначала старые'
+        },
+        actions: {
+            showFilters: 'Показать фильтры',
+            hideFilters: 'Скрыть фильтры',
+            editForum: 'Редактировать форум',
+            archive: 'Архивировать форум',
+            activate: 'Активировать форум',
+            deleteForum: 'Удалить форум',
+            reply: 'Ответить',
+            viewParent: 'Перейти к родительскому сообщению'
+        },
+        columns: {
+            domain: 'Домен',
+            visibility: 'Доступность',
+            public: 'Открытый',
+            private: 'Закрытый',
+            status: 'Статус',
+            pinned: 'Закреплён',
+            createdAt: 'Создан'
+        },
+        tabs: {
+            search: 'Поиск',
+            following: 'Подписки',
+            info: 'Информационные',
+            archived: 'Архивированные',
+            banned: 'Забаненные',
+            posts: 'Посты',
+            newPost: 'Новый пост'
+        },
+        create: {
+            title: 'Создать форум',
+            name: 'Название',
+            namePlaceholder: 'Введите название форума…',
+            description: 'Описание',
+            descriptionPlaceholder: 'Введите описание…',
+            topics: 'Темы',
+            topicsPlaceholder: 'Введите темы через запятую…',
+            topicsHelper: 'Темы разделяются запятыми',
+            domain: 'Домен (опционально)',
+            domainNone: 'Без домена',
+            informational: 'Информационный',
+            public: 'Публичный',
+            pinned: 'Закрепить',
+            minAllowedRole: 'Мин. роль для публикации',
+            roleNone: 'Без ограничения',
+            minAllowedRoleHelper: 'Роли от выбранной и выше могут писать',
+            allowedUpTo: 'До ролей',
+            postPlaceholder: 'Ваше сообщение…',
+            submit: 'Создать'
+        },
+        confirm: {
+            deleteForum: 'Вы уверены, что хотите удалить этот форум?'
+        },
+        status: {
+            active: 'Активный',
+            informational: 'Информационный',
+            archived: 'Архивный',
+            banned: 'Забанен'
+        }
+    },
 }
