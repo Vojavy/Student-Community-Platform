@@ -10,6 +10,7 @@ import java.util.Optional;
 
 import com.vojavy.AlmAgoraHub.config.StagProperties;
 import com.vojavy.AlmAgoraHub.model.UniversityDomain;
+import com.vojavy.AlmAgoraHub.model.user.RoleType;
 import com.vojavy.AlmAgoraHub.model.user.User;
 import com.vojavy.AlmAgoraHub.model.user.UserISData;
 import com.vojavy.AlmAgoraHub.model.user.UserToken;
@@ -17,8 +18,9 @@ import com.vojavy.AlmAgoraHub.dto.responses.StagUserResponse;
 import com.vojavy.AlmAgoraHub.dto.responses.StudentInfoResponse;
 
 import com.vojavy.AlmAgoraHub.service.UniversityDomainService;
-import com.vojavy.AlmAgoraHub.service.User.UserISDataService;
-import com.vojavy.AlmAgoraHub.service.User.UserService;
+import com.vojavy.AlmAgoraHub.service.user.RoleService;
+import com.vojavy.AlmAgoraHub.service.user.UserISDataService;
+import com.vojavy.AlmAgoraHub.service.user.UserService;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
@@ -35,6 +37,7 @@ public class StagService {
     private final UserTokenService userTokenService;
     private final UniversityDomainService universityDomainService;
     private final UserService userService;
+    private final RoleService roleService;
 
     @Autowired
     public StagService(
@@ -44,7 +47,7 @@ public class StagService {
             UserISDataService userISDataService,
             UserTokenService userTokenService,
             UniversityDomainService universityDomainService,
-            UserService userService) {
+            UserService userService, RoleService roleService) {
         this.props = props;
         this.rest = rest;
         this.tokenService = tokenService;
@@ -52,6 +55,7 @@ public class StagService {
         this.userTokenService = userTokenService;
         this.universityDomainService = universityDomainService;
         this.userService = userService;
+        this.roleService = roleService;
     }
 
     @Transactional
@@ -70,6 +74,7 @@ public class StagService {
                 .orElseThrow(() -> new RuntimeException("No such domain: " + domain));
 
         user.setDomain(universityDomain);
+        user.getRoles().add(roleService.getByName(RoleType.ROLE_STUDENT.name()));
         userService.update(user);
 
         UserISData userISData = userISDataService.getByUser(user)

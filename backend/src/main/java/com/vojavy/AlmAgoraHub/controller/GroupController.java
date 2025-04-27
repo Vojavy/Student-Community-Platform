@@ -5,7 +5,7 @@ import com.vojavy.AlmAgoraHub.dto.requests.GroupPostRequest;
 import com.vojavy.AlmAgoraHub.dto.requests.GroupSettingsRequest;
 import com.vojavy.AlmAgoraHub.dto.responses.*;
 import com.vojavy.AlmAgoraHub.model.group.GroupPost;
-import com.vojavy.AlmAgoraHub.service.User.UserService;
+import com.vojavy.AlmAgoraHub.service.user.UserService;
 import com.vojavy.AlmAgoraHub.service.group.GroupService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;

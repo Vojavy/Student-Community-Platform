@@ -34,39 +34,47 @@
 </template>
 
 <script setup>
-import {ref, onMounted, inject} from 'vue'
+import { ref, onMounted, inject, provide, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-import { changeLocaleIntent } from '@/iam/intents/localeIntents.js'
-import { handleLocaleIntent } from '@/iam/actions/localeActions.js'
-import BurgerComponent from '@/components/mobile/BurgerComponent.vue'
-import BottomNavbarComponent from '@/components/mobile/BottomNavbarComponent.vue'
-import { useIsMobile } from '@/utils/device/useIsMobile'
+import { changeLocaleIntent }     from '@/iam/intents/localeIntents.js'
+import { handleLocaleIntent }     from '@/iam/actions/localeActions.js'
+import BurgerComponent            from '@/components/mobile/BurgerComponent.vue'
+import BottomNavbarComponent      from '@/components/mobile/BottomNavbarComponent.vue'
+import { useIsMobile }            from '@/utils/device/useIsMobile'
 
-import NavBarComponent from '@/components/desktop/NavBarComponent.vue'
-import ContainerCentralComponent from '@/components/desktop/ContainerCentralComponent.vue'
+import NavBarComponent            from '@/components/desktop/NavBarComponent.vue'
+import ContainerCentralComponent  from '@/components/desktop/ContainerCentralComponent.vue'
 
-import createAuthModel from "@/iam/models/authModel.js";
-import createLocaleModel from '@/iam/models/localeModel.js'
-import apiClient from "@/utils/api/apiClient.js"
-import {logoutIntent} from "@/iam/intents/authIntents.js";
-import {handleAuthIntent} from "@/iam/actions/authActions.js";
+import createAuthModel            from "@/iam/models/authModel.js";
+import createLocaleModel          from '@/iam/models/localeModel.js'
+import createUserModel            from "@/iam/models/userModel.js";
+import apiClient                  from "@/utils/api/apiClient.js"
+import { logoutIntent }           from "@/iam/intents/authIntents.js";
+import { handleAuthIntent }       from "@/iam/actions/authActions.js";
+import { fetchUserRolesIntent }   from "@/iam/intents/userIntents.js";
+import { handleUserIntent }       from "@/iam/actions/userActions.js";
 
+const { locale, t } = useI18n()
+const lang         = ref(locale.value)
+const coordinator  = inject('coordinator')
 
-const { locale,t } = useI18n()
-const lang = ref(locale.value)
-const coordinator = inject('coordinator')
 const model = {
-  auth: createAuthModel(apiClient),
-  locale: createLocaleModel()
+  auth:   createAuthModel(apiClient),
+  locale: createLocaleModel(),
+  user:   createUserModel(apiClient)
 }
+
+const userRoles = ref([])
+provide('user_roles', userRoles)
 
 onMounted(() => {
   const savedLocale = localStorage.getItem('locale')
   if (savedLocale) {
-    lang.value = savedLocale
+    lang.value   = savedLocale
     locale.value = savedLocale
   }
+  fetchRoles()
 })
 
 const changeLang = async () => {
@@ -75,13 +83,25 @@ const changeLang = async () => {
   await handleLocaleIntent(intent, { model: model.locale })
 }
 
-const goHome = async () => {
-  coordinator.navigateToHome();
+const goHome = () => {
+  coordinator.navigateToHome()
 }
 
 const onLogout = async () => {
-  const intent = logoutIntent();
+  const intent = logoutIntent()
   await handleAuthIntent(intent, { model: model.auth, coordinator })
+}
+
+async function fetchRoles() {
+  try {
+    const roles = await handleUserIntent(
+        fetchUserRolesIntent(),
+        { model: model.user, coordinator }
+    )
+    userRoles.value = Array.isArray(roles) ? roles : []
+  } catch (e) {
+    console.error('Could not fetch user roles', e)
+  }
 }
 
 const isMobile = useIsMobile()

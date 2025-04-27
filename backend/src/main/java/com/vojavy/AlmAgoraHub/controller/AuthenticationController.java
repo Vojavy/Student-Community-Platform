@@ -7,7 +7,7 @@ import com.vojavy.AlmAgoraHub.model.user.User;
 import com.vojavy.AlmAgoraHub.dto.responses.LoginResponse;
 import com.vojavy.AlmAgoraHub.service.authentication.AuthenticationService;
 import com.vojavy.AlmAgoraHub.service.authentication.JwtService;
-import com.vojavy.AlmAgoraHub.service.User.UserService;
+import com.vojavy.AlmAgoraHub.service.user.UserService;
 import com.vojavy.AlmAgoraHub.service.authentication.UserTokenService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;

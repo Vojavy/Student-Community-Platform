@@ -15,5 +15,8 @@ export const handleUserIntent = async (intent, { model }) => {
 
         case 'UPDATE_USER_DETAILS':
             return await model.updateUserDetails(intent.userId, intent.details)
+
+        case 'FETCH_USER_ROLES':
+            return await model.fetchUserRoles(intent.payload)
     }
 }

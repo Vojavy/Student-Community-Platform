@@ -1,17 +1,23 @@
 package com.vojavy.AlmAgoraHub.controller;
 
 import com.vojavy.AlmAgoraHub.dto.requests.UpdateUserRequest;
+import com.vojavy.AlmAgoraHub.dto.responses.RoleResponse;
 import com.vojavy.AlmAgoraHub.dto.responses.UserProfileResponse;
+import com.vojavy.AlmAgoraHub.model.user.RoleType;
+import com.vojavy.AlmAgoraHub.model.user.User;
 import com.vojavy.AlmAgoraHub.model.user.UserDetailsExtended;
 import com.vojavy.AlmAgoraHub.service.authentication.JwtService;
-import com.vojavy.AlmAgoraHub.service.User.UserProfileService;
-import com.vojavy.AlmAgoraHub.service.User.UserService;
+import com.vojavy.AlmAgoraHub.service.user.UserProfileService;
+import com.vojavy.AlmAgoraHub.service.user.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/users")
@@ -53,7 +59,6 @@ public class UserController {
         }
     }
 
-    //TODO Приотправке он почему то сохраняет лишь часть данных
     @PutMapping("/{id}/details")
     public ResponseEntity<?> updateUserDetails(@PathVariable Long id,
                                                @RequestBody UserDetailsExtended details,
@@ -78,6 +83,26 @@ public class UserController {
         return response.map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
+
+    @GetMapping("/roles")
+    public ResponseEntity<List<RoleResponse>> getMyRoles(
+            @RequestHeader("Authorization") String authHeader
+    ) {
+        Long userId = userService.extractUserId(authHeader);
+        if (userId == null) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        return userService.findById(userId)
+                .map(user -> user.getRoles().stream()
+                        .map(role -> RoleResponse.fromEnum(role.getId(), RoleType.fromString(role.getName().name())))
+                        .toList()
+                )
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+    }
+
+
 
     private boolean isAuthorized(Long pathUserId, String token) {
         Long tokenUserId = userService.extractUserId(token);

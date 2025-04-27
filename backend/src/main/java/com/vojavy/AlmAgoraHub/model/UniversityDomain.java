@@ -22,6 +22,14 @@ public class UniversityDomain {
     @Column(name = "admin_email", nullable = false)
     private String adminEmail;
 
+    public UniversityDomain() {}
+
+    public UniversityDomain(String domainName, String domain, String websiteUrl, String adminEmail) {
+        this.domainName = domainName;
+        this.domain = domain;
+        this.websiteUrl = websiteUrl;
+        this.adminEmail = adminEmail;
+    }
     // Getters & Setters
 
     public Long getId() {

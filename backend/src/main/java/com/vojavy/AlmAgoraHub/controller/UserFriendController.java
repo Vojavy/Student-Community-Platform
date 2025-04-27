@@ -4,9 +4,9 @@ import com.vojavy.AlmAgoraHub.dto.responses.FriendResponse;
 import com.vojavy.AlmAgoraHub.dto.responses.UserProfileResponse;
 import com.vojavy.AlmAgoraHub.model.user.User;
 import com.vojavy.AlmAgoraHub.service.authentication.JwtService;
-import com.vojavy.AlmAgoraHub.service.User.UserFriendService;
-import com.vojavy.AlmAgoraHub.service.User.UserProfileService;
-import com.vojavy.AlmAgoraHub.service.User.UserService;
+import com.vojavy.AlmAgoraHub.service.user.UserFriendService;
+import com.vojavy.AlmAgoraHub.service.user.UserProfileService;
+import com.vojavy.AlmAgoraHub.service.user.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 

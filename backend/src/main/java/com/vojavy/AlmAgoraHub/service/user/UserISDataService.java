@@ -1,4 +1,4 @@
-package com.vojavy.AlmAgoraHub.service.User;
+package com.vojavy.AlmAgoraHub.service.user;
 
 import com.vojavy.AlmAgoraHub.model.user.User;
 import com.vojavy.AlmAgoraHub.model.user.UserISData;

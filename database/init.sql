@@ -212,11 +212,11 @@ create table user_group_memberships
     status    varchar(50) not null
         constraint user_group_memberships_status_check
             check ((status)::text = ANY
-                   (ARRAY [('approved'::character varying)::text, ('pending'::character varying)::text, ('banned'::character varying)::text])),
+                   ((ARRAY ['approved'::character varying, 'pending'::character varying, 'banned'::character varying])::text[])),
     role      varchar(50) not null
         constraint user_group_memberships_role_check
             check ((role)::text = ANY
-                   (ARRAY ['owner'::text, 'admin'::text, 'creator'::text, 'helper'::text, 'member'::text, 'invited'::text, 'pending'::text])),
+                   ((ARRAY ['owner'::character varying, 'admin'::character varying, 'editor'::character varying, 'member'::character varying, 'invited'::character varying, 'helper'::character varying])::text[])),
     joined_at timestamp default now(),
     constraint unique_user_in_group
         unique (user_id, group_id)
@@ -277,16 +277,16 @@ create table forums
     created_by           integer                                         not null
         references users
             on delete cascade,
-    university_domain_id integer                                         not null
+    university_domain_id integer
         references university_domains
             on delete cascade,
-    created_at           timestamp   default now(),
+    created_at           timestamp   default now()                       not null,
     status               varchar(50) default 'active'::character varying not null
         constraint forums_status_check
             check ((status)::text = ANY
                    (ARRAY [('active'::character varying)::text, ('closed'::character varying)::text])),
-    is_pinned            boolean     default false,
-    is_public            boolean     default true,
+    is_pinned            boolean     default false                       not null,
+    is_public            boolean     default true                        not null,
     is_closed            boolean     default false                       not null
 );
 

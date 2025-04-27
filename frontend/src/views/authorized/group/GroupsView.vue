@@ -158,7 +158,8 @@
     <!-- Floating Add -->
     <button
         @click="coordinator.navigateToCreateGroup()"
-        class="fixed bottom-6 right-6 bg-accent-primary text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center hover:bg-accent-primary/90 transition"
+        class="fixed right-6 bg-accent-primary text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center hover:bg-accent-primary/90 transition"
+        :class="isMobile ? 'bottom-20' : 'bottom-6'"
         aria-label="Create Group"
     >
       <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none"
@@ -185,6 +186,8 @@ import { handleDomainIntent } from '@/iam/actions/domainActions'
 const { t } = useI18n()
 const coordinator = inject('coordinator')
 
+import { useIsMobile } from '@/utils/device/useIsMobile'
+
 // models
 const groupModel = createGroupModel()
 const domainModel = createDomainModel()
@@ -196,6 +199,7 @@ const searchMy = ref('')
 const myPage = ref(0)
 const mySize = ref(25)
 const myTotalPages = ref(1)
+const isMobile = useIsMobile()
 
 const filteredMyGroups = computed(() => {
   const term = searchMy.value.toLowerCase()

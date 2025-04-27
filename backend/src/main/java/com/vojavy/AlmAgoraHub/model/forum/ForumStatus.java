@@ -2,5 +2,8 @@ package com.vojavy.AlmAgoraHub.model.forum;
 
 public enum ForumStatus {
     active,
-    closed
+    informational,
+    archived,
+    banned,
+    resolved
 }

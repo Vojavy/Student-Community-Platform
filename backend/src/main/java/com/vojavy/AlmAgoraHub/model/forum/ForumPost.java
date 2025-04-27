@@ -37,5 +37,69 @@ public class ForumPost {
     private List<ForumPost> replies;
 
     // getters + setters omitted for brevity
-    // ...
+
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    public Forum getForum() {
+        return forum;
+    }
+
+    public void setForum(Forum forum) {
+        this.forum = forum;
+    }
+
+    public User getAuthor() {
+        return author;
+    }
+
+    public void setAuthor(User author) {
+        this.author = author;
+    }
+
+    public String getContent() {
+        return content;
+    }
+
+    public void setContent(String content) {
+        this.content = content;
+    }
+
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Instant createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public Instant getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(Instant updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
+    public ForumPost getParentPost() {
+        return parentPost;
+    }
+
+    public void setParentPost(ForumPost parentPost) {
+        this.parentPost = parentPost;
+    }
+
+    public List<ForumPost> getReplies() {
+        return replies;
+    }
+
+    public void setReplies(List<ForumPost> replies) {
+        this.replies = replies;
+    }
 }

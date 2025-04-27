@@ -25,9 +25,6 @@ export default function createCoordinator(router) {
         navigateToUserStag() {
             router.push('/user/stag')
         },
-        navigateToForum() {
-            router.push('/forum')
-        },
         navigateToCalendar() {
             router.push('/calendar')
         },
@@ -79,6 +76,41 @@ export default function createCoordinator(router) {
         },
         navigateToGroupEditPost(groupId, postId) {
             router.push(`/app/groups/${groupId}/post-edit/${postId}`)
+        },
+        navigateToForum() {
+            const userId = getUserIdFromToken();
+            if (userId) {
+                router.push('/app/forum');
+            } else {
+                router.push('/forum');
+            }
+        },
+        navigateToForumPublic() {
+            router.push('/forum');
+        },
+        navigateToForumAuth() {
+            router.push('/app/forum');
+        },
+        navigateToForumSearch() {
+            this.navigateToForum();
+        },
+        navigateToForumFollowing() {
+            router.push('/app/forum/following');
+        },
+        navigateToForumInfo() {
+            router.push('/app/forum/info');
+        },
+        navigateToForumArchived() {
+            router.push('/app/forum/archived');
+        },
+        navigateToForumBanned() {
+            router.push('/app/forum/banned');
+        },
+        navigateToForumCreate() {
+            router.push('/app/forum/create');
+        },
+        navigateToForumDetails(id) {
+            router.push({ name: 'forum-info', params: { forumId: id } })
         },
         refreshPage() {
             router.go(0);

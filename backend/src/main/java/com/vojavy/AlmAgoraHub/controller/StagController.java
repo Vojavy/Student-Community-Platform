@@ -1,7 +1,7 @@
 // src/main/java/com/vojavy/AlmAgoraHub/controller/StagController.java
 package com.vojavy.AlmAgoraHub.controller;
 
-import com.vojavy.AlmAgoraHub.service.User.UserService;
+import com.vojavy.AlmAgoraHub.service.user.UserService;
 
 import com.vojavy.AlmAgoraHub.service.authentication.StagService;
 import com.vojavy.AlmAgoraHub.model.user.User;

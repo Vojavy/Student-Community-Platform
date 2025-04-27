@@ -6,10 +6,10 @@ export default function createGroupModel() {
     return {
         // === groups: listing & browsing ===
         async fetchUserGroups(page = 0, size = 25) {
-            const resp = await apiClient.get('/groups/user', {
+            const response = await apiClient.get('/groups/user', {
                 params: { page, size }
             })
-            return resp.data
+            return response.data
         },
 
         async fetchBrowseGroups(filters) {
@@ -17,13 +17,13 @@ export default function createGroupModel() {
             if (Array.isArray(params.topics)) {
                 params.topics = JSON.stringify(params.topics)
             }
-            const resp = await apiClient.get('/groups', { params })
-            return resp.data
+            const response = await apiClient.get('/groups', { params })
+            return response.data
         },
 
         // === group: single‐group operations ===
         async createGroup(groupData) {
-            const resp = await apiClient.post('/groups', {
+            const response = await apiClient.post('/groups', {
                 name: groupData.name,
                 description: groupData.description,
                 topics: JSON.stringify(groupData.topics),
@@ -32,12 +32,12 @@ export default function createGroupModel() {
                 minRoleForEvents: groupData.minRoleForEvents,
                 domain: groupData.domain
             })
-            return resp.data
+            return response.data
         },
 
         async fetchGroup(groupId) {
-            const resp = await apiClient.get(`/groups/${groupId}`)
-            return resp.data
+            const response = await apiClient.get(`/groups/${groupId}`)
+            return response.data
         },
 
         async updateGroupSettings(groupId, settingsData) {
@@ -48,11 +48,11 @@ export default function createGroupModel() {
                         ? settingsData.topics
                         : JSON.stringify(settingsData.topics)
             }
-            const resp = await apiClient.put(
+            const response = await apiClient.put(
                 `/groups/${groupId}/settings`,
                 payload
             )
-            return resp.data
+            return response.data
         },
 
         async deleteGroup(groupId) {
@@ -61,8 +61,8 @@ export default function createGroupModel() {
 
         // === groupMembers: member management ===
         async joinGroup(groupId) {
-            const resp = await apiClient.post(`/groups/${groupId}/join`)
-            return resp.data
+            const response = await apiClient.post(`/groups/${groupId}/join`)
+            return response.data
         },
 
         async leaveGroup(groupId) {
@@ -70,21 +70,21 @@ export default function createGroupModel() {
         },
 
         async inviteUser(groupId, targetUserId, role) {
-            const resp = await apiClient.post(
+            const response = await apiClient.post(
                 `/groups/${groupId}/invite`,
                 null,
                 { params: { targetUserId, role } }
             )
-            return resp.data
+            return response.data
         },
 
         async fetchMembers(groupId, status = null) {
             const params = status ? { status } : {}
-            const resp = await apiClient.get(
+            const response = await apiClient.get(
                 `/groups/${groupId}/members`,
                 { params }
             )
-            return resp.data
+            return response.data
         },
 
         async fetchMemberStatus(groupId, targetUserId) {
@@ -92,26 +92,26 @@ export default function createGroupModel() {
                 targetUserId == null
                     ? `/groups/${groupId}/members/status`
                     : `/groups/${groupId}/members/${targetUserId}/status`
-            const resp = await apiClient.get(path)
-            return resp.data
+            const response = await apiClient.get(path)
+            return response.data
         },
 
         async processJoinRequest(groupId, targetUserId, approve) {
-            const resp = await apiClient.put(
+            const response = await apiClient.put(
                 `/groups/${groupId}/members/${targetUserId}/status`,
                 null,
                 { params: { approve } }
             )
-            return resp.data
+            return response.data
         },
 
         async changeMemberRole(groupId, targetUserId, newRole) {
-            const resp = await apiClient.put(
+            const response = await apiClient.put(
                 `/groups/${groupId}/members/${targetUserId}/role`,
                 null,
                 { params: { newRole } }
             )
-            return resp.data
+            return response.data
         },
 
         async removeMember(groupId, targetUserId) {

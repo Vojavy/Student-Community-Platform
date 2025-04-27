@@ -22,23 +22,34 @@ import GroupWrapper         from '@/views/authorized/group/GroupWrapper.vue'
 import GroupMembersView     from '@/views/authorized/group/GroupMembersView.vue'
 import GroupCalendarView    from '@/views/authorized/group/GroupCalendarView.vue'
 import GroupSettingsView    from '@/views/authorized/group/GroupSettingsView.vue'
+import GroupView            from '@/views/authorized/group/GroupView.vue'
+import GroupPostsView       from '@/views/authorized/group/GroupPostsView.vue'
+import GroupNewPostView     from '@/views/authorized/group/GroupNewPostView.vue'
+
+import PublicForumWrapper   from '@/views/forum/public/PublicForumWrapper.vue'
+import ForumSearchView      from '@/views/forum/ForumSearchView.vue'
+import ForumInfoView        from '@/views/forum/ForumInfoView.vue'
+
+import ForumWrapper         from '@/views/forum/authorized/ForumWrapper.vue'
+import ForumFollowingView   from '@/views/forum/authorized/ForumFollowingView.vue'
+import ForumArchivedView    from '@/views/forum/authorized/ForumArchivedView.vue'
+import ForumBannedView      from '@/views/forum/authorized/ForumBannedView.vue'
+import ForumCreateView      from '@/views/forum/authorized/ForumCreateView.vue'
 
 import { checkTokenIntent } from '@/iam/intents/authIntents'
 import { handleAuthIntent } from '@/iam/actions/authActions'
 import createAuthModel      from '@/iam/models/authModel'
 import createCoordinator    from '@/coordinator/coordinator'
-import GroupView from "@/views/authorized/group/GroupView.vue";
-import GroupPostsView from "@/views/authorized/group/GroupPostsView.vue";
-import GroupNewPostView from "@/views/authorized/group/GroupNewPostView.vue";
 
 const routes = [
+    // --- Публичная часть ---
     {
         path: '/',
         component: PublicLayout,
         children: [
-            {path: '',        name: 'landing',        component: LandingView },
-            {path: 'login',   name: 'login',          component: LoginView,        meta: { requiresUnauth: true }},
-            {path: 'register',name: 'register',       component: RegistrationView, meta: { requiresUnauth: true }},
+            { path: '',        name: 'landing',             component: LandingView },
+            { path: 'login',   name: 'login',               component: LoginView,        meta: { requiresUnauth: true } },
+            { path: 'register',name: 'register',            component: RegistrationView, meta: { requiresUnauth: true } },
             {
                 path: 'verify',
                 name: 'verify',
@@ -49,41 +60,73 @@ const routes = [
                     next()
                 }
             },
-            {path: 'groups',         name: 'groups-blocked', component: GroupsBlockedView},
-            {path: 'access-denied',  name: 'access-denied',  component: AccessDeniedView}
+            { path: 'groups',        name: 'groups-blocked', component: GroupsBlockedView },
+            { path: 'access-denied', name: 'access-denied',  component: AccessDeniedView },
+
+            // Публичный форум
+            {
+                path: 'forum',
+                component: PublicForumWrapper,
+                children: [
+                    { path: '',     name: 'forum-search-public', component: ForumSearchView },
+                    { path: 'info', name: 'forum-info-public',   component: ForumInfoView }
+                ]
+            }
         ]
     },
+
+    // --- Авторизованная часть ---
     {
         path: '/',
         component: HomeLayout,
         children: [
-            {path: 'home', name: 'home', component: HomeView, meta: {requiresAuth: true}},
+            { path: 'home', name: 'home', component: HomeView, meta: { requiresAuth: true } },
+
+            // Профиль
             {
                 path: 'user',
                 component: UserLayout,
                 children: [
-                    {path: ':id', name: 'user-profile', component: UserProfileWrapper, meta: {requiresAuth: true}},
-                    {path: 'settings', name: 'user-settings', component: UserSettingsView, meta: {requiresAuth: true}},
-                    {path: 'stag', name: 'user-stag', component: UserStagView, meta: {requiresAuth: true}}
+                    { path: ':id',      name: 'user-profile',  component: UserProfileWrapper, meta: { requiresAuth: true } },
+                    { path: 'settings', name: 'user-settings', component: UserSettingsView,   meta: { requiresAuth: true } },
+                    { path: 'stag',     name: 'user-stag',     component: UserStagView,       meta: { requiresAuth: true } }
                 ]
             },
-            {path: 'app/groups', name: 'groups', component: GroupsView, meta: {requiresAuth: true}},
-            {path: 'app/groups/create', name: 'create-group', component: CreateGroupView, meta: {requiresAuth: true}},
 
+            // Группы
+            { path: 'app/groups',        name: 'groups',       component: GroupsView,      meta: { requiresAuth: true } },
+            { path: 'app/groups/create', name: 'create-group', component: CreateGroupView, meta: { requiresAuth: true } },
             {
-                path: 'app/groups/:groupId', component: GroupWrapper, meta: {requiresAuth: true}, children: [
-                    {path: '', name: 'group-overview', component: GroupView},
-                    {path: 'members', name: 'group-members', component: GroupMembersView},
-                    {path: 'calendar', name: 'group-calendar', component: GroupCalendarView},
-                    {path: 'settings', name: 'group-settings', component: GroupSettingsView},
-                    {path: 'posts', name: 'group-posts', component: GroupPostsView},
-                    {path: 'post-edit', name: 'group-new-post', component: GroupNewPostView},
+                path: 'app/groups/:groupId',
+                component: GroupWrapper,
+                meta: { requiresAuth: true },
+                children: [
+                    { path: '',           name: 'group-overview',   component: GroupView },
+                    { path: 'members',    name: 'group-members',    component: GroupMembersView },
+                    { path: 'calendar',   name: 'group-calendar',   component: GroupCalendarView },
+                    { path: 'settings',   name: 'group-settings',   component: GroupSettingsView },
+                    { path: 'posts',      name: 'group-posts',      component: GroupPostsView },
+                    { path: 'post-edit',  name: 'group-new-post',   component: GroupNewPostView }
                 ]
             },
+
+            // Форум (авторизованная часть)
             {
-                path: '/:pathMatch(.*)*',
-                redirect: '/'
-            }
+                path: 'app/forum',
+                component: ForumWrapper,
+                meta: { requiresAuth: true },
+                children: [
+                    { path: '',          name: 'forum-search',    component: ForumSearchView },
+                    { path: 'following', name: 'forum-following', component: ForumFollowingView },
+                    { path: 'info',      name: 'forum-info',      component: ForumInfoView },
+                    { path: 'archived',  name: 'forum-archived',  component: ForumArchivedView },
+                    { path: 'banned',    name: 'forum-banned',    component: ForumBannedView }
+                ]
+            },
+            { path: 'app/forum/create', name: 'forum-create', component: ForumCreateView, meta: { requiresAuth: true } },
+
+            // catch-all
+            { path: '/:pathMatch(.*)*', redirect: '/' }
         ]
     }
 ]
@@ -102,10 +145,8 @@ router.beforeEach(async (to, from, next) => {
     const coordinator = createCoordinator(router)
 
     if (requiresAuth && !token) {
-        if (to.name === 'groups' || to.name?.startsWith('group-')) {
-            return next({ name: 'groups-blocked' })
-        }
-        return next({ name: 'login' })
+        // если пытаются зайти в группы/форумы без токена
+        return next({ name: 'groups-blocked' })
     }
 
     if (requiresAuth && token) {

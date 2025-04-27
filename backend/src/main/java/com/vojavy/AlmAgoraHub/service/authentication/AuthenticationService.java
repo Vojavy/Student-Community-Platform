@@ -4,11 +4,12 @@ import com.vojavy.AlmAgoraHub.dto.requests.LoginUserRequest;
 import com.vojavy.AlmAgoraHub.dto.requests.RegisterUserRequest;
 import com.vojavy.AlmAgoraHub.dto.VerifyUserDto;
 import com.vojavy.AlmAgoraHub.model.user.Role;
+import com.vojavy.AlmAgoraHub.model.user.RoleType;
 import com.vojavy.AlmAgoraHub.model.user.User;
 import com.vojavy.AlmAgoraHub.model.user.UserDetailsExtended;
 import com.vojavy.AlmAgoraHub.service.EmailService;
-import com.vojavy.AlmAgoraHub.service.User.RoleService;
-import com.vojavy.AlmAgoraHub.service.User.UserService;
+import com.vojavy.AlmAgoraHub.service.user.RoleService;
+import com.vojavy.AlmAgoraHub.service.user.UserService;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
@@ -76,7 +77,7 @@ public class AuthenticationService {
 
         user.setDetails(emptyDetails);
 
-        user.setRoles(Set.of(roleService.getByName("ROLE_LIMITED")));
+        user.setRoles(Set.of(roleService.getByName(RoleType.ROLE_UNVERIFIED.name())));
 
         sendVerificationEmailLocal(user, baseUrl);
         return userService.save(user);
@@ -110,17 +111,19 @@ public class AuthenticationService {
         if (!input.getVerificationCode().equals(user.getVerificationCode())) {
             throw new RuntimeException("Invalid verification code");
         }
+
         user.setActive(true);
         user.setVerificationCode(null);
         user.setVerificationExpires(null);
 
-        Set<Role> newRoles = new HashSet<>();
-        newRoles.add(roleService.getByName("ROLE_USER"));
-        newRoles.add(roleService.getByName("ROLE_LIMITED"));
-        user.setRoles(newRoles);
+        Role userRole = roleService.getByName(RoleType.ROLE_USER.name());
+        Set<Role> roles = new HashSet<>();
+        roles.add(userRole);
+        user.setRoles(roles);
 
         userService.update(user);
     }
+
 
 
     public void resendVerificationEmailLocal(String email, String baseUrl) {

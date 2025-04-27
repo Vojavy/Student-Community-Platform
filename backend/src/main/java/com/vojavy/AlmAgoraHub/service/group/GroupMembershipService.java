@@ -7,7 +7,7 @@ import com.vojavy.AlmAgoraHub.model.group.Group;
 import com.vojavy.AlmAgoraHub.model.group.GroupMembership;
 import com.vojavy.AlmAgoraHub.repository.group.GroupMembershipRepository;
 import com.vojavy.AlmAgoraHub.repository.group.GroupRepository;
-import com.vojavy.AlmAgoraHub.service.User.UserService;
+import com.vojavy.AlmAgoraHub.service.user.UserService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;

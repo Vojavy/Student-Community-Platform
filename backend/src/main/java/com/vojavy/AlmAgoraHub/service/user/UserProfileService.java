@@ -1,4 +1,4 @@
-package com.vojavy.AlmAgoraHub.service.User;
+package com.vojavy.AlmAgoraHub.service.user;
 
 import com.vojavy.AlmAgoraHub.model.user.UserProfileView;
 import com.vojavy.AlmAgoraHub.repository.UserProfileViewRepository;

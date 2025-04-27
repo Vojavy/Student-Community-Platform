@@ -25,3 +25,6 @@ export const updateUserDetailsIntent = (userId, details) => ({
     details
 })
 
+export const fetchUserRolesIntent = () => ({
+    type: 'FETCH_USER_ROLES'
+})

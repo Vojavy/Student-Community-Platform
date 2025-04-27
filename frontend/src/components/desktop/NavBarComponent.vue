@@ -1,34 +1,64 @@
+<!-- src/components/layouts/SidebarNav.vue -->
 <template>
   <nav class="h-full w-1/3 p-4 bg-secondary text-text">
     <ul class="space-y-4">
-      <li><button @click="goHome" class="hover:text-accent-primary">{{ t('navBar.index') }}</button></li>
-      <li><a href="#" class="hover:text-accent-primary">{{ t('navBar.forum') }}</a></li>
-      <li><a href="#" class="hover:text-accent-primary">{{ t('navBar.actions') }}</a></li>
-      <li><button @click="goProfile" class="hover:text-accent-primary">{{ t('navBar.profile') }}</button></li>
-      <li><a href="#" class="hover:text-accent-primary">{{ t('navBar.market') }}</a></li>
-      <li><a href="#" class="hover:text-accent-primary">{{ t('navBar.calendar') }}</a></li>
-      <li><a href="#" class="hover:text-accent-primary">{{ t('navBar.messages') }}</a></li>
-      <li><button @click="goGroups" class="hover:text-accent-primary">{{ t('navBar.groups') }}</button></li>
+      <li>
+        <button @click="goHome" class="hover:text-accent-primary">
+          {{ t('navBar.index') }}
+        </button>
+      </li>
+      <li>
+        <button @click="goForum" class="hover:text-accent-primary">
+          {{ t('navBar.forum') }}
+        </button>
+      </li>
+      <li>
+        <button @click="goActions" class="hover:text-accent-primary">
+          {{ t('navBar.actions') }}
+        </button>
+      </li>
+      <li>
+        <button @click="goProfile" class="hover:text-accent-primary">
+          {{ t('navBar.profile') }}
+        </button>
+      </li>
+      <li>
+        <button @click="goMarket" class="hover:text-accent-primary">
+          {{ t('navBar.market') }}
+        </button>
+      </li>
+      <li>
+        <button @click="goCalendar" class="hover:text-accent-primary">
+          {{ t('navBar.calendar') }}
+        </button>
+      </li>
+      <li>
+        <button @click="goMessages" class="hover:text-accent-primary">
+          {{ t('navBar.messages') }}
+        </button>
+      </li>
+      <li>
+        <button @click="goGroups" class="hover:text-accent-primary">
+          {{ t('navBar.groups') }}
+        </button>
+      </li>
     </ul>
   </nav>
 </template>
 
 <script setup>
-import { useI18n } from "vue-i18n";
-import {inject} from "vue";
-const coordinator = inject("coordinator")
+import { inject } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
+const coordinator = inject('coordinator')
 
-const goProfile = async () => {
-  coordinator.navigateToUser()
-}
-
-const goHome = async () => {
-  coordinator.navigateToHome()
-}
-
-const goGroups = async () => {
-  coordinator.navigateToGroups()
-}
+const goHome      = () => coordinator.navigateToHome()
+const goForum     = () => coordinator.navigateToForum()
+const goActions   = () => coordinator.navigateToActions()
+const goProfile   = () => coordinator.navigateToUser()
+const goMarket    = () => coordinator.navigateToMarket?.()    // если реализован
+const goCalendar  = () => coordinator.navigateToCalendar()
+const goMessages  = () => coordinator.navigateToMessages()
+const goGroups    = () => coordinator.navigateToGroups()
 </script>

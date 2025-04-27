@@ -13,24 +13,33 @@ public class Role implements GrantedAuthority {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
-    private String name;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, unique = true)
+    private RoleType name; // здесь теперь RoleType, не String
 
     @ManyToMany(mappedBy = "roles")
     private Set<User> users;
 
     public Role() {}
 
-    public Role(String name) {
+    public Role(RoleType name) {
         this.name = name;
+    }
+
+    public Role(String name) {
+        this.name = RoleType.fromString(name);
     }
 
     public Long getId() {
         return id;
     }
 
-    public String getName() {
+    public RoleType getName() {
         return name;
+    }
+
+    public void setName(RoleType name) {
+        this.name = name;
     }
 
     public Set<User> getUsers() {
@@ -39,6 +48,6 @@ public class Role implements GrantedAuthority {
 
     @Override
     public String getAuthority() {
-        return name; // Spring Security uses this
+        return name.name(); // Spring Security требует строку
     }
 }

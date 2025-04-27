@@ -17,6 +17,10 @@ export default function createUserModel() {
         async updateUserDetails(userId, details) {
             const response = await apiClient.put(`/users/${userId}/details`, details)
             return response.data
+        },
+        async fetchUserRoles(){
+            const response = await apiClient.get('/users/roles')
+            return response.data
         }
     }
 }
