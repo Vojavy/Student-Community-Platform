@@ -212,11 +212,11 @@ create table user_group_memberships
     status    varchar(50) not null
         constraint user_group_memberships_status_check
             check ((status)::text = ANY
-                   ((ARRAY ['approved'::character varying, 'pending'::character varying, 'banned'::character varying])::text[])),
+                   (ARRAY [('approved'::character varying)::text, ('pending'::character varying)::text, ('banned'::character varying)::text])),
     role      varchar(50) not null
         constraint user_group_memberships_role_check
             check ((role)::text = ANY
-                   ((ARRAY ['owner'::character varying, 'admin'::character varying, 'editor'::character varying, 'member'::character varying, 'invited'::character varying, 'helper'::character varying])::text[])),
+                   (ARRAY [('owner'::character varying)::text, ('admin'::character varying)::text, ('editor'::character varying)::text, ('member'::character varying)::text, ('invited'::character varying)::text, ('helper'::character varying)::text])),
     joined_at timestamp default now(),
     constraint unique_user_in_group
         unique (user_id, group_id)
@@ -281,10 +281,7 @@ create table forums
         references university_domains
             on delete cascade,
     created_at           timestamp   default now()                       not null,
-    status               varchar(50) default 'active'::character varying not null
-        constraint forums_status_check
-            check ((status)::text = ANY
-                   (ARRAY [('active'::character varying)::text, ('closed'::character varying)::text])),
+    status               varchar(50) default 'active'::character varying not null,
     is_pinned            boolean     default false                       not null,
     is_public            boolean     default true                        not null,
     is_closed            boolean     default false                       not null
@@ -442,6 +439,8 @@ alter table user_is_data
 create table user_friends
 (
     user_id_1  bigint                                           not null
+        constraint event_publication_pkey
+            primary key
         references users
             on delete cascade,
     user_id_2  bigint                                           not null
@@ -450,7 +449,7 @@ create table user_friends
     status     varchar(20) default 'pending'::character varying not null
         constraint user_friends_status_check
             check ((status)::text = ANY
-                   ((ARRAY ['pending'::character varying, 'approved'::character varying])::text[])),
+                   (ARRAY [('pending'::character varying)::text, ('approved'::character varying)::text])),
     hidden     boolean     default false,
     created_at timestamp   default now(),
     primary key (user_id_1, user_id_2)
