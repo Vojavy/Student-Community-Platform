@@ -1,17 +1,17 @@
 <template>
   <div class="space-y-6">
     <!-- Название + кнопка поиска -->
-    <div class="flex items-center gap-4">
+    <div class="flex flex-col sm:flex-row items-center gap-4">
       <input
           v-model="filters.name"
           type="text"
           :placeholder="t('forum.filters.searchPlaceholder')"
-          class="w-3/4 p-2 border rounded"
+          class="w-full sm:w-3/4 p-3 border-2 border-gray-200 rounded-lg shadow-sm focus:border-indigo-400 focus:ring-2 focus:ring-indigo-200 transition"
           @keyup.enter="applyFilters"
       />
       <button
           @click="applyFilters"
-          class="w-1/4 px-4 py-2 bg-accent-primary text-white rounded hover:bg-accent-primary/90 transition text-sm"
+          class="w-full sm:w-1/4 px-5 py-3 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 transform hover:-translate-y-0.5 transition text-sm"
       >
         {{ t('common.search') }}
       </button>
@@ -20,55 +20,44 @@
     <!-- Toggle доп. фильтров -->
     <button
         @click="showFilters = !showFilters"
-        class="text-sm text-accent-primary hover:underline"
+        class="flex items-center text-indigo-600 hover:text-indigo-800 text-sm font-medium transition"
     >
-      {{ showFilters
-        ? t('forum.actions.hideFilters')
-        : t('forum.actions.showFilters')
-      }}
+      <svg
+          :class="showFilters ? 'rotate-180' : ''"
+          class="w-4 h-4 mr-1 transition-transform"
+          fill="none" stroke="currentColor" viewBox="0 0 24 24"
+      >
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M19 9l-7 7-7-7"/>
+      </svg>
+      {{ showFilters ? t('forum.actions.hideFilters') : t('forum.actions.showFilters') }}
     </button>
 
     <!-- Дополнительные фильтры -->
     <div v-show="showFilters" class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-      <!-- Topics left over, if you still need it -->
       <input
           v-model="topicsInput"
           type="text"
           :placeholder="t('forum.filters.topicsPlaceholder')"
-          class="p-2 border rounded"
+          class="p-3 border-2 border-gray-200 rounded-lg shadow-sm focus:border-indigo-400 focus:ring-2 focus:ring-indigo-200 transition"
       />
-
-      <!-- Public / Private -->
-      <select v-model="filters.isPublic" class="p-2 border rounded">
+      <select v-model="filters.isPublic" class="p-3 border-2 border-gray-200 rounded-lg shadow-sm focus:border-indigo-400 focus:ring-2 focus:ring-indigo-200 transition">
         <option :value="null">{{ t('forum.filters.publicAll') }}</option>
         <option :value="true">{{ t('forum.filters.public') }}</option>
         <option :value="false" v-if="isAuth">{{ t('forum.filters.private') }}</option>
       </select>
-
-<!--      &lt;!&ndash; Pinned filter &ndash;&gt;-->
-<!--      <select v-model="filters.pinned" class="p-2 border rounded">-->
-<!--        <option :value="null">{{ t('forum.filters.pinnedAll') }}</option>-->
-<!--        <option :value="true">{{ t('forum.filters.pinned') }}</option>-->
-<!--        <option :value="false">{{ t('forum.filters.notPinned') }}</option>-->
-<!--      </select>-->
-
-      <!-- Домен -->
-      <select v-model="filters.domain" class="p-2 border rounded">
+      <select v-model="filters.domain" class="p-3 border-2 border-gray-200 rounded-lg shadow-sm focus:border-indigo-400 focus:ring-2 focus:ring-indigo-200 transition">
         <option :value="''">{{ t('forum.filters.domainAll') }}</option>
         <option v-for="d in domains" :key="d.id" :value="d.domain">
           {{ d.domainName }}
         </option>
       </select>
-
-      <!-- Статус -->
-      <select v-model="filters.status" class="p-2 border rounded">
+      <select v-model="filters.status" class="p-3 border-2 border-gray-200 rounded-lg shadow-sm focus:border-indigo-400 focus:ring-2 focus:ring-indigo-200 transition">
         <option :value="null">{{ t('forum.filters.statusAll') }}</option>
         <option value="active">{{ t('forum.status.active') }}</option>
         <option value="informational">{{ t('forum.status.informational') }}</option>
       </select>
-
-      <!-- Сортировка -->
-      <select v-model="filters.sort" class="p-2 border rounded">
+      <select v-model="filters.sort" class="p-3 border-2 border-gray-200 rounded-lg shadow-sm focus:border-indigo-400 focus:ring-2 focus:ring-indigo-200 transition">
         <option value="newest">{{ t('forum.sort.newest') }}</option>
         <option value="oldest">{{ t('forum.sort.oldest') }}</option>
       </select>
@@ -80,16 +69,16 @@
           v-for="forum in page.content"
           :key="forum.id"
           @click="goDetails(forum.id)"
-          class="bg-secondary p-4 rounded-lg cursor-pointer hover:bg-secondary/90 transition flex flex-col justify-between"
+          class="bg-white p-6 rounded-2xl shadow-md hover:shadow-xl transform hover:-translate-y-1 transition cursor-pointer flex flex-col justify-between"
       >
-        <!-- Верхняя строка: название слева, топики справа -->
+        <!-- Верхняя строка -->
         <div class="flex justify-between items-start">
-          <h3 class="text-lg font-semibold">{{ forum.name }}</h3>
+          <h3 class="text-xl font-bold text-gray-800">{{ forum.name }}</h3>
           <div class="flex flex-wrap gap-2">
             <span
                 v-for="topic in forum.topics"
                 :key="topic"
-                class="text-xs bg-gray-200 px-2 py-0.5 rounded-full"
+                class="text-xs bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded-full"
             >
               {{ topic }}
             </span>
@@ -97,10 +86,10 @@
         </div>
 
         <!-- Описание -->
-        <p class="text-sm text-text/70 mt-2 line-clamp-2" v-html="forum.description" />
+        <p class="text-gray-600 mt-2 line-clamp-2" v-html="forum.description" />
 
-        <!-- Метаданные внизу -->
-        <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 text-xs text-text/60">
+        <!-- Метаданные -->
+        <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 text-xs text-gray-500">
           <span><strong>ID:</strong> {{ forum.id }}</span>
           <span>
             <strong>{{ t('forum.columns.domain') }}:</strong>
@@ -109,9 +98,7 @@
           <span>
             <strong>{{ t('forum.columns.visibility') }}:</strong>
             <span :class="forum.public ? 'text-green-600' : 'text-red-600'">
-              {{ forum.public
-                ? t('forum.columns.public')
-                : t('forum.columns.private') }}
+              {{ forum.public ? t('forum.columns.public') : t('forum.columns.private') }}
             </span>
           </span>
           <span>
@@ -131,17 +118,17 @@
     </div>
 
     <!-- Пагинация -->
-    <div class="flex justify-center space-x-2 mt-6">
+    <div v-if="page.totalPages!==0" class="flex justify-center space-x-2 mt-6">
       <button
           :disabled="page.first"
           @click="changePage(page.number - 1)"
-          class="px-3 py-1 border rounded disabled:opacity-50"
+          class="px-4 py-2 bg-white border rounded-lg shadow-sm disabled:opacity-50 hover:bg-indigo-50 transition"
       >←</button>
-      <span>{{ page.number + 1 }} / {{ page.totalPages }}</span>
+      <span class="px-3 py-2 font-medium">{{ page.number + 1 }} / {{ page.totalPages }}</span>
       <button
           :disabled="page.last"
           @click="changePage(page.number + 1)"
-          class="px-3 py-1 border rounded disabled:opacity-50"
+          class="px-4 py-2 bg-white border rounded-lg shadow-sm disabled:opacity-50 hover:bg-indigo-50 transition"
       >→</button>
     </div>
   </div>
@@ -149,37 +136,36 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useI18n }               from 'vue-i18n'
-import { inject }                from 'vue'
+import { useI18n } from 'vue-i18n'
+import { inject } from 'vue'
 
-import { fetchForumsIntent }     from '@/iam/intents/forumIntents.js'
-import { handleForumIntent }     from '@/iam/actions/forumActions.js'
-import createForumModel          from '@/iam/models/forumModel.js'
+import { fetchForumsIntent } from '@/iam/intents/forumIntents.js'
+import { handleForumIntent } from '@/iam/actions/forumActions.js'
+import createForumModel from '@/iam/models/forumModel.js'
 
-import { fetchDomainsIntent }    from '@/iam/intents/domainIntents.js'
-import { handleDomainIntent }    from '@/iam/actions/domainActions.js'
-import createDomainModel         from '@/iam/models/domainModel.js'
+import { fetchDomainsIntent } from '@/iam/intents/domainIntents.js'
+import { handleDomainIntent } from '@/iam/actions/domainActions.js'
+import createDomainModel from '@/iam/models/domainModel.js'
 
-import { getUserIdFromToken }    from '@/utils/jwt/getUserIdFromToken.js'
+import { getUserIdFromToken } from '@/utils/jwt/getUserIdFromToken.js'
 
-const { t }       = useI18n()
-const coord       = inject('coordinator')
-const role        = inject('user_roles')
+const { t } = useI18n()
+const coord = inject('coordinator')
+const role = inject('user_roles')
 
-const isAuth      = computed(() => !!getUserIdFromToken())
-const isAdmin     = computed(() => role.value.some(r => r.name === 'ROLE_ADMIN'))
+const isAuth = computed(() => !!getUserIdFromToken())
 
 // models
-const forumModel  = createForumModel()
+const forumModel = createForumModel()
 const domainModel = createDomainModel()
 
 // state
 const showFilters = ref(false)
-const filters     = ref({
+const filters = ref({
   page:     0,
   size:     20,
   isPublic: true,
-  pinned:   null,                 // ← new!
+  pinned:   null,
   domain:   '',
   status:   null,
   name:     '',
@@ -187,8 +173,8 @@ const filters     = ref({
   sort:     'newest'
 })
 const topicsInput = ref('')
-const domains     = ref([])
-const page        = ref({ content: [], number: 0, totalPages: 1, first: true, last: true })
+const domains = ref([])
+const page = ref({ content: [], number: 0, totalPages: 1, first: true, last: true })
 
 async function load() {
   const topics = topicsInput.value
@@ -196,7 +182,6 @@ async function load() {
       .map(s => s.trim())
       .filter(Boolean)
 
-  // only include pinned if user actually selected it
   const payload = {
     ...filters.value,
     topics,
@@ -223,7 +208,6 @@ function changePage(n) {
 }
 
 function goDetails(id) {
-  console.log('goDetails', id)
   coord.navigateToForum(id)
 }
 

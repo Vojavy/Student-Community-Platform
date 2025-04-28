@@ -1,137 +1,211 @@
 <template>
-  <div class="p-6 max-w-3xl mx-auto bg-secondary rounded-lg shadow">
-    <!-- Loading -->
-    <div v-if="isLoading" class="text-center text-text/70 py-12">
+  <div class="p-8 max-w-4xl mx-auto bg-gray-50 rounded-xl shadow-lg">
+    <!-- Loading / Not Found -->
+    <div v-if="isLoading" class="text-center text-gray-400 py-16">
       ⏳ {{ t('common.loading') }}
     </div>
-
-    <!-- Not Found -->
-    <div v-else-if="notFound" class="text-center text-text/70 py-12">
+    <div v-else-if="notFound" class="text-center text-gray-400 py-16">
       {{ t('profile.notFound') }}
     </div>
 
-    <!-- Profile Content -->
+    <!-- Profile -->
     <div v-else>
       <!-- Header -->
-      <div class="flex items-center gap-6 mb-4">
+      <div class="flex items-center gap-6 mb-8">
         <img
             :src="userData.avatarUrl || defaultAvatar"
             alt="Аватар"
-            class="w-20 h-20 rounded-full object-cover border-2 border-accent-primary"
+            class="w-24 h-24 rounded-full ring-4 ring-indigo-300 object-cover"
         />
         <div>
-          <h1 class="text-3xl font-bold text-accent-primary">
-            {{ userData.titulPred ? userData.titulPred + ' ' : '' }}
+          <h1 class="text-4xl font-extrabold text-gray-800">
+            <span v-if="userData.titulPred" class="mr-1">{{ userData.titulPred }}</span>
             {{ userData.jmeno }} {{ userData.prijmeni }}
-            {{ userData.titulZa ? ', ' + userData.titulZa : '' }}
+            <span v-if="userData.titulZa" class="ml-1 text-lg text-gray-500">, {{ userData.titulZa }}</span>
           </h1>
-          <p class="text-sm text-text/70">{{ formattedDate }}</p>
-          <p class="text-sm">
-            <span class="font-medium">{{ t('profile.email') }}:</span>
-            {{ userData.email }}
-          </p>
-          <p class="text-sm">
-            <span class="font-medium">{{ t('profile.active') }}:</span>
-            {{ userData.active ? t('profile.yes') : t('profile.no') }}
-          </p>
+          <p class="mt-1 text-sm text-gray-500">{{ formattedDate }}</p>
+          <div class="mt-2 space-x-4 text-sm text-gray-700">
+            <span><strong>{{ t('profile.email') }}:</strong> {{ userData.email }}</span>
+            <span>
+              <strong>{{ t('profile.active') }}:</strong>
+              <span :class="userData.active ? 'text-green-600' : 'text-red-600'">
+                {{ userData.active ? t('profile.yes') : t('profile.no') }}
+              </span>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bio / Status / Skills -->
+      <div v-if="userData.details" class="mb-8 px-6 py-4 bg-white rounded-lg shadow-sm">
+        <p v-if="userData.details.status" class="text-lg text-gray-800">
+          <strong>{{ t('profile.settings.fields.status') }}:</strong>
+          {{ userData.details.status }}
+        </p>
+        <p v-if="userData.details.bio" class="mt-2 text-gray-600 italic">
+          “{{ userData.details.bio }}”
+        </p>
+        <div v-if="userData.details.skills?.length" class="mt-4 flex flex-wrap gap-2">
+          <span
+              v-for="skill in userData.details.skills"
+              :key="skill"
+              class="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-sm font-medium"
+          >
+            {{ skill }}
+          </span>
         </div>
       </div>
 
       <!-- Action Buttons -->
-      <div class="flex flex-wrap gap-4 mb-8">
+      <div class="mb-8 flex flex-col sm:flex-row gap-4">
         <button
             @click="goToSettings"
-            class="flex-1 sm:flex-none px-6 py-2 bg-accent-primary text-white rounded shadow hover:bg-accent-primary/90 transition"
+            class="flex-1 px-6 py-3 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition"
         >
           {{ t('profile.buttons.settings') }}
         </button>
         <button
             @click="goToStag"
-            class="flex-1 sm:flex-none px-6 py-2 border-2 border-accent-secondary bg-accent-secondary/80 text-white rounded shadow hover:bg-accent-secondary/70 transition"
+            class="flex-1 px-6 py-3 border-2 border-indigo-600 text-indigo-600 font-medium rounded-lg hover:bg-indigo-50 transition"
         >
           {{ t('profile.buttons.connectStag') }}
         </button>
       </div>
 
       <!-- STAG Info -->
-      <div v-if="userData.osCislo" class="bg-primary p-6 rounded-lg border border-gray-200 mb-8">
-        <h2 class="text-xl font-semibold text-accent-secondary mb-4">
+      <div
+          v-if="userData.osCislo"
+          class="mb-8 px-6 py-6 bg-white rounded-lg shadow-sm border-l-4 border-indigo-600"
+      >
+        <h2 class="text-2xl font-semibold text-indigo-600 mb-4">
           {{ t('stag.studentInfo') }}
         </h2>
-        <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div><dt class="font-medium text-text">{{ t('stag.field.osCislo') }}</dt><dd class="text-text">{{ userData.osCislo }}</dd></div>
-          <div><dt class="font-medium text-text">{{ t('stag.field.faculty') }}</dt><dd class="text-text">{{ userData.fakultaSp }}</dd></div>
-          <div><dt class="font-medium text-text">{{ t('stag.field.program') }}</dt><dd class="text-text">{{ userData.nazevSp }}</dd></div>
-          <div><dt class="font-medium text-text">{{ t('stag.field.year') }}</dt><dd class="text-text">{{ userData.rocnik }}</dd></div>
+        <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-gray-700">
+          <div>
+            <dt class="font-medium">{{ t('stag.field.osCislo') }}</dt>
+            <dd>{{ userData.osCislo }}</dd>
+          </div>
+          <div>
+            <dt class="font-medium">{{ t('stag.field.faculty') }}</dt>
+            <dd>{{ userData.fakultaSp }}</dd>
+          </div>
+          <div>
+            <dt class="font-medium">{{ t('stag.field.program') }}</dt>
+            <dd>{{ userData.nazevSp }}</dd>
+          </div>
+          <div>
+            <dt class="font-medium">{{ t('stag.field.year') }}</dt>
+            <dd>{{ userData.rocnik }}</dd>
+          </div>
         </dl>
       </div>
 
-      <!-- Details Toggle -->
-      <div class="mt-6 flex items-center justify-between">
-        <h2 class="text-lg font-semibold text-text">{{ t('profile.detailsTitle') }}</h2>
-        <button @click="showDetails = !showDetails" class="p-1">
-          <svg
-              :class="{ 'rotate-180': showDetails }"
-              class="w-5 h-5 text-text transition-transform"
-              fill="none" stroke="currentColor" viewBox="0 0 24 24"
-          >
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M19 9l-7 7-7-7"/>
-          </svg>
-        </button>
-      </div>
-      <transition name="slide-fade">
-        <div v-if="showDetails" class="mt-2 p-4 bg-primary rounded border border-gray-200">
-          <dl class="space-y-4">
-            <template v-for="key in filledDetailsKeys" :key="key">
-              <div class="flex flex-col sm:flex-row sm:items-center">
-                <dt class="w-1/3 font-medium text-text">{{ detailLabels[key] || key }}</dt>
-                <dd class="flex-1 text-text">
-                  <template v-if="isLink(filledDetails[key])">
-                    <a
-                        :href="normalizeLink(filledDetails[key])"
-                        target="_blank" rel="noopener"
-                        class="text-accent-primary hover:underline"
-                    >
-                      {{ filledDetails[key] }}
-                    </a>
-                  </template>
-                  <template v-else>
-                    {{ filledDetails[key] }}
-                  </template>
+      <!-- Details Tabs -->
+      <div v-if="hasContacts || hasPersonal" class="bg-white rounded-lg shadow-sm mb-8">
+        <div class="border-b border-gray-200">
+          <nav class="flex -mb-px">
+            <button
+                v-if="hasContacts"
+                @click="activeTab = 'contacts'"
+                :class="tabClass('contacts')"
+            >
+              {{ t('profile.tabs.contacts') }}
+            </button>
+            <button
+                v-if="hasPersonal"
+                @click="activeTab = 'personal'"
+                :class="tabClass('personal')"
+            >
+              {{ t('profile.tabs.personal') }}
+            </button>
+          </nav>
+        </div>
+
+        <!-- Contacts Tab -->
+        <div v-if="activeTab === 'contacts'" class="p-6 space-y-6">
+          <h3 class="text-xl font-semibold text-gray-800">{{ t('profile.tabs.contacts') }}</h3>
+          <dl class="grid grid-cols-1 sm:grid-cols-2 gap-6 text-gray-700">
+            <!-- Основные соцсети -->
+            <template v-for="(val, key) in userData.details.contacts" :key="key">
+              <div v-if="val">
+                <dt class="font-medium">{{ contactLabels[key] }}</dt>
+                <dd>
+                  <button
+                      class="text-indigo-600 hover:underline"
+                      @click="goToSocial(key, val)"
+                  >
+                    {{ val }}
+                  </button>
                 </dd>
               </div>
             </template>
-            <div v-if="filledDetailsKeys.length === 0" class="text-text/60 italic">
-              {{ t('profile.noDetails') }}
+            <!-- Другие контакты -->
+            <template v-for="({ source, value }) in userData.details.other" :key="source">
+              <div>
+                <dt class="font-medium">{{ source }}</dt>
+                <dd>
+                  <button
+                      class="text-indigo-600 hover:underline"
+                      @click="openExternal(value)"
+                  >
+                    {{ value }}
+                  </button>
+                </dd>
+              </div>
+            </template>
+          </dl>
+        </div>
+
+        <!-- Personal Tab -->
+        <div v-if="activeTab === 'personal'" class="p-6 space-y-6">
+          <h3 class="text-xl font-semibold text-gray-800">{{ t('profile.tabs.personal') }}</h3>
+          <dl class="space-y-4 text-gray-700">
+            <div v-if="userData.details.birthDate">
+              <dt class="font-medium">{{ t('profile.personal.birthDate') }}</dt>
+              <dd>{{ userData.details.birthDate }}</dd>
+            </div>
+            <div v-if="userData.details.languages?.length">
+              <dt class="font-medium">{{ t('profile.personal.languages') }}</dt>
+              <dd>{{ userData.details.languages.join(', ') }}</dd>
+            </div>
+            <div v-if="userData.details.location">
+              <dt class="font-medium">{{ t('profile.personal.location') }}</dt>
+              <dd>{{ userData.details.location }}</dd>
+            </div>
+            <div v-if="userData.details.website">
+              <dt class="font-medium">{{ t('profile.personal.website') }}</dt>
+              <dd>
+                <button
+                    class="text-indigo-600 hover:underline"
+                    @click="openExternal(userData.details.website)"
+                >
+                  {{ userData.details.website }}
+                </button>
+              </dd>
             </div>
           </dl>
         </div>
-      </transition>
+      </div>
 
       <!-- Friends List -->
-      <div class="mt-8">
-        <h2 class="text-xl font-semibold mb-4">{{ t('profile.friends.title') }}</h2>
-
-        <div v-if="friendsLoading" class="text-text/60">⏳ {{ t('common.loading') }}</div>
-        <div v-else-if="friends.length === 0" class="text-text/60">{{ t('profile.friends.empty') }}</div>
-
-        <ul v-else class="divide-y divide-gray-200 bg-white rounded-lg shadow-sm">
+      <div>
+        <h2 class="text-2xl font-semibold mb-4 text-gray-800">{{ t('profile.friends.title') }}</h2>
+        <div v-if="friendsLoading" class="text-gray-400">⏳ {{ t('common.loading') }}</div>
+        <div v-else-if="friends.length === 0" class="text-gray-400">{{ t('profile.friends.empty') }}</div>
+        <ul v-else class="bg-white rounded-lg shadow-sm divide-y divide-gray-200">
           <li v-for="f in friends" :key="f.userId">
-            <button
-                type="button"
-                class="w-full flex items-center justify-between px-4 py-3 hover:bg-accent-primary/10 transition"
+            <div
+                class="flex items-center justify-between px-6 py-4 hover:bg-indigo-50 transition cursor-pointer"
                 @click="coordinator.navigateToUser(f.userId)"
             >
-              <span class="text-accent-primary font-medium">{{ f.name }}</span>
+              <span class="text-indigo-600 font-medium">{{ f.name }}</span>
               <button
-                  type="button"
-                  class="px-3 py-1 rounded border border-red-600 text-red-600 hover:bg-red-600/10 transition"
+                  class="px-3 py-1 text-sm rounded-full border border-red-500 text-red-500 hover:bg-red-50 transition"
                   @click.stop="removeFriend(f.userId)"
               >
                 {{ t('profile.friends.remove') }}
               </button>
-            </button>
+            </div>
           </li>
         </ul>
       </div>
@@ -142,59 +216,95 @@
 <script setup>
 import { ref, onMounted, computed, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
-import createUserModel from '@/iam/models/userModel'
-import createFriendModel from '@/iam/models/friendModel'
 import { fetchUserProfileIntent } from '@/iam/intents/userIntents'
 import { fetchMyFriendsIntent, removeFriendIntent } from '@/iam/intents/friendIntents'
+import createUserModel from '@/iam/models/userModel'
+import createFriendModel from '@/iam/models/friendModel'
 import { handleUserIntent } from '@/iam/actions/userActions'
 import { handleFriendIntent } from '@/iam/actions/friendActions'
 import { getUserIdFromToken } from '@/utils/jwt/getUserIdFromToken'
 
 const { t } = useI18n()
 const coordinator = inject('coordinator')
-const userModel = createUserModel()
+const userModel   = createUserModel()
 const friendModel = createFriendModel()
 
-const isLoading     = ref(true)
-const notFound      = ref(false)
-const userData      = ref({})
-const showDetails   = ref(false)
-const friends       = ref([])
-const friendsLoading= ref(true)
-const defaultAvatar = '/default-avatar.png'
+const isLoading      = ref(true)
+const notFound       = ref(false)
+const userData       = ref({})
+const friends        = ref([])
+const friendsLoading = ref(true)
+const defaultAvatar  = '/default-avatar.png'
+const activeTab      = ref('')
 
 const formattedDate = computed(() => {
   if (!userData.value.createdAt) return ''
   return `${t('profile.registered')}: ${new Date(userData.value.createdAt).toLocaleDateString()}`
 })
 
-const detailLabels = {
-  bio:       t('profile.settings.fields.bio'),
-  status:    t('profile.settings.fields.status'),
-  skills:    t('profile.settings.fields.skills'),
-  languages: t('profile.personal.languages'),
-  location:  t('profile.personal.location'),
-  website:   t('profile.personal.website'),
-  ...Object.fromEntries(Object.entries(t('profile.contacts')).map(([k,v]) => [k, v]))
-}
-
-const filledDetails = computed(() => {
+// наличе контактов / личных данных
+const hasContacts = computed(() => {
+  const c = userData.value.details?.contacts || {}
+  const o = userData.value.details?.other || []
+  return Object.values(c).some(v => v) || o.length > 0
+})
+const hasPersonal = computed(() => {
   const d = userData.value.details || {}
-  return Object.fromEntries(
-      Object.entries(d)
-          .filter(([_,v]) => v != null && !(Array.isArray(v) && v.length === 0) && !(typeof v === 'object' && !Array.isArray(v) && Object.keys(v).length === 0))
-          .map(([k,v]) => [k, Array.isArray(v) ? v.join(', ') : v])
+  return Boolean(
+      d.birthDate ||
+      (d.languages?.length || 0) > 0 ||
+      d.location ||
+      d.website
   )
 })
-const filledDetailsKeys = computed(() => Object.keys(filledDetails.value))
+// при инициализации выбираем первую доступную вкладку
+onMounted(() => {
+  if (hasContacts.value) activeTab.value = 'contacts'
+  else if (hasPersonal.value) activeTab.value = 'personal'
+})
 
-function isLink(str) {
-  return /^https?:\/\//.test(str) || /^www\./.test(str)
+// подписи соцсетей
+const contactLabels = {
+  fb:        t('profile.contacts.fb'),
+  ln:        t('profile.contacts.ln'),
+  tg:        t('profile.contacts.tg'),
+  inst:      t('profile.contacts.inst'),
+  steam:     t('profile.contacts.steam'),
+  telephone: t('profile.contacts.telephone')
 }
+
+// класс для табов
+function tabClass(tab) {
+  return [
+    'px-6 py-3 text-sm font-medium -mb-px',
+    activeTab.value === tab
+        ? 'border-b-2 border-indigo-600 text-indigo-600'
+        : 'border-b-2 border-transparent text-gray-500 hover:text-gray-700'
+  ]
+}
+
+// открывает внешнюю ссылку
 function normalizeLink(str) {
   return str.startsWith('http') ? str : `https://${str}`
 }
+function openExternal(url) {
+  if (!url) return
+  window.open(normalizeLink(url), '_blank')
+}
 
+// переходит на соцсеть по шаблону URL
+function goToSocial(key, handle) {
+  const urls = {
+    fb:   `https://facebook.com/${handle}`,
+    ln:   `https://linkedin.com/in/${handle}`,
+    tg:   `https://t.me/${handle}`,
+    inst: `https://instagram.com/${handle}`,
+    steam:`https://steamcommunity.com/id/${handle}`
+  }
+  openExternal(urls[key] || handle)
+}
+
+// загрузка данных
 onMounted(async () => {
   try {
     const myId = getUserIdFromToken()
@@ -220,7 +330,8 @@ const goToSettings = () => coordinator.navigateToUserSettings()
 const goToStag     = () => coordinator.navigateToUserStag()
 </script>
 
-<style>
+<style scoped>
+/* плавное появление/исчезновение */
 .slide-fade-enter-active,
 .slide-fade-leave-active {
   transition: all .2s ease;

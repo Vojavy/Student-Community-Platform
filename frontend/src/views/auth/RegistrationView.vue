@@ -36,9 +36,10 @@
 
     <button
         @click="onRegister"
-        class="w-full max-w-sm bg-accent-primary text-white px-4 py-2 rounded"
+        :disabled="isLoading"
+        class="w-full max-w-sm bg-accent-primary text-white px-4 py-2 rounded disabled:opacity-50 disabled:cursor-not-allowed"
     >
-      {{ t('register.button') }}
+      {{ isLoading ? t('common.loading') : t('register.button') }}
     </button>
 
     <p v-if="errorMessage" class="text-red-500 mt-4 text-sm">{{ errorMessage }}</p>
@@ -61,6 +62,7 @@ const password = ref('')
 const repeatPassword = ref('')
 const showPassword = ref(false)
 const errorMessage = ref('')
+const isLoading = ref(false)
 
 const togglePasswordVisibility = () => {
   showPassword.value = !showPassword.value
@@ -74,21 +76,28 @@ const onRegister = async () => {
   errorMessage.value = ''
 
   if (!isValidEmail(email.value)) {
-    errorMessage.value = t('errors.invalidEmail') || 'Неверный email'
+    errorMessage.value = t('errors.invalidEmail')
     return
   }
 
   if (!password.value) {
-    errorMessage.value = t('errors.emptyPassword') || 'Введите пароль'
+    errorMessage.value = t('errors.emptyPassword')
     return
   }
 
   if (password.value !== repeatPassword.value) {
-    errorMessage.value = t('errors.passwordMismatch') || 'Пароли не совпадают'
+    errorMessage.value = t('errors.passwordMismatch')
     return
   }
 
-  const intent = registerIntent({ email: email.value, password: password.value })
-  await handleAuthIntent(intent, { model, coordinator })
+  isLoading.value = true
+  try {
+    const intent = registerIntent({ email: email.value, password: password.value })
+    await handleAuthIntent(intent, { model, coordinator })
+  } catch (err) {
+    errorMessage.value = err.message || t('errors.invalidCredentials')
+  } finally {
+    isLoading.value = false
+  }
 }
 </script>

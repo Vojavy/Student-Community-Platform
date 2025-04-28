@@ -69,7 +69,7 @@ public class AuthenticationService {
                 "ln", "",
                 "telephone", ""
         ));
-        emptyDetails.setOther(Map.of()); // пустой, фронт потом добавит
+        emptyDetails.setOther((new ArrayList<Map<String, String>>())); // пустой, фронт потом добавит
         emptyDetails.setLocation("");
         emptyDetails.setWebsite("");
         emptyDetails.setStatus("");

@@ -5,11 +5,12 @@ export default {
         add: 'Přidat',
         change: 'Změnit',
         delete: 'Smazat',
-        loading: 'Loading...',
-        search: 'Hledat'
+        loading: 'Načítá se...',
+        search: 'Hledat',
+        submit: 'Odeslat'
     },
     verification: {
-        title: 'Ověření e‑mailu',
+        title: 'Ověření e-mailu',
         placeholder: 'Ověřovací kód',
         button: 'Ověřit',
         auto: 'Ověřovací kód se zpracovává automaticky...',
@@ -17,8 +18,8 @@ export default {
         resending: 'Odesílání...',
         sent: 'Ověřovací kód byl znovu odeslán',
         success: '✅ Váš účet byl úspěšně ověřen!',
-        redirecting: 'Za chvíli budete přesměrováni na přihlašovací stránku...',
-        failed: '❌ Oops, něco se pokazilo. Zkuste to prosím znovu.'
+        redirecting: 'Přesměrovávám na přihlašovací stránku...',
+        failed: '❌ Něco se pokazilo. Zkuste to prosím znovu.'
     },
     login: {
         title: 'Přihlášení',
@@ -29,14 +30,15 @@ export default {
     logout: {
         title: 'Odhlášení',
         message: 'Byli jste úspěšně odhlášeni.',
-        button: 'Zpět'
+        button: 'Na domovskou'
     },
     register: {
         title: 'Registrace',
         email: 'Email',
         password: 'Heslo',
         username: 'Uživatelské jméno',
-        button: 'Registrovat se'
+        button: 'Registrovat se',
+        repeat: 'Heslo znovu',
     },
     errors: {
         invalidEmail: 'Neplatná emailová adresa',
@@ -48,8 +50,8 @@ export default {
     },
     accessDenied: {
         title: 'Přístup odepřen',
-        message: 'Nemáte oprávnění pro přístup na tuto stránku.',
-        back: 'Na hlavní'
+        message: 'Nemáte oprávnění k zobrazení této stránky.',
+        back: 'Na domovskou'
     },
     navBar: {
         login: 'Přihlášení',
@@ -78,12 +80,12 @@ export default {
     },
     sessionExpired: {
         title: 'Platnost relace vypršela',
-        message: 'Vaše relace vypršela. Přihlaste se znovu.',
+        message: 'Vaše relace vypršela. Přihlaste se prosím znovu.',
         login: 'Přihlásit se',
-        close: 'Na hlavní stránku'
+        close: 'Na domovskou'
     },
     stag: {
-        studentInfo: 'Informace o STAG',
+        studentInfo: 'Informace z STAGu',
         field: {
             name: 'Jméno',
             osCislo: 'OsCislo',
@@ -94,7 +96,7 @@ export default {
             program: 'Studijní program'
         },
         selectUniversity: 'Vyberte univerzitu',
-        login: 'Přihlásit se do STAG',
+        login: 'Přihlásit se do STAGu',
         status: {
             noToken: 'STAG token nebyl nalezen.',
             invalid: 'STAG token je neplatný.',
@@ -102,7 +104,7 @@ export default {
         },
         delete: {
             show: 'Odstranit STAG token',
-            confirm: 'Potvrdit odstranění',
+            confirm: 'Potvrdit smazání',
             cancel: 'Zrušit'
         },
         universities: {
@@ -119,34 +121,32 @@ export default {
         notFound: 'Uživatel nenalezen',
         registered: 'Registrován',
         detailsTitle: 'Detaily',
-        noDetails: 'Žádné uvedené údaje',
-
+        noDetails: 'Žádné údaje',
         friends: {
             title: 'Přátelé',
-            empty: 'Zatím nemáte žádné přátele',
+            empty: 'Zatím žádní přátelé',
             add: 'Přidat mezi přátele',
             approve: 'Potvrdit žádost',
             decline: 'Zamítnout žádost',
             pending: 'Žádost odeslána',
-            remove: 'Odstranit z přátel',
+            remove: 'Odebrat z přátel',
             column: {
                 name: 'Jméno',
                 status: 'Stav',
                 actions: 'Akce'
             }
         },
-
         settings: {
             title: 'Nastavení',
             save: 'Uložit',
             updated: 'Nastavení uloženo',
             error: 'Došlo k chybě',
-            empty:'Nenalezeno',
-            contacts:{
+            empty: 'Nezadáno',
+            contacts: {
                 otherTitle: 'Další kontakty',
                 addOther: 'Přidat kontakt',
-                keyPlaceholder: 'Způsob kontaktu',
-                valuePlaceholder: 'Detail kontaktu'
+                keyPlaceholder: 'Typ kontaktu',
+                valuePlaceholder: 'Detaily kontaktu'
             },
             tabs: {
                 security: 'Zabezpečení',
@@ -155,11 +155,11 @@ export default {
                 about: 'O mně'
             },
             security: {
-                oldPassword: 'Současné heslo',
+                oldPassword: 'Aktuální heslo',
                 newPassword: 'Nové heslo',
-                incorrectPassword: 'Nesprávné aktuální heslo',
-                deactivate: 'Deaktivovat učet?',
-                confirmDeactivate: 'Deaktivaci účtu potvrďte zadáním hesla. Tuto akci nelze zrušit.',
+                incorrectPassword: 'Špatné aktuální heslo',
+                deactivate: 'Deaktivovat účet?',
+                confirmDeactivate: 'Pro potvrzení deaktivace zadejte heslo. Tuto akci nelze vrátit zpět.'
             },
             fields: {
                 bio: 'O mně',
@@ -167,7 +167,6 @@ export default {
                 skills: 'Dovednosti'
             }
         },
-
         contacts: {
             inst: 'Instagram',
             tg: 'Telegram',
@@ -175,16 +174,14 @@ export default {
             steam: 'Steam',
             ln: 'LinkedIn',
             telephone: 'Telefon',
-            otherTitle: 'Další kontakty',
+            otherTitle: 'Další kontakty'
         },
-
         personal: {
             birthDate: 'Datum narození',
             languages: 'Jazyky',
-            location: 'Místo',
-            website: 'Webová stránka'
+            location: 'Poloha',
+            website: 'Web'
         },
-
         buttons: {
             settings: 'Nastavení profilu',
             connectStag: 'Připojit STAG',
@@ -199,30 +196,26 @@ export default {
         name: 'Název',
         description: 'Popis',
         topics: 'Témata',
-
         overview: 'Přehled',
         calendar: 'Kalendář',
         settings: 'Nastavení',
         posts: 'Příspěvky',
-
         tabs: { my: 'Mé skupiny', browse: 'Procházet' },
         searchPlaceholder: 'Hledat podle názvu nebo tématu…',
-        noMyGroups: 'Zatím nemáte žádné skupiny',
+        noMyGroups: 'Zatím žádné skupiny',
         noBrowseResults: 'Nebyly nalezeny žádné výsledky',
-
         filters: {
             name: 'Název',
             domain: 'Doména',
             domainAll: 'Všechny domény',
             access: 'Přístup',
-            accessAll: 'Všechny',
+            accessAll: 'Vše',
             public: 'Veřejné',
             private: 'Soukromé',
             topics: 'Témata',
             apply: 'Použít'
         },
-        pagination: { prev: '← Předch.', next: 'Další →', size: 'Na stránce' },
-
+        pagination: { prev: '← Předchozí', next: 'Další →', size: 'Na stránku' },
         domainUnknown: 'Bez domény',
         public: 'Veřejná',
         private: 'Soukromá',
@@ -230,11 +223,9 @@ export default {
         owner: 'Vlastník',
         admins: 'Administrátoři',
         helpers: 'Pomocníci',
-
         deleteGroup: 'Smazat skupinu',
         leave: 'Opustit',
         join: 'Připojit se',
-
         members: 'Členové',
         filterStatus: 'Stav',
         filterRole: 'Role',
@@ -243,31 +234,27 @@ export default {
         cancelInvitation: 'Zrušit pozvání',
         kick: 'Vyloučit',
         ban: 'Zabanovat',
-        unban: 'Odblokovat',
-
+        unban: 'Odbanovat',
         role: {
             role: 'Role',
             member: 'Člen',
             helper: 'Pomocník',
-            admin: 'Administrátor',
+            admin: 'Admin',
             owner: 'Vlastník',
-            invited: 'Pozván',
+            invited: 'Pozván'
         },
         status: {
             status: 'Stav',
-            approved: 'Člen',
+            approved: 'Schváleno',
             pending: 'Čeká na schválení',
             banned: 'Zabanován'
         },
-
         pending: 'Žádost o členství odeslána',
         banned: 'Zabanováno',
         notFound: 'Skupina nenalezena',
-
         minRoleForPosts: 'Min. role pro příspěvky',
         minRoleForEvents: 'Min. role pro události',
         noDomain: 'Bez domény',
-
         createTitle: 'Vytvořit novou skupinu',
         form: {
             domain: 'Doména (volitelně)',
@@ -280,27 +267,27 @@ export default {
         }
     },
     posts: {
-        newPost:        'Nový příspěvek',
-        title:          'Nadpis',
-        titlePlaceholder:'Zadejte nadpis…',
-        topics:         'Témata',
-        topicsPlaceholder:'Témata oddělená čárkou…',
-        bold:            '🅱️ Tučné',
-        italic:          '𝘐 Kurzíva',
-        underline:       '〰️ Podtržené',
-        strikethrough:   '❌ Přeškrtnuté',
-        h1:              '🔢 Nadpis 1',
-        h2:              '🔢 Nadpis 2',
-        insertLink:      '🔗 Vložit odkaz',
-        linkPrompt:      'URL adresa',
-        insertImage:     '🖼️ Vložit obrázek',
-        submit:         'Publikovat',
-        expand:         'Rozbalit',
-        hide:           'Skrýt',
-        by:             'od',
-        on:             'dne',
-        edit:           'Upravit',
-        delete:         'Smazat'
+        newPost: 'Nový příspěvek',
+        title: 'Nadpis',
+        titlePlaceholder: 'Zadejte nadpis…',
+        topics: 'Témata',
+        topicsPlaceholder: 'Témata oddělená čárkou…',
+        bold: '🅱️ Tučné',
+        italic: '𝘐 Kurzíva',
+        underline: '〰️ Podtržené',
+        strikethrough: '❌ Přeškrtnuté',
+        h1: '🔢 Nadpis 1',
+        h2: '🔢 Nadpis 2',
+        insertLink: '🔗 Vložit odkaz',
+        linkPrompt: 'URL',
+        insertImage: '🖼️ Vložit obrázek',
+        submit: 'Publikovat',
+        expand: 'Rozbalit',
+        hide: 'Skrýt',
+        by: 'od',
+        on: 'dne',
+        edit: 'Upravit',
+        delete: 'Smazat'
     },
     forum: {
         filters: {
@@ -353,7 +340,7 @@ export default {
             descriptionPlaceholder: 'Zadejte popis…',
             topics: 'Témata',
             topicsPlaceholder: 'Témata oddělená čárkou…',
-            topicsHelper: 'Témata oddělujte čárkou',
+            topicsHelper: 'Témata oddělte čárkou',
             domain: 'Doména (volitelně)',
             domainNone: 'Žádná',
             informational: 'Informační',
@@ -374,6 +361,23 @@ export default {
             informational: 'Informační',
             archived: 'Archivované',
             banned: 'Zabanované'
+        },
+        detail: {
+            createdBy: 'Vytvořil',
+            createdAt: 'Vytvořeno',
+            status: 'Stav',
+            newPostTitle: 'Nový příspěvek',
+            newPostPlaceholder: 'Váš příspěvek…',
+            replyingTo: 'Odpověď na',
+            replyToPost: 'Odpovědět na příspěvek',
+            addMessage: 'Přidat zprávu',
+            settingsTitle: 'Nastavení',
+            closeForum: 'Uzavřít fórum',
+            archiveForum: 'Archivovat fórum',
+            resolveForum: 'Vyřešit fórum',
+            deleteForum: 'Smazat fórum',
+            reply: 'Odpovědět',
+            inReplyTo: 'Ve odpovědi na'
         }
-    },
+    }
 }

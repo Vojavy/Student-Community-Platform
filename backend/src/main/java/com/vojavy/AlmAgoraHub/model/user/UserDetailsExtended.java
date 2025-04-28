@@ -11,8 +11,7 @@ import java.time.LocalDate;
 import java.util.*;
 
 /**
- * Extended user profile details stored as JSONB in the database.
- * This includes personal and social metadata, not used for authentication or core identity.
+ * Дополнительные детали профиля пользователя, хранятся в JSONB.
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class UserDetailsExtended {
@@ -21,130 +20,84 @@ public class UserDetailsExtended {
     private List<String> interests;
     private LocalDate birthDate;
     private List<String> languages;
-    private Map<String, String> contacts; // standard contact links
-    private Map<String, String> other;    // additional links or contact methods
+    private Map<String, String> contacts;               // стандартные контакты
+    private List<Map<String, String>> other;            // доп. контакты: список карт {source->value}
     private String location;
     private String website;
     private String status;
     private List<String> skills;
 
     public UserDetailsExtended() {
-        this.bio = "";
+        this.bio       = "";
         this.interests = new ArrayList<>();
+        this.birthDate = null;
         this.languages = new ArrayList<>();
-        this.contacts = new HashMap<>();
-        this.other = new HashMap<>();
-        this.skills = new ArrayList<>();
-        this.location = "";
-        this.website = "";
-        this.status = "";
+        this.contacts  = new HashMap<>();
+        this.other     = new ArrayList<>();
+        this.location  = "";
+        this.website   = "";
+        this.status    = "";
+        this.skills    = new ArrayList<>();
     }
 
-    // --- Full constructor (optional) ---
-    public UserDetailsExtended(String bio,
-                               List<String> interests,
-                               LocalDate birthDate,
-                               List<String> languages,
-                               Map<String, String> contacts,
-                               Map<String, String> other,
-                               String location,
-                               String website,
-                               String status,
-                               List<String> skills) {
-        this.bio = bio;
+    public UserDetailsExtended(
+            String bio,
+            List<String> interests,
+            LocalDate birthDate,
+            List<String> languages,
+            Map<String, String> contacts,
+            List<Map<String, String>> other,
+            String location,
+            String website,
+            String status,
+            List<String> skills
+    ) {
+        this.bio       = bio;
         this.interests = interests;
         this.birthDate = birthDate;
         this.languages = languages;
-        this.contacts = contacts;
-        this.other = other;
-        this.location = location;
-        this.website = website;
-        this.status = status;
-        this.skills = skills;
+        this.contacts  = contacts;
+        this.other     = other;
+        this.location  = location;
+        this.website   = website;
+        this.status    = status;
+        this.skills    = skills;
     }
 
-    // --- Getters and Setters ---
-    public String getBio() {
-        return bio;
-    }
+    // ─── Getters & Setters ───────────────────────────────────────────────────
 
-    public void setBio(String bio) {
-        this.bio = bio;
-    }
+    public String getBio() { return bio; }
+    public void setBio(String bio) { this.bio = bio; }
 
-    public List<String> getInterests() {
-        return interests;
-    }
+    public List<String> getInterests() { return interests; }
+    public void setInterests(List<String> interests) { this.interests = interests; }
 
-    public void setInterests(List<String> interests) {
-        this.interests = interests;
-    }
+    public LocalDate getBirthDate() { return birthDate; }
+    public void setBirthDate(LocalDate birthDate) { this.birthDate = birthDate; }
 
-    public LocalDate getBirthDate() {
-        return birthDate;
-    }
+    public List<String> getLanguages() { return languages; }
+    public void setLanguages(List<String> languages) { this.languages = languages; }
 
-    public void setBirthDate(LocalDate birthDate) {
-        this.birthDate = birthDate;
-    }
+    public Map<String, String> getContacts() { return contacts; }
+    public void setContacts(Map<String, String> contacts) { this.contacts = contacts; }
 
-    public List<String> getLanguages() {
-        return languages;
-    }
+    public List<Map<String, String>> getOther() { return other; }
+    public void setOther(List<Map<String, String>> other) { this.other = other; }
 
-    public void setLanguages(List<String> languages) {
-        this.languages = languages;
-    }
+    public String getLocation() { return location; }
+    public void setLocation(String location) { this.location = location; }
 
-    public Map<String, String> getContacts() {
-        return contacts;
-    }
+    public String getWebsite() { return website; }
+    public void setWebsite(String website) { this.website = website; }
 
-    public void setContacts(Map<String, String> contacts) {
-        this.contacts = contacts;
-    }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
 
-    public Map<String, String> getOther() {
-        return other;
-    }
+    public List<String> getSkills() { return skills; }
+    public void setSkills(List<String> skills) { this.skills = skills; }
 
-    public void setOther(Map<String, String> other) {
-        this.other = other;
-    }
+    // ─── equals, hashCode, toString ─────────────────────────────────────────
 
-    public String getLocation() {
-        return location;
-    }
-
-    public void setLocation(String location) {
-        this.location = location;
-    }
-
-    public String getWebsite() {
-        return website;
-    }
-
-    public void setWebsite(String website) {
-        this.website = website;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public List<String> getSkills() {
-        return skills;
-    }
-
-    public void setSkills(List<String> skills) {
-        this.skills = skills;
-    }
-
-    // --- Equality & Debug Support ---
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -183,7 +136,8 @@ public class UserDetailsExtended {
                 '}';
     }
 
-    // --- JPA Converter ---
+    // ─── JPA JSONB Converter ────────────────────────────────────────────────
+
     @Converter
     public static class ConverterImpl implements AttributeConverter<UserDetailsExtended, String> {
         private static final ObjectMapper mapper = new ObjectMapper();
@@ -200,7 +154,7 @@ public class UserDetailsExtended {
 
         @Override
         public UserDetailsExtended convertToEntityAttribute(String dbData) {
-            if (dbData == null || dbData.isEmpty()) return null;
+            if (dbData == null || dbData.isBlank()) return null;
             try {
                 return mapper.readValue(dbData, UserDetailsExtended.class);
             } catch (IOException e) {

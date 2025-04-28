@@ -114,6 +114,14 @@ export default function createCoordinator(router) {
         },
         refreshPage() {
             router.go(0);
+        },
+        navigateToExternal(url) {
+            if (!url) return
+            // либо через window.open, либо через router.push, если нужна внутренняя обёртка
+            window.open(this.normalizeLink(url), '_blank')
+        },
+        normalizeLink(str) {
+            return str.startsWith('http') ? str : `https://${str}`
         }
     }
 }

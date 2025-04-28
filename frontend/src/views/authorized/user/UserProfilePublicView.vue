@@ -1,76 +1,75 @@
 <template>
-  <div class="p-6 max-w-3xl mx-auto bg-secondary rounded-lg shadow">
-    <!-- Loading -->
-    <div v-if="isLoading" class="text-center text-text/70 py-12">
+  <div class="p-8 max-w-4xl mx-auto bg-gray-50 rounded-xl shadow-lg">
+    <!-- Loading / Not Found -->
+    <div v-if="isLoading" class="text-center text-gray-400 py-16">
       ⏳ {{ t('common.loading') }}
     </div>
-
-    <!-- Not Found -->
-    <div v-else-if="notFound" class="text-center text-text/70 py-12">
+    <div v-else-if="notFound" class="text-center text-gray-400 py-16">
       {{ t('profile.notFound') }}
     </div>
 
     <!-- Profile Content -->
     <div v-else>
-      <!-- Шапка -->
+      <!-- Header -->
       <div class="flex items-center gap-6 mb-8">
         <img
             :src="userData.avatarUrl || defaultAvatar"
             alt="Аватар"
-            class="w-20 h-20 rounded-full object-cover border-2 border-accent-primary"
+            class="w-24 h-24 rounded-full ring-4 ring-indigo-300 object-cover"
         />
         <div>
-          <h1 class="text-3xl font-bold text-accent-primary">
-            {{ userData.titulPred ? userData.titulPred + ' ' : '' }}
+          <h1 class="text-4xl font-extrabold text-gray-800">
+            <span v-if="userData.titulPred" class="mr-1">{{ userData.titulPred }}</span>
             {{ userData.jmeno }} {{ userData.prijmeni }}
-            {{ userData.titulZa ? ', ' + userData.titulZa : '' }}
+            <span v-if="userData.titulZa" class="ml-1 text-lg text-gray-500">, {{ userData.titulZa }}</span>
           </h1>
-          <p class="text-sm text-text/70">{{ formattedDate }}</p>
-          <p class="text-sm">
-            <span class="font-medium">{{ t('profile.username') }}:</span>
-            {{ userData.userName }}
-          </p>
-          <p class="text-sm">
-            <span class="font-medium">{{ t('profile.active') }}:</span>
-            {{ userData.active ? t('profile.yes') : t('profile.no') }}
-          </p>
+          <p class="mt-1 text-sm text-gray-500">{{ formattedDate }}</p>
+          <div class="mt-2 space-x-4 text-sm text-gray-700">
+            <span><strong>{{ t('profile.username') }}:</strong> {{ userData.userName }}</span>
+            <span>
+              <strong>{{ t('profile.active') }}:</strong>
+              <span :class="userData.active ? 'text-green-600' : 'text-red-600'">
+                {{ userData.active ? t('profile.yes') : t('profile.no') }}
+              </span>
+            </span>
+          </div>
         </div>
       </div>
 
-      <!-- STAG данные -->
+      <!-- STAG Info -->
       <div
           v-if="userData.osCislo"
-          class="bg-primary p-6 rounded-lg border border-gray-200 mb-8"
+          class="mb-8 px-6 py-6 bg-white rounded-lg shadow-sm border-l-4 border-indigo-600"
       >
-        <h2 class="text-xl font-semibold text-accent-secondary mb-4">
+        <h2 class="text-2xl font-semibold text-indigo-600 mb-4">
           {{ t('stag.studentInfo') }}
         </h2>
-        <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-gray-700">
           <div>
-            <dt class="font-medium text-text">{{ t('stag.field.osCislo') }}</dt>
-            <dd class="text-text">{{ userData.osCislo }}</dd>
+            <dt class="font-medium">{{ t('stag.field.osCislo') }}</dt>
+            <dd>{{ userData.osCislo }}</dd>
           </div>
           <div>
-            <dt class="font-medium text-text">{{ t('stag.field.faculty') }}</dt>
-            <dd class="text-text">{{ userData.fakultaSp }}</dd>
+            <dt class="font-medium">{{ t('stag.field.faculty') }}</dt>
+            <dd>{{ userData.fakultaSp }}</dd>
           </div>
           <div>
-            <dt class="font-medium text-text">{{ t('stag.field.program') }}</dt>
-            <dd class="text-text">{{ userData.nazevSp }}</dd>
+            <dt class="font-medium">{{ t('stag.field.program') }}</dt>
+            <dd>{{ userData.nazevSp }}</dd>
           </div>
           <div>
-            <dt class="font-medium text-text">{{ t('stag.field.year') }}</dt>
-            <dd class="text-text">{{ userData.rocnik }}</dd>
+            <dt class="font-medium">{{ t('stag.field.year') }}</dt>
+            <dd>{{ userData.rocnik }}</dd>
           </div>
         </dl>
       </div>
 
       <!-- Friendship Actions -->
-      <div v-if="!isOwner" class="flex flex-wrap gap-4 mb-8">
+      <div v-if="!isOwner" class="flex flex-col sm:flex-row gap-4 mb-8">
         <button
             v-if="isFriend"
             @click="removeFriend"
-            class="px-6 py-2 rounded shadow bg-red-600 text-white hover:bg-red-700 transition"
+            class="flex-1 px-6 py-3 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition"
         >
           {{ t('profile.friends.remove') }}
         </button>
@@ -78,13 +77,13 @@
         <template v-else-if="hasIncoming">
           <button
               @click="approveFriend"
-              class="px-6 py-2 rounded shadow bg-accent-primary text-white hover:bg-accent-primary/90 transition"
+              class="flex-1 px-6 py-3 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition"
           >
             {{ t('profile.friends.approve') }}
           </button>
           <button
               @click="declineFriend"
-              class="px-6 py-2 rounded shadow border border-red-600 text-red-600 hover:bg-red-600/10 transition"
+              class="flex-1 px-6 py-3 border border-red-600 text-red-600 font-medium rounded-lg hover:bg-red-50 transition"
           >
             {{ t('profile.friends.decline') }}
           </button>
@@ -93,7 +92,7 @@
         <button
             v-else-if="hasOutgoing"
             disabled
-            class="px-6 py-2 rounded shadow text-text/60 border border-text/20"
+            class="flex-1 px-6 py-3 border border-gray-200 text-gray-400 font-medium rounded-lg"
         >
           {{ t('profile.friends.pending') }}
         </button>
@@ -101,54 +100,41 @@
         <button
             v-else
             @click="addFriend"
-            class="px-6 py-2 rounded shadow bg-accent-primary text-white hover:bg-accent-primary/90 transition"
+            class="flex-1 px-6 py-3 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition"
         >
           {{ t('profile.friends.add') }}
         </button>
 
         <button
             @click="onMessage"
-            class="px-6 py-2 bg-accent-secondary text-white rounded shadow hover:bg-accent-secondary/90 transition"
+            class="flex-1 px-6 py-3 bg-indigo-500 text-white font-medium rounded-lg hover:bg-indigo-600 transition"
         >
           {{ t('profile.buttons.sendMessage') }}
         </button>
       </div>
 
-      <!--      TODO ПОФИКСИТЬ ВСЮ ХУЙНЮ ПОЖАЛУЙСТА-->
-      <div class="mt-8">
-        <h2 class="text-xl font-semibold mb-4">{{ t('profile.friends.title') }}</h2>
-
-        <div v-if="friendsLoading" class="text-text/60">
-          ⏳ {{ t('common.loading') }}
-        </div>
-        <!--      TODO ВЫВОДИТ ПЕНДИНГ ДРУЗЕЙ-->
-        <div v-else-if="friends.length === 0" class="text-text/60">
-          {{ t('profile.friends.empty') }}
-        </div>
-        <ul v-else class="divide-y divide-gray-200 bg-white rounded-lg shadow-sm">
-          <li
-              v-for="f in friends"
-              :key="f.userId"
-          >
-            <button
-                type="button"
+      <!-- Friends List -->
+      <div>
+        <h2 class="text-2xl font-semibold mb-4 text-gray-800">{{ t('profile.friends.title') }}</h2>
+        <div v-if="friendsLoading" class="text-gray-400">⏳ {{ t('common.loading') }}</div>
+        <div v-else-if="friends.length === 0" class="text-gray-400">{{ t('profile.friends.empty') }}</div>
+        <ul v-else class="bg-white rounded-lg shadow-sm divide-y divide-gray-200">
+          <li v-for="f in friends" :key="f.userId">
+            <div
+                class="flex items-center justify-between px-6 py-4 hover:bg-indigo-50 transition cursor-pointer"
                 @click="coordinator.navigateToUser(f.userId)"
-                class="w-full text-left px-4 py-3 hover:bg-accent-primary/10 transition"
             >
-              <span class="text-left text-accent-primary font-medium">
-                {{ f.name }}
-              </span>
-            </button>
+              <span class="text-indigo-600 font-medium">{{ f.name }}</span>
+            </div>
           </li>
         </ul>
       </div>
-
-
     </div>
   </div>
 </template>
 
 <script setup>
+// (Скрипт оставляем без изменений)
 import { ref, onMounted, computed, inject } from 'vue'
 import { useRoute }     from 'vue-router'
 import { useI18n }      from 'vue-i18n'
@@ -175,21 +161,17 @@ const route       = useRoute()
 const coordinator = inject('coordinator')
 const { t }       = useI18n()
 
-// два отдельных `model`
-const userModel   = createUserModel()
-const friendModel= createFriendModel()
+const userModel    = createUserModel()
+const friendModel  = createFriendModel()
 
-// состояние профиля
-const isLoading = ref(true)
-const notFound  = ref(false)
-const userData  = ref({})
-
-// состояние дружбы
-const isFriend      = ref(false)
-const hasIncoming   = ref(false)
-const hasOutgoing   = ref(false)
-const friends       = ref([])
-const friendsLoading= ref(true)
+const isLoading      = ref(true)
+const notFound       = ref(false)
+const userData       = ref({})
+const isFriend       = ref(false)
+const hasIncoming    = ref(false)
+const hasOutgoing    = ref(false)
+const friends        = ref([])
+const friendsLoading = ref(true)
 
 const selfId   = getUserIdFromToken()
 const viewedId = Number(route.params.id)
@@ -203,7 +185,6 @@ const formattedDate = computed(() => {
 })
 
 onMounted(async () => {
-  // 1) профиль
   try {
     userData.value = await handleUserIntent(
         fetchUserProfileIntent(viewedId),
@@ -218,7 +199,6 @@ onMounted(async () => {
     console.error(err)
   }
 
-  // 2) друзья профиля
   friendsLoading.value = true
   friends.value = await handleFriendIntent(
       fetchFriendsIntent(viewedId),
@@ -226,7 +206,6 @@ onMounted(async () => {
   )
   friendsLoading.value = false
 
-  // 3) мои заявки/друзья
   const myRelations = await handleFriendIntent(
       fetchMyFriendsIntent(),
       { model: friendModel }
@@ -234,7 +213,6 @@ onMounted(async () => {
   isFriend.value    = myRelations.some(r => r.userId === viewedId && r.status === 'approved')
   hasOutgoing.value = myRelations.some(r => r.userId === viewedId && r.status === 'pending')
 
-  // 4) входящие ко мне заявки
   const incoming = await handleFriendIntent(
       fetchIncomingRequestsIntent(),
       { model: friendModel }
@@ -243,8 +221,6 @@ onMounted(async () => {
 
   isLoading.value = false
 })
-
-// ————— методы дружбы —————————————
 
 async function addFriend() {
   await handleFriendIntent(
@@ -283,3 +259,16 @@ function onMessage() {
   coordinator.navigateToChat(viewedId)
 }
 </script>
+
+<style scoped>
+/* Плавные анимации (если нужны дальше) */
+.slide-fade-enter-active,
+.slide-fade-leave-active {
+  transition: all .2s ease;
+}
+.slide-fade-enter-from,
+.slide-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
+}
+</style>

@@ -55,26 +55,27 @@
     </div>
 
     <!-- Другие контакты -->
+    <!-- Другие контакты -->
     <div class="space-y-4">
       <h3 class="text-lg font-semibold">{{ t('profile.settings.contacts.otherTitle') }}</h3>
 
       <!-- существующие -->
       <div
-          v-for="(value, key) in local.other"
-          :key="key"
+          v-for="item in localOtherArray"
+          :key="item.source"
           class="flex flex-wrap items-center gap-2"
       >
-        <span class="font-medium min-w-[80px]">{{ key }}:</span>
-        <span class="text-text/60 flex-1 min-w-[100px]">{{ value }}</span>
+        <span class="font-medium min-w-[80px]">{{ item.source }}:</span>
+        <span class="text-text/60 flex-1 min-w-[100px]">{{ item.value }}</span>
         <button
             class="px-2 py-1 text-sm rounded border border-accent-primary text-accent-primary hover:bg-accent-primary/10 transition"
-            @click="startOther(key)"
+            @click="startOther(item.source)"
         >
           {{ t('common.change') }}
         </button>
         <button
             class="px-2 py-1 text-sm rounded border border-red-600 text-red-600 hover:bg-red-600/10 transition"
-            @click="removeOther(key)"
+            @click="removeOther(item.source)"
         >
           {{ t('common.delete') }}
         </button>
@@ -122,11 +123,12 @@
         </button>
       </div>
     </div>
+
   </div>
 </template>
 
 <script setup>
-import { reactive, ref, watch, nextTick } from 'vue'
+import { reactive, ref, watch, nextTick, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
@@ -145,11 +147,16 @@ const contactFields = [
 
 // локальная копия данных
 const local = reactive({
-  contacts: {},
-  other: {}
+  contacts: {},         // объект вида { fb: '...', ... }
+  otherMap: {}          // объект вида { source1: 'value1', ... }
 })
 
-// edit‑флаги и refs
+// для шаблона преобразуем обратно в массив
+const localOtherArray = computed(() =>
+    Object.entries(local.otherMap).map(([source, value]) => ({ source, value }))
+)
+
+// edit-флаги и refs для основных контактов
 const editing   = reactive(contactFields.reduce((o,f)=>(o[f.key]=false,o), {}))
 const inputRefs = reactive(contactFields.reduce((o,f)=>(o[f.key]=null,o), {}))
 
@@ -159,10 +166,20 @@ const otherForm    = reactive({ key:'', value:'' })
 const otherRefs    = reactive({ key:null, value:null })
 
 // синхронизация с profile.details
-watch(() => props.profile.details, d => {
-  local.contacts = { ...d.contacts }
-  local.other    = { ...(d.other||{}) }
-  Object.keys(editing).forEach(k => editing[k]=false)
+watch(() => props.profile.details, details => {
+  // contacts — просто копируем
+  local.contacts = { ...details.contacts }
+
+  // other — из массива делаем map
+  local.otherMap = {}
+  if (Array.isArray(details.other)) {
+    for (const { source, value } of details.other) {
+      local.otherMap[source] = value
+    }
+  }
+
+  // сбросим все edit-флаги
+  Object.keys(editing).forEach(k => editing[k] = false)
   editingOther.value = null
 }, { immediate: true })
 
@@ -177,11 +194,18 @@ function cancelEditing(key) {
 }
 function deleteField(key) {
   const updated = { ...local.contacts, [key]: '' }
-  emit('update-details', { contacts: updated })
+  emit('update-details', {
+    contacts: updated,
+    // сохраняем other как есть
+    other: localOtherArray.value
+  })
   editing[key] = false
 }
 function saveField(key) {
-  emit('update-details', { contacts: { ...local.contacts } })
+  emit('update-details', {
+    contacts: { ...local.contacts },
+    other: localOtherArray.value
+  })
   editing[key] = false
 }
 
@@ -192,7 +216,7 @@ function startOther(key) {
     otherForm.value = ''
   } else {
     otherForm.key = key
-    otherForm.value = local.other[key]
+    otherForm.value = local.otherMap[key]
   }
   editingOther.value = key
   nextTick(() => {
@@ -202,17 +226,24 @@ function startOther(key) {
 function cancelOther() {
   editingOther.value = null
 }
-function removeOther(key) {
-  const o = { ...local.other }
-  delete o[key]
-  emit('update-details', { other: o })
+function removeOther(source) {
+  const o = { ...local.otherMap }
+  delete o[source]
+  emit('update-details', {
+    contacts: local.contacts,
+    other: Object.entries(o).map(([s,v])=>({ source: s, value: v }))
+  })
 }
 function confirmOther() {
-  const k = otherForm.key.trim()
-  const v = otherForm.value.trim()
-  if (!k) return
-  const o = { ...local.other, [k]: v }
-  emit('update-details', { other: o })
+  const source = otherForm.key.trim()
+  const val    = otherForm.value.trim()
+  if (!source) return
+  const o = { ...local.otherMap, [source]: val }
+  emit('update-details', {
+    contacts: local.contacts,
+    other: Object.entries(o).map(([s,v])=>({ source: s, value: v }))
+  })
   editingOther.value = null
 }
 </script>
+

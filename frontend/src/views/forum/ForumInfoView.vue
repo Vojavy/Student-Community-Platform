@@ -117,7 +117,7 @@
     </div>
 
     <!-- pagination -->
-    <div class="flex justify-center space-x-2 mt-6">
+    <div v-if="page.totalPages!==0"  class="flex justify-center space-x-2 mt-6">
       <button
           :disabled="page.first"
           @click="changePage(page.number - 1)"

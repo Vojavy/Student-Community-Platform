@@ -6,7 +6,8 @@ export default {
         change: 'Change',
         delete: 'Delete',
         loading: 'Loading...',
-        search: 'Search'
+        search: 'Search',
+        submit: 'Submit'
     },
     verification: {
         title: 'Email Verification',
@@ -36,7 +37,8 @@ export default {
         email: 'Email',
         password: 'Password',
         username: 'Username',
-        button: 'Register'
+        button: 'Register',
+        repeat: 'Repeat password',
     },
     errors: {
         invalidEmail: 'Invalid email address',
@@ -120,7 +122,6 @@ export default {
         registered: 'Registered',
         detailsTitle: 'Details',
         noDetails: 'No details provided',
-
         friends: {
             title: 'Friends',
             empty: 'You have no friends yet',
@@ -135,14 +136,13 @@ export default {
                 actions: 'Actions'
             }
         },
-
         settings: {
             title: 'Settings',
             save: 'Save',
             updated: 'Settings saved',
             error: 'An error occurred',
-            empty:'Not specified',
-            contacts:{
+            empty: 'Not specified',
+            contacts: {
                 otherTitle: 'Other contacts',
                 addOther: 'Add another contact',
                 keyPlaceholder: 'Contact method',
@@ -159,7 +159,7 @@ export default {
                 newPassword: 'New password',
                 incorrectPassword: 'Incorrect current password',
                 deactivate: 'Deactivate account?',
-                confirmDeactivate: 'Confirm account deactivation by entering your password. This action cannot be undone.',
+                confirmDeactivate: 'Confirm account deactivation by entering your password. This action cannot be undone.'
             },
             fields: {
                 bio: 'Bio',
@@ -167,7 +167,6 @@ export default {
                 skills: 'Skills'
             }
         },
-
         contacts: {
             inst: 'Instagram',
             tg: 'Telegram',
@@ -175,16 +174,14 @@ export default {
             steam: 'Steam',
             ln: 'LinkedIn',
             telephone: 'Telephone',
-            otherTitle: 'Other contacts',
+            otherTitle: 'Other contacts'
         },
-
         personal: {
             birthDate: 'Birth Date',
             languages: 'Languages',
             location: 'Location',
             website: 'Website'
         },
-
         buttons: {
             settings: 'Profile Settings',
             connectStag: 'Connect STAG',
@@ -199,17 +196,14 @@ export default {
         name: 'Name',
         description: 'Description',
         topics: 'Topics',
-
         overview: 'Overview',
         calendar: 'Calendar',
         settings: 'Settings',
         posts: 'Posts',
-
         tabs: { my: 'My Groups', browse: 'Browse' },
         searchPlaceholder: 'Search by name or topic…',
         noMyGroups: 'You have no groups yet',
         noBrowseResults: 'No results found',
-
         filters: {
             name: 'Name',
             domain: 'Domain',
@@ -222,7 +216,6 @@ export default {
             apply: 'Apply'
         },
         pagination: { prev: '← Prev', next: 'Next →', size: 'Per page' },
-
         domainUnknown: 'No domain',
         public: 'Public',
         private: 'Private',
@@ -230,11 +223,9 @@ export default {
         owner: 'Owner',
         admins: 'Admins',
         helpers: 'Helpers',
-
         deleteGroup: 'Delete Group',
         leave: 'Leave',
         join: 'Join',
-
         members: 'Members',
         filterStatus: 'Status',
         filterRole: 'Role',
@@ -244,14 +235,13 @@ export default {
         kick: 'Kick',
         ban: 'Ban',
         unban: 'Unban',
-
         role: {
             role: 'Role',
             member: 'Member',
             helper: 'Helper',
             admin: 'Admin',
             owner: 'Owner',
-            invited: 'Invited',
+            invited: 'Invited'
         },
         status: {
             status: 'Status',
@@ -259,15 +249,12 @@ export default {
             pending: 'Pending',
             banned: 'Banned'
         },
-
         pending: 'Membership request sent',
         banned: 'Banned',
         notFound: 'Group not found',
-
         minRoleForPosts: 'Min. role to post',
         minRoleForEvents: 'Min. role to create events',
         noDomain: 'No domain',
-
         createTitle: 'Create New Group',
         form: {
             domain: 'Domain (optional)',
@@ -280,27 +267,27 @@ export default {
         }
     },
     posts: {
-        newPost:        'New post',
-        title:          'Title',
-        titlePlaceholder:'Enter a title…',
-        topics:         'Topics',
-        topicsPlaceholder:'Comma-separated topics…',
-        bold:            '🅱️ Bold',
-        italic:          '𝘐 Italic',
-        underline:       '〰️ Underline',
-        strikethrough:   '❌ Strikethrough',
-        h1:              '🔢 Heading 1',
-        h2:              '🔢 Heading 2',
-        insertLink:      '🔗 Insert link',
-        linkPrompt:      'URL',
-        insertImage:     '🖼️ Insert image',
-        submit:         'Publish',
-        expand:         'Expand',
-        hide:           'Hide',
-        by:             'by',
-        on:             'on',
-        edit:           'Edit',
-        delete:         'Delete'
+        newPost: 'New post',
+        title: 'Title',
+        titlePlaceholder: 'Enter a title…',
+        topics: 'Topics',
+        topicsPlaceholder: 'Comma-separated topics…',
+        bold: '🅱️ Bold',
+        italic: '𝘐 Italic',
+        underline: '〰️ Underline',
+        strikethrough: '❌ Strikethrough',
+        h1: '🔢 Heading 1',
+        h2: '🔢 Heading 2',
+        insertLink: '🔗 Insert link',
+        linkPrompt: 'URL',
+        insertImage: '🖼️ Insert image',
+        submit: 'Publish',
+        expand: 'Expand',
+        hide: 'Hide',
+        by: 'by',
+        on: 'on',
+        edit: 'Edit',
+        delete: 'Delete'
     },
     forum: {
         filters: {
@@ -374,6 +361,23 @@ export default {
             informational: 'Informational',
             archived: 'Archived',
             banned: 'Banned'
+        },
+        detail: {
+            createdBy: 'Created by',
+            createdAt: 'Created on',
+            status: 'Status',
+            newPostTitle: 'New Post',
+            newPostPlaceholder: 'Your message…',
+            replyingTo: 'Replying to',
+            replyToPost: 'Reply to post',
+            addMessage: 'Add message',
+            settingsTitle: 'Settings',
+            closeForum: 'Close forum',
+            archiveForum: 'Archive forum',
+            resolveForum: 'Resolve forum',
+            deleteForum: 'Delete forum',
+            reply: 'Reply',
+            inReplyTo: 'In reply to'
         }
-    },
+    }
 }
