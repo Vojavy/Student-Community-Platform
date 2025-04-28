@@ -79,8 +79,6 @@ export default function createCoordinator(router) {
         },
         navigateToForum(id = null) {
             const userId = getUserIdFromToken();
-            console.log('User ID:', userId)
-            console.log('Forum ID:', id)
             if (userId) {
                 id !== null ? router.push(`/app/forum/${id}`) : router.push('/app/forum');
             } else {

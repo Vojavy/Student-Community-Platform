@@ -158,7 +158,7 @@
         </div>
 
         <!-- Public -->
-        <div class="flex items-center space-x-2">
+        <div v-if="!isOnlyUnverified" class="flex items-center space-x-2">
           <input type="checkbox" id="public" v-model="settings.public" />
           <label for="public">{{ t('forum.create.public') }}</label>
         </div>
@@ -273,6 +273,7 @@ const { t } = useI18n()
 const route = useRoute()
 const forum = ref(null)
 const posts = ref([])
+const coord = inject('coordinator')
 const forumId = Number(route.params.id)
 
 // отступы
@@ -316,6 +317,10 @@ const canEdit    = computed(() =>
     forum.value && (isAdmin.value || isCreator.value)
 )
 
+const isOnlyUnverified = computed(() => {
+  return role.value.length === 1 && role.value[0].name === 'ROLE_UNVERIFIED';
+})
+
 // редактор
 const editorState = ref({ open:false, parentPostId:null })
 function openEditor(pid) { editorState.value = { open:true, parentPostId:pid } }
@@ -358,7 +363,8 @@ async function loadForum() {
     universityDomain: f.universityDomain.domain,
     informational:    f.status==='informational',
     public:           f.public,
-    pinned:           f.pinned
+    pinned:           f.pinned,
+    closed:           f.closed,
   })
   minRoleName.value = f.allowedRoles.length ? f.allowedRoles[0] : ''
 }
@@ -386,14 +392,34 @@ async function onReply({content,parentPostId}) {
 // действия по кнопкам
 async function closeForum() {
   await handleForumIntent(
-      updateForumIntent(forumId,{ closed: true }),
+      updateForumIntent(forumId,{
+        name:             settings.name.trim(),
+        description:      settings.description.trim(),
+        topics:           settings.topicsInput.split(',').map(s=>s.trim()).filter(Boolean),
+        universityDomain: settings.universityDomain,
+        status:           'archived',
+        public:           settings.public,
+        pinned:           isAdmin.value ? settings.pinned : undefined,
+        closed:           true,
+        allowedRoles:     allowedRoleNames.value
+      }),
       {model:createForumModel()}
   )
   settings.closed = true
 }
 async function archiveForum() {
   await handleForumIntent(
-      updateForumIntent(forumId,{ status: 'archived' }),
+      updateForumIntent(forumId,{
+        name:             settings.name.trim(),
+        description:      settings.description.trim(),
+        topics:           settings.topicsInput.split(',').map(s=>s.trim()).filter(Boolean),
+        universityDomain: settings.universityDomain,
+        status:           'archived',
+        public:           settings.public,
+        pinned:           isAdmin.value ? settings.pinned : undefined,
+        closed:           settings.closed,
+        allowedRoles:     allowedRoleNames.value
+      }),
       {model:createForumModel()}
   )
   settings.informational = false
@@ -401,14 +427,34 @@ async function archiveForum() {
 }
 async function resolveForum() {
   await handleForumIntent(
-      updateForumIntent(forumId,{ status: 'resolved' }),
+      updateForumIntent(forumId,{
+        name:             settings.name.trim(),
+        description:      settings.description.trim(),
+        topics:           settings.topicsInput.split(',').map(s=>s.trim()).filter(Boolean),
+        universityDomain: settings.universityDomain,
+        status:           'resolved',
+        public:           settings.public,
+        pinned:           isAdmin.value ? settings.pinned : undefined,
+        closed:           settings.closed,
+        allowedRoles:     allowedRoleNames.value
+      }),
       {model:createForumModel()}
   )
   forum.value.status = 'resolved'
 }
 async function banForum() {
   await handleForumIntent(
-      updateForumIntent(forumId,{ status: 'banned', closed: true }),
+      updateForumIntent(forumId,{
+        name:             settings.name.trim(),
+        description:      settings.description.trim(),
+        topics:           settings.topicsInput.split(',').map(s=>s.trim()).filter(Boolean),
+        universityDomain: settings.universityDomain,
+        status:           'banned',
+        public:           settings.public,
+        pinned:           isAdmin.value ? settings.pinned : undefined,
+        closed:           true,
+        allowedRoles:     allowedRoleNames.value
+      }),
       {model:createForumModel()}
   )
   forum.value.status = 'banned'
@@ -440,7 +486,7 @@ async function deleteForum() {
   await handleForumIntent(deleteForumIntent(forumId), {
     model: createForumModel()
   })
-  inject('coordinator').navigateToForumSearch()
+  coord.navigateToForumSearch()
 }
 
 // плавный скролл
