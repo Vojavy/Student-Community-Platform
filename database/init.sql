@@ -439,8 +439,6 @@ alter table user_is_data
 create table user_friends
 (
     user_id_1  bigint                                           not null
-        constraint event_publication_pkey
-            primary key
         references users
             on delete cascade,
     user_id_2  bigint                                           not null

@@ -63,9 +63,14 @@ public class ForumService {
         UniversityDomain domain = domainService.getDomainByCode(req.getUniversityDomain())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Domain not found"));
 
-        Set<Role> roles = req.getAllowedRoles().stream()
+        Set<Role> roles;
+        if (req.getAllowedRoles() == null || req.getAllowedRoles().isEmpty())
+            roles = new HashSet<>(creator.getRoles());
+        else
+            roles = req.getAllowedRoles().stream()
                 .map(roleService::getByName)
                 .collect(Collectors.toSet());
+
         Forum forum = new Forum();
         forum.setName(req.getName());
 
@@ -95,16 +100,23 @@ public class ForumService {
 
     public void updateForum(Integer forumId, CreateForumRequest req, Long actorUserId) {
 
-        User user = userService.findById(actorUserId)
+        User actor = userService.findById(actorUserId)
                 .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "User not found"));
 
         Forum forum = forumRepo.findById(forumId)
                 .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Forum not found"));
 
-        if (!forum.getCreatedBy().equals(user) && !user.getRoles().contains(RoleType.ROLE_ADMIN)) {
+        if (!forum.getCreatedBy().equals(actor) && !actor.getRoles().contains(RoleType.ROLE_ADMIN)) {
             throw new ResponseStatusException(FORBIDDEN, "Only creators or admins can update forums");
         };
 
+        Set<Role> roles;
+        if (req.getAllowedRoles() == null || req.getAllowedRoles().isEmpty())
+            roles = new HashSet<>(actor.getRoles());
+        else
+            roles = req.getAllowedRoles().stream()
+                    .map(roleService::getByName)
+                    .collect(Collectors.toSet());
 
 
         forum.setName(req.getName());
@@ -123,9 +135,7 @@ public class ForumService {
                     e
             );
         }
-        forum.setAllowedRoles(req.getAllowedRoles().stream()
-                .map(roleService::getByName)
-                .collect(Collectors.toSet()));
+        forum.setAllowedRoles(roles);
 
         if (req.getUniversityDomain() == null)
             forum.setUniversityDomain(null);
