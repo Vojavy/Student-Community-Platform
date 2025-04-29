@@ -83,7 +83,6 @@ public class AuthenticationService {
         return userService.save(user);
     }
 
-
     public User authenticateLocal(LoginUserRequest input) {
         User user = userService.findByEmail(input.getEmail())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
@@ -123,8 +122,6 @@ public class AuthenticationService {
 
         userService.update(user);
     }
-
-
 
     public void resendVerificationEmailLocal(String email, String baseUrl) {
         Optional<User> optionalUser = userService.findByEmail(email);

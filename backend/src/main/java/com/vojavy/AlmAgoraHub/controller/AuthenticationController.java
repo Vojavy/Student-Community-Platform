@@ -39,7 +39,6 @@ public class AuthenticationController {
         this.userService = userService;
     }
 
-    //TODO возвращать только ок
     @PostMapping("/signup")
     public ResponseEntity<?> register(
             @RequestBody RegisterUserRequest registerUserRequest,
@@ -65,7 +64,6 @@ public class AuthenticationController {
         LoginResponse loginResponse = new LoginResponse(jwtToken, expiresAt, "auth");
         return ResponseEntity.ok(loginResponse);
     }
-
 
     @PostMapping("/verify")
     public ResponseEntity<?> verifyUser(@RequestBody VerifyUserDto verifyUserDto){
@@ -141,7 +139,6 @@ public class AuthenticationController {
             return ResponseEntity.badRequest().body(response);
         }
     }
-
 
     @DeleteMapping("/logout")
     public ResponseEntity<?> logout(@RequestHeader("Authorization") String authHeader) {

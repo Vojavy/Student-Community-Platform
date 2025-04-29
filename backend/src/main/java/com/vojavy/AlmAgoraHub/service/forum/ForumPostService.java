@@ -1,4 +1,3 @@
-// src/main/java/com/vojavy/AlmAgoraHub/service/forum/ForumPostService.java
 package com.vojavy.AlmAgoraHub.service.forum;
 
 import com.vojavy.AlmAgoraHub.model.forum.Forum;
@@ -12,11 +11,11 @@ import java.util.List;
 
 @Service
 @Transactional
-public class ForumPostService {
+class ForumPostService {
 
     private final ForumPostRepository postRepository;
 
-    public ForumPostService(ForumPostRepository postRepository) {
+    protected ForumPostService(ForumPostRepository postRepository) {
         this.postRepository = postRepository;
     }
 
@@ -41,7 +40,7 @@ public class ForumPostService {
                 .orElseThrow(() -> new IllegalArgumentException("Parent post not found"));
     }
 
-    public List<ForumPost> findAllByForum(Forum forum) {
+    protected List<ForumPost> findAllByForum(Forum forum) {
         return postRepository.findByForumOrderByCreatedAtAsc(forum);
     }
 }

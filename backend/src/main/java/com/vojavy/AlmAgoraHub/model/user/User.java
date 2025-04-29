@@ -11,7 +11,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-
 @Entity
 @Table(name = "users")
 public class User implements org.springframework.security.core.userdetails.UserDetails {
@@ -48,13 +47,9 @@ public class User implements org.springframework.security.core.userdetails.UserD
     private Instant verificationExpires;
 
     @Convert(converter = UserDetailsExtended.ConverterImpl.class)
-    @JdbcTypeCode(SqlTypes.JSON)               // говорим Hibernate, что это JSON (_не_ varchar)
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
     private UserDetailsExtended details;
-
-
-    // --- Relations ---
-
 
     @ManyToOne
     @JoinColumn(name = "domain_id")

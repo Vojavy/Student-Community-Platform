@@ -83,7 +83,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             chain.doFilter(request, response);
 
         } catch (ExpiredJwtException e) {
-            System.out.println("❌ Token expired: " + e.getMessage());
+            System.out.println("Token expired: " + e.getMessage());
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.getWriter().write("JWT expired");
             if (token != null) {
@@ -91,7 +91,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             }
 
         } catch (Exception e) {
-            System.out.println("❌ Other JWT error: " + e);
+            System.out.println("Other error: " + e);
             handlerExceptionResolver.resolveException(request, response, null, e);
         }
     }

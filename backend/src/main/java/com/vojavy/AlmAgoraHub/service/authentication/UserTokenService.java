@@ -39,7 +39,6 @@ public class UserTokenService {
                 .ifPresent(userTokenRepository::delete);
     }
 
-
     public UserToken saveUniversityToken(Long userId, String token, Instant expiration, String origin) {
         Optional<UserToken> existing = userTokenRepository
                 .findFirstByUser_IdAndTokenType(userId, "uni");
