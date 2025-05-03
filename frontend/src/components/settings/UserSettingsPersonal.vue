@@ -76,57 +76,58 @@ const emit  = defineEmits(['update-details'])
 
 const fields = [
   { key:'birthDate', label:'profile.personal.birthDate', type:'date' },
-  { key:'languages', label:'profile.personal.languages', type:'multiselect',
-    options:[
-      {value:'en', label:'English'},
-      {value:'ru', label:'Русский'},
-      {value:'cs', label:'Češtина'}
+  { key:'languages', label:'profile.personal.languages', type:'multiselect', options:[
+      {value:'en', label:'English'}, {value:'ru', label:'Русский'}, {value:'cs', label:'Čeština'}
     ]
   },
-  { key:'location',   label:'profile.personal.location', type:'text' },
-  { key:'website',    label:'profile.personal.website',  type:'text' }
+  { key:'location', label:'profile.personal.location', type:'text' },
+  { key:'website',  label:'profile.personal.website',  type:'text' }
 ]
 
-// локалки
 const local   = reactive({})
 const editing = reactive({})
 const refs    = reactive({})
 
-watch(()=>props.profile.details, d=>{
-  fields.forEach(f=>{
-    if(f.key==='languages'){
-      local.languages = Array.isArray(d.languages)?[...d.languages]:[]
-    } else {
-      local[f.key] = d[f.key]||''
-    }
-    editing[f.key]=false
-    refs[f.key]=null
-  })
-},{ immediate:true })
+watch(
+    () => props.profile.details,
+    details => {
+      if (!details) return
+      fields.forEach(f => {
+        if (f.key === 'languages') {
+          local.languages = Array.isArray(details.languages) ? [...details.languages] : []
+        } else {
+          local[f.key] = details[f.key] || ''
+        }
+        editing[f.key] = false
+        refs[f.key]    = null
+      })
+    },
+    { immediate: true }
+)
 
 const display = key => {
   const v = props.profile.details?.[key]
-  if(key==='languages') return Array.isArray(v)?v.join(', '):''
-  return v||''
+  if (key === 'languages') return Array.isArray(v) ? v.join(', ') : ''
+  return v || ''
 }
 
-function start(key){
-  editing[key]=true
-  nextTick(()=>refs[key]?.focus?.())
+function start(key) {
+  editing[key] = true
+  nextTick(() => refs[key]?.focus?.())
 }
-function cancel(key){
+function cancel(key) {
   const v = props.profile.details?.[key]
   local[key] = key==='languages'
-      ? Array.isArray(v)?[...v]:[]
-      : v||''
-  editing[key]=false
+      ? (Array.isArray(v) ? [...v] : [])
+      : (v || '')
+  editing[key] = false
 }
-function remove(key){
-  emit('update-details',{ [key]: key==='languages'?[]:'' })
+function remove(key) {
+  emit('update-details', { [key]: key==='languages' ? [] : '' })
 }
-function save(key){
-  const val = key==='languages'?local.languages:local[key]
-  emit('update-details',{ [key]: val })
-  editing[key]=false
+function save(key) {
+  const val = key === 'languages' ? local.languages : local[key]
+  emit('update-details', { [key]: val })
+  editing[key] = false
 }
 </script>

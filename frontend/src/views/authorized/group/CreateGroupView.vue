@@ -1,21 +1,13 @@
 <template>
   <div class="max-w-2xl mx-auto p-6 space-y-6 bg-secondary rounded-lg shadow">
     <h1 class="text-2xl font-bold">{{ t('groups.createTitle') }}</h1>
-
     <form @submit.prevent="onSubmit" class="space-y-4">
       <!-- Domain -->
       <div>
         <label class="block font-medium mb-1">{{ t('groups.form.domain') }}</label>
-        <select
-            v-model="form.domain"
-            class="w-full p-2 border rounded bg-primary text-text"
-        >
+        <select v-model="form.domain" class="w-full p-2 border rounded bg-primary text-text">
           <option value="">{{ t('groups.form.domainNone') }}</option>
-          <option
-              v-for="d in domains"
-              :key="d.id"
-              :value="d.domain"
-          >
+          <option v-for="d in domains" :key="d.id" :value="d.domain">
             {{ d.domainName }}
           </option>
         </select>
@@ -25,8 +17,8 @@
       <div>
         <label class="block font-medium mb-1">{{ t('groups.form.name') }}</label>
         <input
-            type="text"
             v-model="form.name"
+            type="text"
             class="w-full p-2 border rounded bg-primary text-text"
             required
         />
@@ -43,14 +35,53 @@
       </div>
 
       <!-- Topics -->
-      <div>
+      <div class="space-y-2">
         <label class="block font-medium mb-1">{{ t('groups.form.topics') }}</label>
-        <input
-            type="text"
-            v-model="form.topics"
-            placeholder="tag1,tag2,…"
-            class="w-full p-2 border rounded bg-primary text-text"
-        />
+        <!-- Existing topics -->
+        <ul class="list-disc list-inside space-y-1 mb-2">
+          <li v-for="(topic, idx) in topics" :key="idx" class="flex items-center gap-2">
+            <span class="flex-1">{{ topic }}</span>
+            <button
+                type="button"
+                class="px-2 py-1 text-sm border rounded border-accent-primary text-accent-primary hover:bg-accent-primary/10 transition"
+                @click="startEdit(idx)"
+            >
+              {{ t('common.change') }}
+            </button>
+            <button
+                type="button"
+                class="px-2 py-1 text-sm border rounded border-red-600 text-red-600 hover:bg-red-600/10 transition"
+                @click="removeTopic(idx)"
+            >
+              {{ t('common.delete') }}
+            </button>
+          </li>
+        </ul>
+
+        <!-- Add / Edit topic form -->
+        <div class="flex gap-2">
+          <input
+              v-model="topicValue"
+              type="text"
+              :placeholder="editingTopicIndex === null ? t('groups.form.newTopicPlaceholder') : t('common.change')"
+              class="flex-1 p-2 border rounded bg-primary text-text"
+          />
+          <button
+              type="button"
+              class="px-4 py-2 bg-accent-primary text-white rounded hover:bg-accent-primary/90 transition"
+              @click="confirmTopic"
+          >
+            {{ editingTopicIndex === null ? t('common.add') : t('common.save') }}
+          </button>
+          <button
+              v-if="editingTopicIndex !== null"
+              type="button"
+              class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition"
+              @click="cancelEdit"
+          >
+            {{ t('common.cancel') }}
+          </button>
+        </div>
       </div>
 
       <!-- Public -->
@@ -78,85 +109,81 @@
 import { reactive, ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { inject } from 'vue'
-
-import createGroupModel from '@/iam/models/group/groupModel.js'
-import { createGroupIntent } from '@/iam/intents/groupIntents'
-import { handleGroupIntent } from '@/iam/actions/groupActions'
-
-import createDomainModel from '@/iam/models/domainModel'
-import { fetchDomainsIntent } from '@/iam/intents/domainIntents'
-import { handleDomainIntent } from '@/iam/actions/domainActions'
-
-import createUserModel from '@/iam/models/userModel'
-import { fetchUserProfileIntent } from '@/iam/intents/userIntents'
-import { handleUserIntent } from '@/iam/actions/userActions'
-
+import { useGroupStore } from '@/iam/stores/groupStore.js'
+import { useDomainStore } from '@/iam/stores/domainStore.js'
+import { useUserStore } from '@/iam/stores/userStore.js'
 import { getUserIdFromToken } from '@/utils/jwt/getUserIdFromToken'
 
 const { t } = useI18n()
 const coordinator = inject('coordinator')
-
-const groupModel = createGroupModel()
-const domainModel = createDomainModel()
-const userModel = createUserModel()
+const groupStore = useGroupStore()
+const domainStore = useDomainStore()
+const userStore   = useUserStore()
 
 const userId = getUserIdFromToken()
-
 const domains = ref([])
 
 const form = reactive({
-  domain: '',         // empty = none
-  name: '',
+  domain:      '',
+  name:        '',
   description: '',
-  topics: '',
-  public: true
+  public:      true
 })
+
+const topics = ref([])
+const editingTopicIndex = ref(null)
+const topicValue = ref('')
 
 onMounted(async () => {
-  // fetch available university domains
-  domains.value = await handleDomainIntent(
-      fetchDomainsIntent(),
-      { model: domainModel }
-  )
+  await domainStore.fetchDomains()
+  domains.value = domainStore.domains
 
-  // optionally prefill domain from user profile if needed:
   try {
-    const profile = await handleUserIntent(
-        fetchUserProfileIntent(userId),
-        { model: userModel }
-    )
-    if (profile.domain) {
-      form.domain = profile.domain
+    await userStore.fetchProfile(userId)
+    if (userStore.profile.domain) {
+      form.domain = userStore.profile.domain
     }
-  } catch {
-    // ignore
-  }
+  } catch {  }
 })
 
-async function onSubmit() {
-  // split tags
-  const topicsArr = form.topics
-      .split(',')
-      .map(s => s.trim())
-      .filter(Boolean)
+function confirmTopic() {
+  const val = topicValue.value.trim()
+  if (!val) return
+  if (editingTopicIndex.value === null) {
+    topics.value.push(val)
+  } else {
+    topics.value[editingTopicIndex.value] = val
+  }
+  cancelEdit()
+}
 
+function startEdit(idx) {
+  editingTopicIndex.value = idx
+  topicValue.value = topics.value[idx]
+}
+
+function removeTopic(idx) {
+  topics.value.splice(idx, 1)
+  if (editingTopicIndex.value === idx) cancelEdit()
+}
+
+function cancelEdit() {
+  editingTopicIndex.value = null
+  topicValue.value = ''
+}
+
+async function onSubmit() {
   const groupData = {
-    name: form.name,
-    description: form.description,
-    topics: topicsArr,
-    public: form.public,
-    minRoleForPosts: 'member',
+    name:             form.name,
+    description:      form.description,
+    topics:           topics.value,
+    public:           form.public,
+    minRoleForPosts:  'member',
     minRoleForEvents: 'admin',
-    domain: form.domain || undefined   // undefined => no domain
+    domain:           form.domain || undefined
   }
 
-  // create
-  const created = await handleGroupIntent(
-      createGroupIntent(groupData),
-      { model: groupModel }
-  )
-
-  // navigate to newly created group
+  const created = await groupStore.createGroup(groupData)
   coordinator.navigateToGroup(created.id)
 }
 </script>

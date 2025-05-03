@@ -7,9 +7,11 @@ import createCoordinator from './coordinator/coordinator'
 import './assets/main.css'
 
 import { createI18n } from 'vue-i18n'
+import { createPinia } from "pinia";
 import en from './locales/en'
 import ru from './locales/ru'
 import cz from './locales/cz'
+
 
 const i18n = createI18n({
     legacy: false,
@@ -22,8 +24,10 @@ const i18n = createI18n({
     }
 })
 
+const pinia = createPinia()
 const app = createApp(App)
 
+app.use(pinia)
 app.use(i18n)
 app.use(router)
 app.provide('coordinator', createCoordinator(router))

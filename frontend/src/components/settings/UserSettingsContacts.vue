@@ -1,16 +1,9 @@
 <template>
   <div class="space-y-8">
     <h2 class="text-xl font-semibold">{{ t('profile.settings.tabs.contacts') }}</h2>
+    <div v-for="field in contactFields" :key="field.key" class="space-y-2">
 
-    <!-- Основные контакты -->
-    <div
-        v-for="field in contactFields"
-        :key="field.key"
-        class="space-y-2"
-    >
       <label class="block font-medium">{{ t(field.label) }}</label>
-
-      <!-- view mode -->
       <div class="flex flex-wrap items-center gap-2">
         <span class="text-text/60 flex-1 min-w-[100px]">
           {{ local.contacts[field.key] || t('profile.settings.empty') }}
@@ -30,7 +23,6 @@
         </button>
       </div>
 
-      <!-- edit mode -->
       <div v-if="editing[field.key]" class="flex flex-col gap-2">
         <input
             v-model="local.contacts[field.key]"
@@ -54,17 +46,10 @@
       </div>
     </div>
 
-    <!-- Другие контакты -->
-    <!-- Другие контакты -->
     <div class="space-y-4">
       <h3 class="text-lg font-semibold">{{ t('profile.settings.contacts.otherTitle') }}</h3>
 
-      <!-- существующие -->
-      <div
-          v-for="item in localOtherArray"
-          :key="item.source"
-          class="flex flex-wrap items-center gap-2"
-      >
+      <div v-for="item in localOtherArray" :key="item.source" class="flex flex-wrap items-center gap-2">
         <span class="font-medium min-w-[80px]">{{ item.source }}:</span>
         <span class="text-text/60 flex-1 min-w-[100px]">{{ item.value }}</span>
         <button
@@ -81,7 +66,6 @@
         </button>
       </div>
 
-      <!-- форма добавления / редактирования -->
       <div class="flex flex-col gap-2">
         <template v-if="editingOther !== null">
           <div class="flex flex-wrap gap-2">
@@ -123,7 +107,6 @@
         </button>
       </div>
     </div>
-
   </div>
 </template>
 
@@ -135,7 +118,6 @@ const { t } = useI18n()
 const props = defineProps({ profile: Object })
 const emit  = defineEmits(['update-details'])
 
-// основные поля
 const contactFields = [
   { key: 'fb',        label: 'profile.contacts.fb' },
   { key: 'ln',        label: 'profile.contacts.ln' },
@@ -145,58 +127,49 @@ const contactFields = [
   { key: 'telephone', label: 'profile.contacts.telephone' }
 ]
 
-// локальная копия данных
 const local = reactive({
-  contacts: {},         // объект вида { fb: '...', ... }
-  otherMap: {}          // объект вида { source1: 'value1', ... }
+  contacts: {},
+  otherMap: {}
 })
 
-// для шаблона преобразуем обратно в массив
 const localOtherArray = computed(() =>
     Object.entries(local.otherMap).map(([source, value]) => ({ source, value }))
 )
 
-// edit-флаги и refs для основных контактов
 const editing   = reactive(contactFields.reduce((o,f)=>(o[f.key]=false,o), {}))
 const inputRefs = reactive(contactFields.reduce((o,f)=>(o[f.key]=null,o), {}))
 
-// «другие» контакты
 const editingOther = ref(null)
 const otherForm    = reactive({ key:'', value:'' })
 const otherRefs    = reactive({ key:null, value:null })
 
-// синхронизация с profile.details
-watch(() => props.profile.details, details => {
-  // contacts — просто копируем
-  local.contacts = { ...details.contacts }
+watch(
+    () => props.profile.details,
+    details => {
+      if (!details) return
+      local.contacts = { ...(details.contacts || {}) }
+      local.otherMap = {}
+      ;(details.other || []).forEach(({ source, value }) => {
+        local.otherMap[source] = value
+      })
+      Object.keys(editing).forEach(k => editing[k] = false)
+      editingOther.value = null
+    },
+    { immediate: true }
+)
 
-  // other — из массива делаем map
-  local.otherMap = {}
-  if (Array.isArray(details.other)) {
-    for (const { source, value } of details.other) {
-      local.otherMap[source] = value
-    }
-  }
-
-  // сбросим все edit-флаги
-  Object.keys(editing).forEach(k => editing[k] = false)
-  editingOther.value = null
-}, { immediate: true })
-
-// основные методы
 function startEditing(key) {
   editing[key] = true
   nextTick(() => inputRefs[key]?.focus())
 }
 function cancelEditing(key) {
-  local.contacts[key] = props.profile.details.contacts[key] || ''
+  local.contacts[key] = props.profile.details?.contacts?.[key] || ''
   editing[key] = false
 }
 function deleteField(key) {
   const updated = { ...local.contacts, [key]: '' }
   emit('update-details', {
     contacts: updated,
-    // сохраняем other как есть
     other: localOtherArray.value
   })
   editing[key] = false
@@ -209,7 +182,6 @@ function saveField(key) {
   editing[key] = false
 }
 
-// методы для «других»
 function startOther(key) {
   if (key === '__new__') {
     otherForm.key = ''
@@ -231,7 +203,7 @@ function removeOther(source) {
   delete o[source]
   emit('update-details', {
     contacts: local.contacts,
-    other: Object.entries(o).map(([s,v])=>({ source: s, value: v }))
+    other: Object.entries(o).map(([s,v]) => ({ source:s, value:v }))
   })
 }
 function confirmOther() {
@@ -241,9 +213,8 @@ function confirmOther() {
   const o = { ...local.otherMap, [source]: val }
   emit('update-details', {
     contacts: local.contacts,
-    other: Object.entries(o).map(([s,v])=>({ source: s, value: v }))
+    other: Object.entries(o).map(([s,v]) => ({ source:s, value:v }))
   })
   editingOther.value = null
 }
 </script>
-

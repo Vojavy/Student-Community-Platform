@@ -17,13 +17,15 @@
 
     <button
         @click="onLogin"
-        class="w-full max-w-sm bg-accent-primary text-white px-4 py-2 rounded"
+        :disabled="authStore.loading"
+        class="w-full max-w-sm bg-accent-primary text-white px-4 py-2 rounded disabled:opacity-50 disabled:cursor-not-allowed"
     >
-      {{ t('login.button') }}
+      <span v-if="!authStore.loading">{{ t('login.button') }}</span>
+      <span v-else>⏳</span>
     </button>
 
-    <p v-if="errorMessage" class="text-red-500 mt-4 text-sm text-center max-w-sm">
-      {{ errorMessage }}
+    <p v-if="authStore.error" class="text-red-500 mt-4 text-sm text-center max-w-sm">
+      {{ authStore.error }}
     </p>
   </div>
 </template>
@@ -31,40 +33,27 @@
 <script setup>
 import { ref, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { loginIntent } from '@/iam/intents/authIntents'
-import { handleAuthIntent } from '@/iam/actions/authActions'
-import createAuthModel from '@/iam/models/authModel'
+import { useAuthStore } from '@/iam/stores/authStore'
 
 const { t } = useI18n()
 const coordinator = inject('coordinator')
-const model = createAuthModel()
+const authStore = useAuthStore()
 
 const email = ref('')
 const password = ref('')
-const errorMessage = ref('')
 
-const isValidEmail = (value) => {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
-}
+const isValidEmail = v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)
 
 const onLogin = async () => {
-  errorMessage.value = ''
-
+  authStore.error = ''
   if (!isValidEmail(email.value)) {
-    errorMessage.value = t('errors.invalidEmail')
+    authStore.error = t('errors.invalidEmail')
     return
   }
-
   if (!password.value) {
-    errorMessage.value = t('errors.emptyPassword')
+    authStore.error = t('errors.emptyPassword')
     return
   }
-
-  try {
-    const intent = loginIntent(email.value, password.value)
-    await handleAuthIntent(intent, { model, coordinator })
-  } catch (e) {
-    errorMessage.value = t('errors.invalidCredentials')
-  }
+  await authStore.login({ email: email.value, password: password.value }, coordinator)
 }
 </script>

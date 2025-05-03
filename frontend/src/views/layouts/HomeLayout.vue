@@ -1,3 +1,4 @@
+<!-- src/views/layouts/HomeLayout.vue -->
 <template>
   <div class="min-h-screen bg-primary text-text">
     <!-- Мобильная версия -->
@@ -11,17 +12,19 @@
     <div v-else class="flex flex-col h-screen">
       <div class="flex justify-between items-center p-4 border-b">
         <div class="flex gap-4 items-center">
-          <button @click="goHome" class="text-sm" >{{ t('navBar.index') }}</button>
+          <button @click="goHome" class="text-sm">
+            {{ t('navBar.index') }}
+          </button>
         </div>
-        <div>
-          <div class="flex justify-end gap-4 items-center">
-            <button @click="onLogout" class="text-sm">{{t('navBar.signout')}}</button>
-            <select v-model="lang" @change="changeLang" class="px-2 py-1 border rounded">
-              <option value="ru">Русский</option>
-              <option value="en">English</option>
-              <option value="cz">Čeština</option>
-            </select>
-          </div>
+        <div class="flex gap-4 items-center">
+          <button @click="onLogout" class="text-sm">
+            {{ t('navBar.signout') }}
+          </button>
+          <select v-model="lang" @change="changeLang" class="px-2 py-1 border rounded">
+            <option value="ru">Русский</option>
+            <option value="en">English</option>
+            <option value="cz">Čeština</option>
+          </select>
         </div>
       </div>
 
@@ -36,73 +39,45 @@
 <script setup>
 import { ref, onMounted, inject, provide, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useIsMobile } from '@/utils/device/useIsMobile'
 
-import { changeLocaleIntent }     from '@/iam/intents/localeIntents.js'
-import { handleLocaleIntent }     from '@/iam/actions/localeActions.js'
-import BurgerComponent            from '@/components/mobile/BurgerComponent.vue'
-import BottomNavbarComponent      from '@/components/mobile/BottomNavbarComponent.vue'
-import { useIsMobile }            from '@/utils/device/useIsMobile'
+import BurgerComponent           from '@/components/mobile/BurgerComponent.vue'
+import BottomNavbarComponent     from '@/components/mobile/BottomNavbarComponent.vue'
+import NavBarComponent           from '@/components/desktop/NavBarComponent.vue'
+import ContainerCentralComponent from '@/components/desktop/ContainerCentralComponent.vue'
 
-import NavBarComponent            from '@/components/desktop/NavBarComponent.vue'
-import ContainerCentralComponent  from '@/components/desktop/ContainerCentralComponent.vue'
+import { useAuthStore }   from '@/iam/stores/authStore'
+import { useLocaleStore } from '@/iam/stores/localeStore'
+import { useUserStore }   from '@/iam/stores/userStore'
 
-import createAuthModel            from "@/iam/models/authModel.js";
-import createLocaleModel          from '@/iam/models/localeModel.js'
-import createUserModel            from "@/iam/models/userModel.js";
-import apiClient                  from "@/utils/api/apiClient.js"
-import { logoutIntent }           from "@/iam/intents/authIntents.js";
-import { handleAuthIntent }       from "@/iam/actions/authActions.js";
-import { fetchUserRolesIntent }   from "@/iam/intents/userIntents.js";
-import { handleUserIntent }       from "@/iam/actions/userActions.js";
+const { t, locale } = useI18n()
+const coordinator    = inject('coordinator')
+const isMobile       = useIsMobile()
 
-const { locale, t } = useI18n()
-const lang         = ref(locale.value)
-const coordinator  = inject('coordinator')
+const authStore   = useAuthStore()
+const localeStore = useLocaleStore()
+const userStore   = useUserStore()
 
-const model = {
-  auth:   createAuthModel(apiClient),
-  locale: createLocaleModel(),
-  user:   createUserModel(apiClient)
-}
+const lang = ref(localeStore.locale)
 
-const userRoles = ref([])
-provide('user_roles', userRoles)
+provide('user_roles', computed(() => userStore.roles))
 
-onMounted(() => {
-  const savedLocale = localStorage.getItem('locale')
-  if (savedLocale) {
-    lang.value   = savedLocale
-    locale.value = savedLocale
-  }
-  fetchRoles()
+onMounted(async () => {
+  locale.value = localeStore.locale
+  lang.value   = localeStore.locale
+  await userStore.fetchRoles()
 })
 
-const changeLang = async () => {
-  locale.value = lang.value
-  const intent = changeLocaleIntent(lang.value)
-  await handleLocaleIntent(intent, { model: model.locale })
-}
-
-const goHome = () => {
+function goHome() {
   coordinator.navigateToHome()
 }
 
-const onLogout = async () => {
-  const intent = logoutIntent()
-  await handleAuthIntent(intent, { model: model.auth, coordinator })
+async function onLogout() {
+  await authStore.logout(coordinator)
 }
 
-async function fetchRoles() {
-  try {
-    const roles = await handleUserIntent(
-        fetchUserRolesIntent(),
-        { model: model.user, coordinator }
-    )
-    userRoles.value = Array.isArray(roles) ? roles : []
-  } catch (e) {
-    console.error('Could not fetch user roles', e)
-  }
+async function changeLang() {
+  localeStore.setLocale(lang.value)
+  locale.value = localeStore.locale
 }
-
-const isMobile = useIsMobile()
 </script>

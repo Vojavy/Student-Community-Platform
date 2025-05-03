@@ -1,10 +1,10 @@
+<!-- src/views/authorized/Group/GroupView.vue -->
 <template>
   <div class="p-6 bg-secondary rounded-lg shadow space-y-6">
-    <!-- Header with actions -->
+    <!-- Header + Actions -->
     <div class="flex justify-between items-center">
       <h2 class="text-2xl font-semibold">{{ group.name }}</h2>
       <div class="space-x-2">
-        <!-- Owner can delete -->
         <button
             v-if="isOwner"
             @click="onDelete"
@@ -12,7 +12,6 @@
         >
           {{ t('groups.deleteGroup') }}
         </button>
-        <!-- Member can leave -->
         <button
             v-else-if="isMember"
             @click="onLeave"
@@ -20,7 +19,6 @@
         >
           {{ t('groups.leave') }}
         </button>
-        <!-- Non-member in public group can join -->
         <button
             v-else-if="!isMember && group.isPublic"
             @click="onJoin"
@@ -31,54 +29,50 @@
       </div>
     </div>
 
-    <!-- Group metadata -->
+    <!-- Metadata -->
     <div class="flex flex-wrap gap-4 text-sm text-text/70">
       <span>{{ t('groups.createdAt') }}: {{ formattedDate }}</span>
       <span>
         {{ t('groups.domain') }}:
-        <span v-if="group.domain">{{ group.domain.domainName }}</span>
-        <span v-else>—</span>
+        <span v-if="group.domain">{{ group.domain.domainName }}</span><span v-else>—</span>
       </span>
       <span :class="group.isPublic ? 'text-green-600' : 'text-red-600'">
         {{ group.isPublic ? t('groups.public') : t('groups.private') }}
       </span>
     </div>
 
-    <!-- Description -->
+    <!-- Description & Tags -->
     <p class="text-text">{{ group.description }}</p>
-
-    <!-- Tags -->
-    <div v-if="Array.isArray(group.topics) && group.topics.length" class="flex flex-wrap gap-2">
+    <div v-if="normalizedTopics.length" class="flex flex-wrap gap-2">
       <span
-          v-for="tag in group.topics"
+          v-for="tag in normalizedTopics"
           :key="tag"
           class="px-2 py-1 bg-primary rounded-full text-sm"
       >
-        #{{ tag }}
+        {{ tag }}
       </span>
     </div>
 
-    <!-- Owner, Admins, Helpers -->
+    <!-- Owner/Admins/Helpers -->
     <div class="space-y-4 text-text">
       <div>
-        <strong>{{ t('groups.owner') }}:</strong>
-        {{ group.owner.name }}
+        <strong>{{ t('groups.owner') }}:</strong> {{ group.owner.name }}
       </div>
       <div v-if="group.admins?.length">
         <strong>{{ t('groups.admins') }}:</strong>
-        <span v-for="(u, i) in group.admins" :key="u.id">
-          {{ u.name }}<span v-if="i+1 < group.admins.length">, </span>
+        <span v-for="(u,i) in group.admins" :key="u.id">
+          {{ u.name }}<span v-if="i+1<group.admins.length">, </span>
         </span>
       </div>
       <div v-if="group.helpers?.length">
         <strong>{{ t('groups.helpers') }}:</strong>
-        <span v-for="(u, i) in group.helpers" :key="u.id">
-          {{ u.name }}<span v-if="i+1 < group.helpers.length">, </span>
+        <span v-for="(u,i) in group.helpers" :key="u.id">
+          {{ u.name }}<span v-if="i+1<group.helpers.length">, </span>
         </span>
       </div>
     </div>
 
-    <!-- Members list -->
+    <!-- Members List -->
     <div v-if="members.length" class="space-y-1">
       <strong>{{ t('groups.members') }}:</strong>
       <ul class="list-disc list-inside ml-4">
@@ -103,60 +97,70 @@
 </template>
 
 <script setup>
-import { inject, computed } from 'vue'
-import { useI18n } from 'vue-i18n'
+import { computed }         from 'vue'
+import { useI18n }          from 'vue-i18n'
 import { getUserIdFromToken } from '@/utils/jwt/getUserIdFromToken'
-import createGroupModel from '@/iam/models/group/groupModel.js'
-import {
-  joinGroupIntent,
-  leaveGroupIntent,
-  deleteGroupIntent
-} from '@/iam/intents/groupIntents'
-import { handleGroupIntent } from '@/iam/actions/groupActions'
+import { inject }           from 'vue'
+import { useGroupStore }    from '@/iam/stores/groupStore.js'
 
-const { t } = useI18n()
-const coordinator = inject('coordinator')
-const group = inject('group')
-const members = inject('members')
-const status = inject('status')
+const { t }         = useI18n()
+const coordinator    = inject('coordinator')
+const store          = useGroupStore()
 
-const model = createGroupModel()
+const group          = computed(() => store.currentGroup || {})
+const members        = computed(() => store.members)
+const status         = computed(() => store.memberStatus.status)
 
-const isMember = computed(() => status.value === 'approved')
-const currentUserId = getUserIdFromToken()
-const isOwner = computed(() => group.value.owner.id === currentUserId)
+const isMember       = computed(() => status.value === 'approved')
+const currentUserId  = getUserIdFromToken()
+const isOwner        = computed(() => group.value.owner?.id === currentUserId)
 
-const formattedDate = computed(() =>
+const formattedDate  = computed(() =>
     group.value.createdAt
         ? new Date(group.value.createdAt).toLocaleDateString()
         : ''
 )
 
+const normalizedTopics = computed(() => {
+  const raw = group.value.topics
+  if (!raw) return []
+  let out = []
+  if (Array.isArray(raw)) {
+    raw.forEach(item => {
+      if (typeof item === 'string' && item.trim().startsWith('[')) {
+        try {
+          const parsed = JSON.parse(item)
+          if (Array.isArray(parsed)) {
+            out.push(...parsed)
+            return
+          }
+        } catch { }
+      }
+      out.push(item)
+    })
+  } else if (typeof raw === 'string') {
+    try {
+      const parsed = JSON.parse(raw)
+      if (Array.isArray(parsed)) return parsed
+    } catch { }
+    out.push(raw)
+  }
+  return out
+})
+
 async function onJoin() {
-  await handleGroupIntent(
-      joinGroupIntent(group.value.id),
-      { model, coordinator }
-  )
-  coordinator.refreshPage()
+  await store.joinGroup(group.value.id)
+  await store.fetchMemberStatus(group.value.id)
 }
-
 async function onLeave() {
-  await handleGroupIntent(
-      leaveGroupIntent(group.value.id),
-      { model, coordinator }
-  )
-  coordinator.refreshPage()
+  await store.leaveGroup(group.value.id)
+  await store.fetchMemberStatus(group.value.id)
 }
-
 async function onDelete() {
-  await handleGroupIntent(
-      deleteGroupIntent(group.value.id),
-      { model, coordinator }
-  )
+  await store.deleteGroup(group.value.id)
   coordinator.navigateToGroups()
 }
-
-function goToUser(userId) {
-  coordinator.navigateToUser(userId)
+function goToUser(id) {
+  coordinator.navigateToUser(id)
 }
 </script>

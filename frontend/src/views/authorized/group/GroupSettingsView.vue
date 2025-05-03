@@ -1,42 +1,42 @@
+<!-- src/views/authorized/Group/GroupSettingsView.vue -->
 <template>
   <div class="space-y-6 max-w-xl mx-auto">
     <h1 class="text-2xl font-semibold">{{ t('groups.settings') }}</h1>
-
     <form @submit.prevent="onSave" class="space-y-4">
-      <!-- Название -->
+      <!-- name -->
       <div>
         <label class="block text-sm font-medium mb-1">{{ t('groups.name') }}</label>
         <input v-model="name" type="text" class="w-full border rounded px-3 py-2" />
       </div>
 
-      <!-- Описание -->
+      <!-- description -->
       <div>
         <label class="block text-sm font-medium mb-1">{{ t('groups.description') }}</label>
         <textarea v-model="description" class="w-full border rounded px-3 py-2"></textarea>
       </div>
 
-      <!-- Публичность -->
+      <!-- public -->
       <div class="flex items-center space-x-2">
         <input id="public" type="checkbox" v-model="isPublic" />
         <label for="public">{{ t('groups.public') }}</label>
       </div>
 
-      <!-- Домен -->
+      <!-- domain -->
       <div>
         <label class="block text-sm font-medium mb-1">{{ t('groups.domain') }}</label>
-        <select v-model="selectedDomainCode" class="w-full border rounded px-3 py-2">
+        <select v-model="selectedDomain" class="w-full border rounded px-3 py-2">
           <option :value="null">{{ t('groups.noDomain') }}</option>
           <option
-              v-for="domainItem in domainList"
-              :key="domainItem.domain"
-              :value="domainItem.domain"
+              v-for="d in domains"
+              :key="d.domain"
+              :value="d.domain"
           >
-            {{ domainItem.domainName }}
+            {{ d.domainName }}
           </option>
         </select>
       </div>
 
-      <!-- Минимальная роль для постов -->
+      <!-- minRoleForPosts -->
       <div>
         <label class="block text-sm font-medium mb-1">{{ t('groups.minRoleForPosts') }}</label>
         <select v-model="minRoleForPosts" class="w-full border rounded px-3 py-2">
@@ -47,7 +47,7 @@
         </select>
       </div>
 
-      <!-- Минимальная роль для событий -->
+      <!-- minRoleForEvents -->
       <div>
         <label class="block text-sm font-medium mb-1">{{ t('groups.minRoleForEvents') }}</label>
         <select v-model="minRoleForEvents" class="w-full border rounded px-3 py-2">
@@ -58,17 +58,62 @@
         </select>
       </div>
 
-      <!-- Тэги (простой ввод через запятую) -->
-      <div>
+      <!-- topics -->
+      <div class="space-y-2">
         <label class="block text-sm font-medium mb-1">{{ t('groups.topics') }}</label>
-        <input
-            v-model="topicsInput"
-            type="text"
-            placeholder="spring, lil, wayne"
-            class="w-full border rounded px-3 py-2"
-        />
+
+        <!-- existing tags -->
+        <div v-for="(tag, idx) in topics" :key="idx" class="flex items-center gap-2">
+          <template v-if="editingTopic === idx">
+            <input
+                v-model="topicValue"
+                ref="topicInput"
+                class="flex-1 border rounded px-2 py-1"
+            />
+            <button
+                type="button"
+                class="px-3 py-1 bg-accent-primary text-white rounded"
+                @click="saveTopic(idx)"
+            >{{ t('common.save') }}</button>
+            <button
+                type="button"
+                class="px-3 py-1 bg-gray-300 text-gray-700 rounded"
+                @click="cancelEdit()"
+            >{{ t('common.cancel') }}</button>
+          </template>
+          <template v-else>
+            <span class="px-2 py-1 bg-primary rounded-full text-sm">{{ tag }}</span>
+            <button
+                type="button"
+                class="px-2 py-1 text-sm border rounded border-accent-primary text-accent-primary"
+                @click="startEdit(idx)"
+            >{{ t('common.change') }}</button>
+            <button
+                type="button"
+                class="px-2 py-1 text-sm border rounded border-red-600 text-red-600"
+                @click="removeTopic(idx)"
+            >{{ t('common.delete') }}</button>
+          </template>
+        </div>
+
+        <!-- add new tag -->
+        <div class="flex gap-2">
+          <input
+              v-model="newTopic"
+              placeholder="New topic…"
+              class="flex-1 border rounded px-2 py-1"
+              @keyup.enter="addTopic"
+          />
+          <button
+              type="button"
+              class="px-3 py-1 bg-accent-primary text-white rounded"
+              :disabled="!newTopic.trim()"
+              @click="addTopic"
+          >{{ t('common.add') }}</button>
+        </div>
       </div>
 
+      <!-- save button -->
       <button
           type="submit"
           class="px-4 py-2 bg-accent-primary text-white rounded hover:bg-accent-secondary transition"
@@ -80,83 +125,81 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { inject } from 'vue'
-import { useI18n } from 'vue-i18n'
-import checkRights from '@/utils/groups/checkRights'
-import { updateGroupSettingsIntent } from '@/iam/intents/groupIntents'
-import { handleGroupIntent } from '@/iam/actions/groupActions'
-import createGroupModel from '@/iam/models/group/groupModel.js'
-import createDomainModel from '@/iam/models/domainModel'
-import { fetchDomainsIntent } from '@/iam/intents/domainIntents'
-import { handleDomainIntent } from '@/iam/actions/domainActions'
+import { ref, computed, onMounted, nextTick } from 'vue'
+import { useI18n }               from 'vue-i18n'
+import { inject }                from 'vue'
+import checkRights               from '@/utils/groups/checkRights'
+import { useGroupStore }         from '@/iam/stores/groupStore.js'
+import { useDomainStore }        from '@/iam/stores/domainStore.js'
 
-const { t } = useI18n()
-const coordinator = inject('coordinator')
+const { t }         = useI18n()
+const coordinator   = inject('coordinator')
+const store         = useGroupStore()
+const domainStore   = useDomainStore()
 
-// inject provided group and role
-const group = inject('group')
-const role = inject('role')
-
-// form fields
-const name = ref(group.value.name)
-const description = ref(group.value.description)
-const isPublic = ref(group.value.isPublic)
-
-// use domain.code as select value
-const selectedDomainCode = ref(group.value.domain?.domain ?? null)
-
-const minRoleForPosts = ref(group.value.minRoleForPosts)
+const group            = computed(() => store.currentGroup || {})
+const role             = computed(() => store.memberStatus.role)
+const name             = ref(group.value.name)
+const description      = ref(group.value.description)
+const isPublic         = ref(group.value.isPublic)
+const selectedDomain   = ref(group.value.domain?.domain ?? null)
+const minRoleForPosts  = ref(group.value.minRoleForPosts)
 const minRoleForEvents = ref(group.value.minRoleForEvents)
-const topicsInput = ref(
-    Array.isArray(group.value.topics) ? group.value.topics.join(', ') : ''
-)
 
-// domain list for dropdown
-const domainList = ref([])
-const domainModel = createDomainModel()
+const topics         = ref(Array.isArray(group.value.topics) ? [...group.value.topics] : [])
+const editingTopic   = ref(null)
+const topicValue     = ref('')
+const newTopic       = ref('')
+
+const domains = computed(() => domainStore.domains)
 
 onMounted(async () => {
-  // redirect if insufficient rights
   if (!checkRights(role.value, group.value.minRoleForEvents)) {
     coordinator.navigateToGroup(group.value.id)
     return
   }
-  // fetch domains
-  domainList.value = await handleDomainIntent(
-      fetchDomainsIntent(),
-      { model: domainModel }
-  )
+  await domainStore.fetchDomains()
 })
 
-// compute full domain object from selected code
-const selectedDomainObject = computed(() => {
-  return domainList.value.find(d => d.domain === selectedDomainCode.value) ?? null
-})
+function startEdit(idx) {
+  editingTopic.value = idx
+  topicValue.value = topics.value[idx]
+  nextTick(() => {
+    const inp = document.querySelector('input[ref="topicInput"]')
+    inp?.focus()
+  })
+}
+function saveTopic(idx) {
+  const v = topicValue.value.trim()
+  if (v) topics.value.splice(idx, 1, v)
+  cancelEdit()
+}
+function cancelEdit() {
+  editingTopic.value = null
+  topicValue.value = ''
+}
+function removeTopic(idx) {
+  topics.value.splice(idx, 1)
+}
+function addTopic() {
+  const v = newTopic.value.trim()
+  if (v && !topics.value.includes(v)) {
+    topics.value.push(v)
+  }
+  newTopic.value = ''
+}
 
 async function onSave() {
-  const topics = topicsInput.value
-      .split(',')
-      .map(s => s.trim())
-      .filter(Boolean)
-
   const settingsData = {
     name: name.value,
     description: description.value,
     isPublic: isPublic.value,
-    domain: selectedDomainObject.value?.domain ?? null,
+    domain: selectedDomain.value,
     minRoleForPosts: minRoleForPosts.value,
     minRoleForEvents: minRoleForEvents.value,
-    topics
+    topics: topics.value
   }
-
-  // perform intent
-  await handleGroupIntent(
-      updateGroupSettingsIntent(group.value.id, settingsData),
-      { model: createGroupModel() }
-  )
-
-  // update local group
-  group.value = { ...group.value, ...settingsData }
+  await store.updateGroupSettings(group.value.id, settingsData)
+  store.currentGroup = { ...store.currentGroup, ...settingsData }
 }
 </script>

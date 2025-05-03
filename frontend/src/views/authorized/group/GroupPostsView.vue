@@ -46,7 +46,7 @@
       >
         <div v-html="post.content" class="prose max-w-none"></div>
 
-        <!-- Fade + Expand button (только при isOverflow и !expanded) -->
+        <!-- Fade + Expand button -->
         <div
             v-if="post.isOverflow && !post.expanded"
             class="absolute inset-x-0 bottom-0 flex justify-center pb-2 bg-gradient-to-b from-transparent to-white z-10"
@@ -60,7 +60,7 @@
         </div>
       </div>
 
-      <!-- Author / Date / Actions (всегда, но кнопки редактирования/удаления только с правами) -->
+      <!-- Author / Date / Actions -->
       <div class="flex justify-between items-center text-sm text-text/70 mt-2">
         <div>
           {{ t('posts.by') }}
@@ -86,7 +86,7 @@
         </div>
       </div>
 
-      <!-- Footer: скрыть (только когда expanded и isOverflow) -->
+      <!-- Hide button -->
       <div
           v-if="post.expanded && post.isOverflow"
           class="flex justify-end mt-2"
@@ -102,37 +102,32 @@
   </div>
 </template>
 
-
 <script setup>
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { inject }  from 'vue'
+import { inject } from 'vue'
 import checkRights from '@/utils/groups/checkRights'
 
 import {
   fetchGroupPostsIntent,
   deleteGroupPostIntent
 } from '@/iam/intents/groupIntents.js'
-import { handleGroupIntent }   from '@/iam/actions/groupActions.js'
-import createGroupPostModel    from '@/iam/models/group/groupPostModel.js'
+import { handleGroupIntent } from '@/iam/actions/groupActions.js'
+import createGroupPostModel from '@/iam/models/group/groupPostModel.js'
 
-const { t }       = useI18n()
-const coord       = inject('coordinator')
-const group       = inject('group')
-const role        = inject('role')
+const { t } = useI18n()
+const coord = inject('coordinator')
+const group = inject('group')
+const role  = inject('role')
 
-// права
 const canPost   = computed(() => checkRights(role.value, group.value.minRoleForPosts))
 const canEdit   = computed(() => checkRights(role.value, group.value.minRoleForPosts))
 const canDelete = computed(() => checkRights(role.value, 'admin'))
 
-// поиск и данные
 const searchTerm    = ref('')
 const posts         = ref([])
 const previewHeight = '400px'
-
-// для хранения DOM элементов
-const postRefs = ref([])
+const postRefs      = ref([])
 
 async function loadPosts() {
   try {
@@ -147,11 +142,13 @@ async function loadPosts() {
       isOverflow: false,
       parsedTopics: (() => {
         try {
-          if (p.topics.length === 1 && p.topics[0].trim().startsWith('[')) {
+          if (Array.isArray(p.topics)
+              && p.topics.length === 1
+              && p.topics[0].trim().startsWith('[')) {
             return JSON.parse(p.topics[0])
           }
         } catch {}
-        return p.topics
+        return p.topics || []
       })()
     }))
     await nextTick()
@@ -165,19 +162,18 @@ function measureOverflow() {
   posts.value.forEach((post, i) => {
     const el = postRefs.value[i]
     if (el) {
-      const overflow = el.scrollHeight > parseInt(previewHeight)
-      post.isOverflow = overflow
-      if (!overflow) post.expanded = true
+      post.isOverflow = el.scrollHeight > parseInt(previewHeight)
+      if (!post.isOverflow) post.expanded = true
     }
   })
 }
 
 onMounted(loadPosts)
+
 watch(searchTerm, async () => {
   await loadPosts()
 })
 
-// навигация / действия
 function goNewPost()      { coord.navigateToGroupNewPost(group.value.id) }
 function goEdit(id)       { coord.navigateToGroupEditPost(group.value.id, id) }
 async function deletePost(id) {
@@ -191,12 +187,11 @@ async function deletePost(id) {
 function toggleExpand(post) { post.expanded = !post.expanded }
 function formatDate(d)       { return new Date(d).toLocaleString() }
 
-// фильтрация
 const filteredPosts = computed(() => {
   const term = searchTerm.value.trim().toLowerCase()
+  if (!term) return posts.value
   return posts.value.filter(p =>
-      !term
-      || p.title.toLowerCase().includes(term)
+      p.title.toLowerCase().includes(term)
       || stripHtml(p.content).toLowerCase().includes(term)
   )
 })
@@ -210,7 +205,6 @@ function stripHtml(html) {
 
 <style scoped>
 .mask-gradient {
-  /* фейд начинается с 75% от блока и до конца */
   -webkit-mask-image: -webkit-linear-gradient(
       to bottom,
       rgba(0,0,0,1) 75%,

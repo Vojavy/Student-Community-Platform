@@ -36,68 +36,51 @@
 
     <button
         @click="onRegister"
-        :disabled="isLoading"
+        :disabled="authStore.loading"
         class="w-full max-w-sm bg-accent-primary text-white px-4 py-2 rounded disabled:opacity-50 disabled:cursor-not-allowed"
     >
-      {{ isLoading ? t('common.loading') : t('register.button') }}
+      <span v-if="!authStore.loading">{{ t('register.button') }}</span>
+      <span v-else>⏳ {{ t('common.loading') }}</span>
     </button>
 
-    <p v-if="errorMessage" class="text-red-500 mt-4 text-sm">{{ errorMessage }}</p>
+    <p v-if="authStore.error" class="text-red-500 mt-4 text-sm">{{ authStore.error }}</p>
   </div>
 </template>
 
 <script setup>
 import { ref, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { registerIntent } from '@/iam/intents/authIntents'
-import { handleAuthIntent } from '@/iam/actions/authActions'
-import createAuthModel from '@/iam/models/authModel'
+import { useAuthStore } from '@/iam/stores/authStore'
 
 const { t } = useI18n()
 const coordinator = inject('coordinator')
-const model = createAuthModel()
+const authStore = useAuthStore()
 
 const email = ref('')
 const password = ref('')
 const repeatPassword = ref('')
 const showPassword = ref(false)
-const errorMessage = ref('')
-const isLoading = ref(false)
 
 const togglePasswordVisibility = () => {
   showPassword.value = !showPassword.value
 }
 
-const isValidEmail = (value) => {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
-}
+const isValidEmail = v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)
 
 const onRegister = async () => {
-  errorMessage.value = ''
-
+  authStore.error = ''
   if (!isValidEmail(email.value)) {
-    errorMessage.value = t('errors.invalidEmail')
+    authStore.error = t('errors.invalidEmail')
     return
   }
-
   if (!password.value) {
-    errorMessage.value = t('errors.emptyPassword')
+    authStore.error = t('errors.emptyPassword')
     return
   }
-
   if (password.value !== repeatPassword.value) {
-    errorMessage.value = t('errors.passwordMismatch')
+    authStore.error = t('errors.passwordMismatch')
     return
   }
-
-  isLoading.value = true
-  try {
-    const intent = registerIntent({ email: email.value, password: password.value })
-    await handleAuthIntent(intent, { model, coordinator })
-  } catch (err) {
-    errorMessage.value = err.message || t('errors.invalidCredentials')
-  } finally {
-    isLoading.value = false
-  }
+  await authStore.register({ email: email.value, password: password.value }, coordinator)
 }
 </script>

@@ -2,7 +2,6 @@
   <div class="space-y-6">
     <h2 class="text-xl font-semibold">{{ t('profile.settings.tabs.security') }}</h2>
 
-    <!-- Email -->
     <div class="space-y-2">
       <label class="block font-medium">{{ t('profile.email') }}</label>
       <div v-if="!editing.email" class="flex items-center gap-4">
@@ -45,7 +44,6 @@
       </div>
     </div>
 
-    <!-- Password -->
     <div class="space-y-2">
       <label class="block font-medium">{{ t('profile.settings.security.newPassword') }}</label>
       <div v-if="!editing.password" class="flex items-center gap-4">
@@ -77,8 +75,10 @@
             placeholder="••••••••"
             class="w-full p-2 border rounded bg-primary text-text"
         />
-        <p v-if="form.newPassword && form.confirmPassword && form.newPassword !== form.confirmPassword"
-           class="text-red-600 text-sm">
+        <p
+            v-if="form.newPassword && form.confirmPassword && form.newPassword !== form.confirmPassword"
+            class="text-red-600 text-sm"
+        >
           {{ t('errors.passwordMismatch') }}
         </p>
         <div class="flex gap-2">
@@ -99,7 +99,6 @@
       </div>
     </div>
 
-    <!-- Deactivate -->
     <div class="space-y-2">
       <button
           v-if="!confirmingDeactivate"

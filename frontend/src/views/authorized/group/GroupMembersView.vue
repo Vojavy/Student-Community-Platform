@@ -1,161 +1,137 @@
+<!-- src/views/authorized/Group/GroupMembersView.vue -->
 <template>
   <div class="space-y-6">
     <h1 class="text-2xl font-semibold">{{ t('groups.members') }}</h1>
 
-
-    <div class="flex-1">
-      <label class="block text-sm font-medium mb-1">
-        {{ t('common.search') }}
-      </label>
+    <!-- поиск по имени -->
+    <div>
+      <label class="block text-sm font-medium mb-1">{{ t('common.search') }}</label>
       <input
-          v-model="searchTerm"
-          @input="applyFilters"
+          v-model.trim="searchTerm"
           type="text"
-          placeholder="Name..."
+          :placeholder="t('groups.searchPlaceholder')"
           class="w-full border rounded px-3 py-2"
       />
     </div>
-    <!-- Search & Filters -->
-    <div class="flex flex-col md:flex-row md:items-start md:space-x-4 space-y-4 md:space-y-0">
-      <!-- Поиск по имени -->
 
-
-      <!-- Фильтр по статусам -->
+    <!-- фильтры -->
+    <div class="flex flex-col md:flex-row gap-6">
+      <!-- статус -->
       <div>
-        <span class="block text-sm font-medium mb-1">
-          {{ t('groups.filterStatus') }}
-        </span>
+        <span class="block text-sm font-medium mb-1">{{ t('groups.filterStatus') }}</span>
         <div class="flex flex-wrap gap-2">
-          <label
-              v-for="statusOption in statusOptions"
-              :key="statusOption"
-              class="inline-flex items-center space-x-1"
-          >
+          <label v-for="opt in statusOptions" :key="opt" class="inline-flex items-center gap-1">
             <input
                 type="checkbox"
-                :value="statusOption"
+                :value="opt"
                 v-model="selectedStatuses"
-                @change="applyFilters"
                 class="form-checkbox h-4 w-4"
             />
-            <span class="text-sm">
-              {{ t(`groups.status.${statusOption}`) }}
-            </span>
+            <span class="text-sm">{{ t(`groups.status.${opt}`) }}</span>
           </label>
         </div>
       </div>
 
-      <!-- Фильтр по ролям -->
+      <!-- роль -->
       <div>
-        <span class="block text-sm font-medium mb-1">
-          {{ t('groups.filterRole') }}
-        </span>
+        <span class="block text-sm font-medium mb-1">{{ t('groups.filterRole') }}</span>
         <div class="flex flex-wrap gap-2">
-          <label
-              v-for="roleOption in roleOptions"
-              :key="roleOption"
-              class="inline-flex items-center space-x-1"
-          >
+          <label v-for="opt in roleOptions" :key="opt" class="inline-flex items-center gap-1">
             <input
                 type="checkbox"
-                :value="roleOption"
+                :value="opt"
                 v-model="selectedRoles"
-                @change="applyFilters"
                 class="form-checkbox h-4 w-4"
             />
-            <span class="text-sm">
-              {{ t(`groups.role.${roleOption}`) }}
-            </span>
+            <span class="text-sm">{{ t(`groups.role.${opt}`) }}</span>
           </label>
         </div>
       </div>
     </div>
 
-    <!-- Список участников -->
+    <!-- список участников -->
     <ul class="space-y-4">
       <li
-          v-for="member in filteredMembers"
-          :key="member.id"
+          v-for="m in filteredMembers"
+          :key="m.id"
           class="p-4 bg-secondary rounded flex flex-col md:flex-row md:items-center justify-between"
       >
+        <!-- имя + статус/роль -->
         <div>
           <button
-              @click="navigateToUserProfile(member.user.id)"
+              @click="goToUser(m.user.id)"
               class="text-lg font-medium text-accent-primary hover:underline"
           >
-            {{ member.user.name }}
+            {{ m.user.name }}
           </button>
           <div class="text-sm text-text/60">
             {{ t('groups.status.status') }}:
-            {{ t(`groups.status.${member.status}`) }},
+            {{ t(`groups.status.${m.status}`) }},
             {{ t('groups.role.role') }}:
-            {{ t(`groups.role.${member.role}`) }}
+            {{ t(`groups.role.${m.role}`) }}
           </div>
         </div>
 
+        <!-- действия (только если canManage) -->
         <div
-            v-if="canManage && member.role !== 'owner'"
+            v-if="canManage && m.role !== 'owner'"
             class="mt-4 md:mt-0 flex flex-wrap gap-2"
         >
-          <!-- Pending -->
-          <template v-if="member.status === 'pending'">
+          <!-- PENDING ---------------------------------------------------------------->
+          <template v-if="m.status === 'pending'">
             <button
-                @click="approveMember(member.user.id)"
+                @click="approve(m.user.id)"
                 class="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700"
             >
               {{ t('groups.approve') }}
             </button>
             <button
-                @click="declineMember(member.user.id)"
+                @click="decline(m.user.id)"
                 class="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
             >
               {{ t('groups.decline') }}
             </button>
           </template>
 
-          <!-- Invited -->
-          <template v-else-if="member.status === 'invited'">
+          <!-- INVITED --------------------------------------------------------------->
+          <template v-else-if="m.status === 'invited'">
             <button
-                @click="cancelInvitation(member.user.id)"
+                @click="cancelInvite(m.user.id)"
                 class="px-3 py-1 bg-orange-600 text-white rounded hover:bg-orange-700"
             >
               {{ t('groups.cancelInvitation') }}
             </button>
           </template>
 
-          <!-- Approved -->
-          <template v-else-if="member.status === 'approved'">
+          <!-- APPROVED -------------------------------------------------------------->
+          <template v-else-if="m.status === 'approved'">
             <button
-                @click="kickMember(member.user.id)"
+                @click="kick(m.user.id)"
                 class="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
             >
               {{ t('groups.kick') }}
             </button>
             <button
-                @click="banMember(member.user.id)"
+                @click="ban(m.user.id)"
                 class="px-3 py-1 bg-gray-600 text-white rounded hover:bg-gray-700"
             >
               {{ t('groups.ban') }}
             </button>
             <select
-                v-model="member.role"
-                @change="changeRole(member.user.id, member.role)"
+                v-model="m.role"
+                @change="changeRole(m.user.id, m.role)"
                 class="px-3 py-1 border rounded"
             >
-              <option
-                  v-for="roleOption in roleOptions"
-                  :key="roleOption"
-                  :value="roleOption"
-              >
-                {{ t(`groups.role.${roleOption}`) }}
+              <option v-for="opt in roleOptions" :key="opt" :value="opt">
+                {{ t(`groups.role.${opt}`) }}
               </option>
             </select>
           </template>
 
-          <!-- Banned -->
-          <template v-else-if="member.status === 'banned'">
+          <!-- BANNED ---------------------------------------------------------------->
+          <template v-else-if="m.status === 'banned'">
             <button
-                @click="unbanMember(member.user.id)"
+                @click="unban(m.user.id)"
                 class="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
             >
               {{ t('groups.unban') }}
@@ -163,147 +139,69 @@
           </template>
         </div>
       </li>
+
+      <li
+          v-if="!filteredMembers.length"
+          class="italic text-center text-text/60 py-6"
+      >
+        {{ t('groups.emptyMembers') }}
+      </li>
     </ul>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, inject } from 'vue'
+import { ref, computed, onMounted, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
 import checkRights from '@/utils/groups/checkRights'
+import { useGroupStore } from '@/iam/stores/groupStore'
 
-// Intents & Actions
-import {
-  fetchMembersIntent,
-  changeMemberRoleIntent,
-  banMemberIntent,
-  unbanMemberIntent,
-  kickMemberIntent,
-  apply_pendingJoinRequestsIntent,
-  decline_pendingJoinRequestsIntent
-} from '@/iam/intents/groupIntents.js'
-import { handleGroupIntent } from '@/iam/actions/groupActions.js'
-import createGroupModel from "@/iam/models/group/groupModel.js";
+const { t }        = useI18n()
+const coordinator  = inject('coordinator')
+const store        = useGroupStore()
 
-const { t } = useI18n()
-
-// Из wrapper-а
-const group = inject('group')
-const coordinator = inject('coordinator')
-const userRole = inject('role')
-
-// Модель и общий диспетчер действий
-const model = createGroupModel()
-const actions = handleGroupIntent
-
-// локальные реактивы
-const members = ref([])
-const filteredMembers = ref([])
-
-const searchTerm = ref('')
+const searchTerm       = ref('')
 const selectedStatuses = ref([])
-const selectedRoles = ref([])
+const selectedRoles    = ref([])
 
 const statusOptions = ['approved', 'pending', 'banned']
-const roleOptions = ['member', 'helper', 'admin', 'owner', 'invited']
+const roleOptions   = ['member', 'helper', 'admin', 'owner', 'invited']
 
-// проверка прав менеджмента
+const members       = computed(() => store.members)
+const currentGroup  = computed(() => store.currentGroup)
+const memberStatus  = computed(() => store.memberStatus)
+
 const canManage = computed(() =>
-    checkRights(userRole.value, group.value.minRoleForEvents)
+    checkRights(memberStatus.value?.role, currentGroup.value?.minRoleForEvents)
 )
 
-// загрузка списка
-async function loadMembers() {
-  const data = await actions(
-      fetchMembersIntent(group.value.id, null),
-      { model, coordinator }
-  )
-  members.value = data
-  applyFilters()
-}
-
-// фильтрация
-function applyFilters() {
+const filteredMembers = computed(() => {
+  if (!members.value) return []
   const term = searchTerm.value.trim().toLowerCase()
-  filteredMembers.value = members.value.filter(m => {
-    const name = m.user.name.toLowerCase()
-    const okName   = !term || name.includes(term)
-    const okStatus = selectedStatuses.value.length === 0
-        || selectedStatuses.value.includes(m.status)
-    const okRole   = selectedRoles.value.length === 0
-        || selectedRoles.value.includes(m.role)
-    return okName && okStatus && okRole
+
+  return members.value.filter(m => {
+    const byName   = !term || (m.user.name || '').toLowerCase().includes(term)
+    const byStatus = !selectedStatuses.value.length || selectedStatuses.value.includes(m.status)
+    const byRole   = !selectedRoles.value.length   || selectedRoles.value.includes(m.role)
+    return byName && byStatus && byRole
   })
-}
+})
 
-// при монтировании подгружаем
-onMounted(loadMembers)
+onMounted(async () => {
+  if (!members.value.length && currentGroup.value?.id) {
+    await store.fetchMembers(currentGroup.value.id)
+  }
+})
 
-// реагируем на изменения фильтров
-watch(
-    [members, searchTerm, selectedStatuses, selectedRoles],
-    applyFilters
-)
+const goToUser = id => coordinator.navigateToUser(id)
 
-// навигация
-function navigateToUserProfile(userId) {
-  coordinator.navigateToUser(userId)
-}
+const reload = () => store.fetchMembers(currentGroup.value.id)
 
-// === обработчики действий ===
-async function approveMember(userId) {
-  await actions(
-      apply_pendingJoinRequestsIntent(group.value.id, userId),
-      { model, coordinator }
-  )
-  await loadMembers()
-}
-
-async function declineMember(userId) {
-  await actions(
-      decline_pendingJoinRequestsIntent(group.value.id, userId),
-      { model, coordinator }
-  )
-  await loadMembers()
-}
-
-async function cancelInvitation(userId) {
-  await actions(
-      cancelInvitationIntent(group.value.id, userId),
-      { model, coordinator }
-  )
-  await loadMembers()
-}
-
-async function kickMember(userId) {
-  await actions(
-      kickMemberIntent(group.value.id, userId),
-      { model, coordinator }
-  )
-  await loadMembers()
-}
-
-async function banMember(userId) {
-  await actions(
-      banMemberIntent(group.value.id, userId),
-      { model, coordinator }
-  )
-  await loadMembers()
-}
-
-async function unbanMember(userId) {
-  await actions(
-      unbanMemberIntent(group.value.id, userId),
-      { model, coordinator }
-  )
-  await loadMembers()
-}
-
-async function changeRole(userId, newRole) {
-  await actions(
-      changeMemberRoleIntent(group.value.id, userId, newRole),
-      { model, coordinator }
-  )
-  await loadMembers()
-}
+const approve      = async id => { await store.processJoinRequest(currentGroup.value.id, id, true);  await reload() }
+const decline      = async id => { await store.processJoinRequest(currentGroup.value.id, id, false); await reload() }
+const cancelInvite = async id => { await store.removeMember       (currentGroup.value.id, id);       await reload() }
+const kick         = async id => { await store.removeMember       (currentGroup.value.id, id);       await reload() }
+const ban          = async id => { await store.banMember          (currentGroup.value.id, id);       await reload() }
+const unban        = async id => { await store.unbanMember        (currentGroup.value.id, id);       await reload() }
+const changeRole   = async (id, r) => { await store.changeMemberRole(currentGroup.value.id, id, r);  await reload() }
 </script>

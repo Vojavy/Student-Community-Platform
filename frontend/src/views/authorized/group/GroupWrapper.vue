@@ -1,33 +1,34 @@
 <template>
   <div>
-    <!-- Загрузка / ошибка / приватный -->
-    <div v-if="isLoading" class="text-center py-12 text-text/70">
-      ⏳ {{ translate('common.loading') }}
+    <!-- Loading -->
+    <div v-if="loading" class="text-center py-12 text-text/70">
+      ⏳ {{ t('common.loading') }}
     </div>
-    <div v-else-if="isNotFound" class="text-center py-12 text-text/70">
-      {{ translate('groups.notFound') }}
+
+    <!-- Not found -->
+    <div v-else-if="isNotFound || (!loading && !group)" class="text-center py-12 text-text/70">
+      {{ t('groups.notFound') }}
     </div>
+
+    <!-- Private (pending / banned) -->
     <GroupPrivateView
-        v-else-if="!isAllowed"
+        v-else-if="group && !isAllowed"
         :group="group"
-        :status="membershipStatus.status"
+        :status="status"
         @join="handleJoin"
         @leave="handleLeave"
     />
 
-    <!-- Основной контент -->
+    <!-- Main content -->
     <div v-else class="flex flex-col md:flex-row min-h-[80vh]">
-      <!-- Боковое меню -->
       <aside class="w-full md:w-64 bg-secondary p-4">
         <SidebarMenu
             :groupId="group.id"
-            :role="membershipStatus.role"
+            :role="role"
             :minRoleForPosts="group.minRoleForPosts"
             :minRoleForEvents="group.minRoleForEvents"
         />
       </aside>
-
-      <!-- Дочерние маршруты -->
       <section class="flex-1 p-6">
         <router-view />
       </section>
@@ -36,109 +37,64 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, provide } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import createGroupModel from '@/iam/models/group/groupModel.js'
-import {
-  fetchGroupIntent,
-  fetchMemberStatusIntent,
-  fetchMembersIntent,
-  joinGroupIntent,
-  leaveGroupIntent
-} from '@/iam/intents/groupIntents'
-import { handleGroupIntent } from '@/iam/actions/groupActions'
+import { useGroupStore } from '@/iam/stores/groupStore.js'
 import GroupPrivateView from './GroupPrivateView.vue'
 import SidebarMenu from '@/components/group/SidebarMenu.vue'
 
-const { t: translate } = useI18n()
-
-const currentRoute = useRoute()
-const groupModel = createGroupModel()
-
-const groupId = Number(currentRoute.params.groupId)
-
-const isLoading = ref(true)
+const { t }      = useI18n()
+const route      = useRoute()
+const store      = useGroupStore()
 const isNotFound = ref(false)
-const group = ref(null)
-const membershipStatus = ref({ status: 'none', role: 'member' })
-const members = ref([])
 
-onMounted(async () => {
-  try {
-    const fetchedGroup = await handleGroupIntent(
-        fetchGroupIntent(groupId),
-        { model: groupModel }
-    )
+const groupId = computed(() => Number(route.params.groupId))
+const loading = computed(() => store.loading)
+const group   = computed(() => store.currentGroup)
+const status  = computed(() => store.memberStatus.status)
+const role    = computed(() => store.memberStatus.role)
 
-    if (Array.isArray(fetchedGroup.topics)) {
-      const decodedTopics = []
-      for (const item of fetchedGroup.topics) {
-        try {
-          const parsed = JSON.parse(item)
-          if (Array.isArray(parsed)) {
-            decodedTopics.push(...parsed)
-          }
-        } catch {
-        }
-      }
-      fetchedGroup.topics = decodedTopics
-    }
-
-    group.value = fetchedGroup
-
-    const fetchedStatus = await handleGroupIntent(
-        fetchMemberStatusIntent(groupId, null),
-        { model: groupModel }
-    )
-    membershipStatus.value = fetchedStatus
-
-    if (fetchedGroup.isPublic || fetchedStatus.status === 'approved') {
-      members.value = await handleGroupIntent(
-          fetchMembersIntent(groupId, 'approved'),
-          { model: groupModel }
-      )
-    }
-  } catch (error) {
-    if (error.response?.status === 404) {
-      isNotFound.value = true
-    } else if (error.response?.status === 403)
-    {
-      group.value = error.response.data
-    } else
-    {
-      console.error(error)
-    }
-    } finally {
-      isLoading.value = false
-    }
-})
-
-provide('group', group)
-provide('members', members)
-provide('role', computed(() => membershipStatus.value.role))
-provide('status', computed(() => membershipStatus.value.status))
-
-const isMember = computed(() => membershipStatus.value.status === 'approved')
+const isMember  = computed(() => status.value === 'approved')
 const isAllowed = computed(() => group.value?.isPublic || isMember.value)
 
+import { provide } from 'vue'
+provide('group',   group)
+provide('members', computed(() => store.members))
+provide('role',    role)
+provide('status',  status)
+
+async function loadAll() {
+  isNotFound.value = false
+  try {
+    await store.fetchGroup(groupId.value)
+    await store.fetchMemberStatus(groupId.value, null)
+    if (store.currentGroup.isPublic || isMember.value) {
+      await store.fetchMembers(groupId.value, 'approved')
+    }
+  } catch (err) {
+    if (err.response?.status === 404) {
+      isNotFound.value = true
+    } else {
+      console.error(err)
+    }
+  }
+}
+
+onMounted(loadAll)
+watch(groupId, loadAll)
+
 async function handleJoin() {
-  await handleGroupIntent(joinGroupIntent(groupId), { model: groupModel })
-  membershipStatus.value = await handleGroupIntent(
-      fetchMemberStatusIntent(groupId, null),
-      { model: groupModel }
-  )
-  if (membershipStatus.value.status === 'approved') {
-    members.value = await handleGroupIntent(
-        fetchMembersIntent(groupId, 'approved'),
-        { model: groupModel }
-    )
+  await store.joinGroup(groupId.value)
+  await store.fetchMemberStatus(groupId.value, null)
+  if (store.memberStatus.status === 'approved') {
+    await store.fetchMembers(groupId.value, 'approved')
   }
 }
 
 async function handleLeave() {
-  await handleGroupIntent(leaveGroupIntent(groupId), { model: groupModel })
-  membershipStatus.value = { status: 'none', role: 'member' }
-  members.value = []
+  await store.leaveGroup(groupId.value)
+  store.memberStatus = { status: 'none', role: 'member' }
+  store.members = []
 }
 </script>

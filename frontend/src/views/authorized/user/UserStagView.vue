@@ -1,35 +1,34 @@
-<!-- src/views/authorized/User/UserStagView.vue -->
 <template>
   <div class="p-6 max-w-lg mx-auto bg-secondary rounded-lg shadow">
     <h1 class="text-2xl font-semibold text-accent-primary mb-6">
       {{ t('stag.selectUniversity') }}
     </h1>
 
-    <!-- Loading -->
     <div v-if="isLoading" class="text-center text-text/70 py-12">
       ⏳ {{ t('common.loading') }}
     </div>
 
-    <!-- Main -->
     <div v-else>
       <select
           v-model="selected"
           class="w-full bg-white border border-gray-300 rounded px-4 py-2 mb-6 focus:border-accent-primary focus:outline-none"
       >
         <option disabled value="">{{ t('stag.selectUniversity') }}</option>
-        <option
-            v-for="dom in domains"
-            :key="dom.domain"
-            :value="dom.domain"
-        >
+        <option v-for="dom in domains" :key="dom.domain" :value="dom.domain">
           {{ dom.domainName }}
         </option>
       </select>
 
       <div class="mb-6">
-        <p v-if="status === null" class="text-text/80">{{ t('stag.status.noToken') }}</p>
-        <p v-else-if="status.hasValidTicket" class="text-success">{{ t('stag.status.valid') }}</p>
-        <p v-else class="text-error">{{ t('stag.status.invalid') }}</p>
+        <p v-if="status === null" class="text-text/80">
+          {{ t('stag.status.noToken') }}
+        </p>
+        <p v-else-if="status.hasValidTicket" class="text-success">
+          {{ t('stag.status.valid') }}
+        </p>
+        <p v-else class="text-error">
+          {{ t('stag.status.invalid') }}
+        </p>
       </div>
 
       <div class="flex flex-wrap gap-4">
@@ -73,62 +72,48 @@
 
 <script setup>
 import { ref, onMounted, inject } from 'vue'
-import { useI18n }              from 'vue-i18n'
+import { useI18n } from 'vue-i18n'
+import { useDomainStore } from '@/iam/stores/domainStore'
+import { useStagStore } from '@/iam/stores/stagStore'
 
-import {
-  checkStagTicketIntent,
-  deleteStagTicket,
-  saveStagToken,
-  startStagLoginIntent
-} from '@/iam/intents/stagIntents.js'
-import { handleStagIntent }   from '@/iam/actions/stagActions.js'
-import createStagModel        from '@/iam/models/stagModel.js'
+const { t } = useI18n()
+const coordinator = inject('coordinator')
+const domainStore = useDomainStore()
+const stagStore = useStagStore()
 
-import { fetchDomainsIntent } from '@/iam/intents/domainIntents.js'
-import { handleDomainIntent } from '@/iam/actions/domainActions.js'
-import createDomainModel      from '@/iam/models/domainModel.js'
-
-const { t }      = useI18n()
-const coordinator= inject('coordinator')
-
-const stagModel      = createStagModel()
-const status         = ref(null)
+const domains = ref([])
+const selected = ref('')
 const confirmingDelete = ref(false)
-
-const domainModel    = createDomainModel()
-const domains        = ref([])
-const selected       = ref('')
-
-const isLoading      = ref(true)
+const isLoading = ref(true)
+const status = ref(null)
 
 onMounted(async () => {
-  domains.value = await handleDomainIntent(fetchDomainsIntent(), { model: domainModel })
+  isLoading.value = true
+  await domainStore.fetchDomains()
+  domains.value = domainStore.domains
 
   const params = new URLSearchParams(window.location.search)
-  const ticket      = params.get('stagUserTicket')
-  const longTicket  = params.get('longTicket')
-  const domainCode  = params.get('domain')
+  const ticket     = params.get('stagUserTicket')
+  const longTicket = params.get('longTicket')
+  const domainCode = params.get('domain')
   if (ticket && domainCode) {
-    await handleStagIntent(
-        saveStagToken(ticket, longTicket, domainCode),
-        { model: stagModel, coordinator }
-    )
+    await stagStore.saveTicket(ticket, longTicket, domainCode)
   }
 
-  status.value = await handleStagIntent(checkStagTicketIntent(), { model: stagModel, coordinator })
+  status.value = await stagStore.checkTicket()
   isLoading.value = false
 })
 
-const onLogin = async () => {
+function onLogin() {
   if (!selected.value) return
-  await handleStagIntent(startStagLoginIntent(selected.value), { model: stagModel, coordinator })
+  stagStore.startLogin(selected.value)
 }
 
-const onDelete = async () => {
+async function onDelete() {
   isLoading.value = true
-  await handleStagIntent(deleteStagTicket(), { model: stagModel, coordinator })
   confirmingDelete.value = false
-  status.value = await handleStagIntent(checkStagTicketIntent(), { model: stagModel, coordinator })
+  await stagStore.deleteTicket()
+  status.value = await stagStore.checkTicket()
   isLoading.value = false
 }
 </script>

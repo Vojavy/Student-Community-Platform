@@ -1,5 +1,6 @@
+<!-- src/components/group/GroupPrivateView.vue -->
 <template>
-  <div class="p-6 bg-secondary rounded-lg shadow text-center space-y-4">
+  <div v-if="group" class="p-6 bg-secondary rounded-lg shadow text-center space-y-4">
     <h2 class="text-2xl font-semibold">{{ group.name }}</h2>
     <p class="text-text mb-4">{{ group.description }}</p>
 
@@ -10,16 +11,17 @@
     >
       {{ t('groups.join') }}
     </button>
-
-    <!-- pending -->
     <span v-else-if="status === 'pending'" class="italic text-text/60">
       {{ t('groups.pending') }}
     </span>
-
-    <!-- banned -->
     <span v-else-if="status === 'banned'" class="text-red-600">
       {{ t('groups.banned') }}
     </span>
+  </div>
+
+  <!-- fallback while `group` is still loading -->
+  <div v-else class="p-6 text-center text-gray-500">
+    ⏳ {{ t('common.loading') }}
   </div>
 </template>
 
@@ -28,8 +30,16 @@ import { defineProps } from 'vue'
 import { useI18n }     from 'vue-i18n'
 
 const { t } = useI18n()
+
 defineProps({
-  group:  Object,
-  status: String
+  group: {
+    type: Object,
+    required: false,
+    default: null
+  },
+  status: {
+    type: String,
+    required: true
+  }
 })
 </script>

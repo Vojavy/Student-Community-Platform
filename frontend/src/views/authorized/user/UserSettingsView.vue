@@ -1,18 +1,13 @@
 <template>
   <div class="min-h-screen bg-secondary py-4">
-    <!-- Контейнер -->
     <div class="mx-2 sm:mx-auto max-w-full sm:max-w-4xl bg-white rounded-xl shadow-lg overflow-hidden">
-      <!-- Заголовок -->
       <div class="px-4 py-3 border-b border-gray-200">
         <h1 class="text-lg sm:text-2xl font-semibold text-text">
           {{ t('profile.settings.title') }}
         </h1>
       </div>
 
-      <!-- Табы -->
-      <div
-          class="overflow-x-auto whitespace-nowrap bg-primary/50 sm:bg-transparent px-2 sm:px-4 py-2"
-      >
+      <div class="overflow-x-auto whitespace-nowrap bg-primary/50 sm:bg-transparent px-2 sm:px-4 py-2">
         <button
             v-for="tab in tabs"
             :key="tab.key"
@@ -28,9 +23,8 @@
         </button>
       </div>
 
-      <!-- Контент -->
       <div class="p-4 sm:p-6">
-        <div v-if="isLoading" class="text-center py-12 text-gray-400">
+        <div v-if="loading" class="text-center py-12 text-gray-400">
           ⏳ {{ t('common.loading') }}
         </div>
         <div v-else>
@@ -47,74 +41,50 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { getUserIdFromToken } from '@/utils/jwt/getUserIdFromToken'
-import createUserModel from '@/iam/models/userModel'
-import {
-  fetchUserProfileIntent,
-  updateUserIntent,
-  updateUserDetailsIntent
-} from '@/iam/intents/userIntents'
-import { handleUserIntent } from '@/iam/actions/userActions'
+import { useUserStore } from '@/iam/stores/userStore'
 
 import UserSettingsSecurity from '@/components/settings/UserSettingsSecurity.vue'
 import UserSettingsContacts from '@/components/settings/UserSettingsContacts.vue'
 import UserSettingsPersonal from '@/components/settings/UserSettingsPersonal.vue'
-import UserSettingsAbout from '@/components/settings/UserSettingsAbout.vue'
+import UserSettingsAbout    from '@/components/settings/UserSettingsAbout.vue'
 
 const { t } = useI18n()
-const model = createUserModel()
-const userId = getUserIdFromToken()
+const coordinator = inject('coordinator')
+const userStore   = useUserStore()
 
-const isLoading = ref(true)
-const profile = ref(null)
-const currentTab = ref('security')
+const userId = getUserIdFromToken()
+const loading = computed(() => userStore.loading)
+const profile = computed(() => userStore.profile)
 
 const tabs = [
   { key: 'security', label: 'profile.settings.tabs.security' },
   { key: 'contacts', label: 'profile.settings.tabs.contacts' },
   { key: 'personal', label: 'profile.settings.tabs.personal' },
-  { key: 'about', label: 'profile.settings.tabs.about' }
+  { key: 'about',    label: 'profile.settings.tabs.about' }
 ]
-
+const currentTab   = ref('security')
 const tabComponents = {
   security: UserSettingsSecurity,
   contacts: UserSettingsContacts,
   personal: UserSettingsPersonal,
-  about: UserSettingsAbout
+  about:    UserSettingsAbout
 }
 
-onMounted(async () => {
-  profile.value = await handleUserIntent(fetchUserProfileIntent(userId), { model })
-  console.log('📥 Loaded profile:', profile.value)
-  isLoading.value = false
+onMounted(() => {
+  userStore.fetchProfile(userId)
 })
 
-const onUpdateUser = async (updatedUser) => {
-  console.log('🟦 onUpdateUser called with:', updatedUser)
-  await handleUserIntent(updateUserIntent(userId, updatedUser), { model })
-  Object.assign(profile.value, updatedUser)
-  console.log('✅ profile.value updated (user):', profile.value)
+async function onUpdateUser(updated) {
+  await userStore.updateUser(userId, updated)
 }
-
-const onUpdateDetails = async (partial) => {
-  console.log('🟧 onUpdateDetails called with partial:', partial);
-
+async function onUpdateDetails(partial) {
   const merged = {
-    ...JSON.parse(JSON.stringify(profile.value.details)),
+    ...userStore.profile.details,
     ...partial
-  };
-
-  console.log('📤 Merged details before sending:', merged);
-
-  profile.value.details = merged;
-
-  await handleUserIntent(
-      updateUserDetailsIntent(userId, merged),
-      { model }
-  );
-
-  console.log('✅ profile.value.details успешно отправлен на бэк');
+  }
+  await userStore.updateUserDetails(userId, merged)
 }
 </script>

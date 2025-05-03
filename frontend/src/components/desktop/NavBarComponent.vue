@@ -57,7 +57,7 @@ const goHome      = () => coordinator.navigateToHome()
 const goForum     = () => coordinator.navigateToForum()
 const goActions   = () => coordinator.navigateToActions()
 const goProfile   = () => coordinator.navigateToUser()
-const goMarket    = () => coordinator.navigateToMarket?.()    // если реализован
+const goMarket    = () => coordinator.navigateToMarket?.()
 const goCalendar  = () => coordinator.navigateToCalendar()
 const goMessages  = () => coordinator.navigateToMessages()
 const goGroups    = () => coordinator.navigateToGroups()
