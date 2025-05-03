@@ -1,4 +1,3 @@
-<!-- src/views/authorized/User/UserProfilePersonalView.vue -->
 <template>
   <div class="p-8 max-w-4xl mx-auto bg-gray-50 rounded-xl shadow-lg">
     <div v-if="isLoading" class="text-center text-gray-400 py-16">

@@ -10,4 +10,6 @@ import java.util.List;
 @Repository
 public interface ForumPostRepository extends JpaRepository<ForumPost, Integer> {
     List<ForumPost> findByForumOrderByCreatedAtAsc(Forum forum);
+
+    Long countByForum(Forum forum);
 }

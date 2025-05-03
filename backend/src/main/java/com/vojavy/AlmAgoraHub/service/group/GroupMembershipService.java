@@ -7,6 +7,7 @@ import com.vojavy.AlmAgoraHub.model.group.Group;
 import com.vojavy.AlmAgoraHub.model.group.GroupMembership;
 import com.vojavy.AlmAgoraHub.repository.group.GroupMembershipRepository;
 import com.vojavy.AlmAgoraHub.repository.group.GroupRepository;
+import com.vojavy.AlmAgoraHub.service.notification.NotificationService;
 import com.vojavy.AlmAgoraHub.service.user.UserService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -25,15 +26,18 @@ public class GroupMembershipService {
     private final GroupMembershipRepository membershipRepository;
     private final GroupRepository           groupRepository;
     private final UserService               userService;
+    private final NotificationService       notificationService;
 
     protected GroupMembershipService(
             GroupMembershipRepository membershipRepository,
             GroupRepository groupRepository,
-            UserService userService
+            UserService userService,
+            NotificationService notificationService
     ) {
         this.membershipRepository = membershipRepository;
         this.groupRepository      = groupRepository;
         this.userService          = userService;
+        this.notificationService  = notificationService;
     }
 
     protected GroupMembership saveMembership(GroupMembership membership) {
@@ -93,7 +97,14 @@ public class GroupMembershipService {
         m.setJoinedAt(Instant.now());
         m.setStatus("approved");
         m.setRole(role);
-        return membershipRepository.save(m);
+        GroupMembership saved = membershipRepository.save(m);
+        notificationService.sendGroupInviteNotification(
+                userService.findById(inviterId).get(),
+                userService.findById(targetUserId).get(),
+                group,
+                role
+        );
+        return saved;
     }
 
     protected GroupMembership leaveGroup(Long groupId, Long userId) {
@@ -112,7 +123,13 @@ public class GroupMembershipService {
         if (approve) {
             m.setStatus("approved");
             m.setRole("member");
-            return membershipRepository.save(m);
+            GroupMembership saved = membershipRepository.save(m);
+            notificationService.sendGroupJoinApprovalNotification(
+                    userService.findById(managerUserId).get(),
+                    userService.findById(targetUserId).get(),
+                    m.getGroup(),
+                    "member");
+            return saved;
         } else {
             membershipRepository.delete(m);
             return m;

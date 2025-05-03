@@ -3,6 +3,7 @@ package com.vojavy.AlmAgoraHub.service.user;
 import com.vojavy.AlmAgoraHub.model.user.User;
 import com.vojavy.AlmAgoraHub.model.user.UserFriend;
 import com.vojavy.AlmAgoraHub.repository.UserFriendRepository;
+import com.vojavy.AlmAgoraHub.service.notification.NotificationService;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -15,10 +16,16 @@ public class UserFriendService {
 
     private final UserFriendRepository friendRepository;
     private final UserService userService;
+    private final NotificationService notificationService;
 
-    public UserFriendService(UserFriendRepository friendRepository, UserService userService) {
+    public UserFriendService(
+            UserFriendRepository friendRepository,
+            UserService userService,
+            NotificationService notificationService
+    ) {
         this.friendRepository = friendRepository;
         this.userService = userService;
+        this.notificationService  = notificationService;
     }
 
     public void sendFriendRequest(Long fromUserId, Long toUserId) {
@@ -48,6 +55,8 @@ public class UserFriendService {
         friendRequest.setCreatedAt(Instant.now());
 
         friendRepository.save(friendRequest);
+
+        notificationService.sendFriendRequestNotification(fromUser, toUser);
     }
 
     public void acceptFriendRequest(Long requesterId, Long receiverId) {

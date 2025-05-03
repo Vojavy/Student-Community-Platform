@@ -2,7 +2,9 @@ package com.vojavy.AlmAgoraHub.service.forum;
 
 import com.vojavy.AlmAgoraHub.model.forum.Forum;
 import com.vojavy.AlmAgoraHub.model.forum.ForumPost;
+import com.vojavy.AlmAgoraHub.model.user.User;
 import com.vojavy.AlmAgoraHub.repository.forum.ForumPostRepository;
+import com.vojavy.AlmAgoraHub.service.notification.NotificationService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,9 +16,16 @@ import java.util.List;
 class ForumPostService {
 
     private final ForumPostRepository postRepository;
+    private final NotificationService notificationService;
 
-    protected ForumPostService(ForumPostRepository postRepository) {
+    private final int MILESTONE = 10;
+
+    protected ForumPostService(
+            ForumPostRepository postRepository,
+            NotificationService notificationService
+    ) {
         this.postRepository = postRepository;
+        this.notificationService = notificationService;
     }
 
     protected ForumPost createPost(
@@ -31,7 +40,17 @@ class ForumPostService {
         p.setContent(content);
         p.setCreatedAt(Instant.now());
         p.setParentPost(parent);
-        return postRepository.save(p);
+        ForumPost saved = postRepository.save(p);
+        long total = postRepository.countByForum(forum);
+        if (total % MILESTONE == 0) {
+            List<User> subs = findAllByForum(forum)
+                    .stream()
+                    .map(ForumPost::getAuthor)
+                    .distinct()
+                    .toList();
+            notificationService.sendForumPostMilestoneNotification(forum, (int) total, subs);
+        }
+        return saved;
     }
 
     protected ForumPost getPost(Forum forum, Integer postId) {
