@@ -45,3 +45,4 @@ public class AppConfiguration {
         return authProvider;
     }
 }
+

@@ -44,7 +44,11 @@ public class UserService {
         return userRepository.save(updatedUser);
     }
 
-    public void updateUserWithPasswordCheck(Long userId, UpdateUserRequest request, BCryptPasswordEncoder encoder) {
+    public void updateUserWithPasswordCheck(
+            Long userId,
+            UpdateUserRequest request,
+            BCryptPasswordEncoder encoder
+    ) {
         User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("User not found"));
 
         if (!encoder.matches(request.getOldPassword(), user.getPassword())) {
@@ -67,7 +71,10 @@ public class UserService {
         return jwtService.extractClaim(token, claims -> claims.get("id", Long.class));
     }
 
-    public void updateUserDetails(Long userId, UserDetailsExtended details) {
+    public void updateUserDetails(
+            Long userId,
+            UserDetailsExtended details
+    ) {
         User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("User not found"));
         user.setDetails(details);
         userRepository.save(user);

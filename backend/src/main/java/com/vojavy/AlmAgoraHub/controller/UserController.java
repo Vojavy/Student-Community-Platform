@@ -4,7 +4,6 @@ import com.vojavy.AlmAgoraHub.dto.requests.UpdateUserRequest;
 import com.vojavy.AlmAgoraHub.dto.responses.RoleResponse;
 import com.vojavy.AlmAgoraHub.dto.responses.UserProfileResponse;
 import com.vojavy.AlmAgoraHub.model.user.RoleType;
-import com.vojavy.AlmAgoraHub.model.user.User;
 import com.vojavy.AlmAgoraHub.model.user.UserDetailsExtended;
 import com.vojavy.AlmAgoraHub.service.authentication.JwtService;
 import com.vojavy.AlmAgoraHub.service.user.UserProfileService;
@@ -13,11 +12,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/users")
@@ -40,12 +37,14 @@ public class UserController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateUser(@PathVariable Long id,
-                                        @RequestBody UpdateUserRequest request,
-                                        @RequestHeader("Authorization") String tokenHeader) {
+    public ResponseEntity<?> updateUser(
+            @PathVariable Long id,
+            @RequestBody UpdateUserRequest request,
+            @RequestHeader("Authorization") String tokenHeader
+    ) {
         String token = tokenHeader.replace("Bearer ", "");
 
-        if (!isAuthorized(id, token)) {
+        if (isNotAuthorized(id, token)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access denied");
         }
 
@@ -60,12 +59,14 @@ public class UserController {
     }
 
     @PutMapping("/{id}/details")
-    public ResponseEntity<?> updateUserDetails(@PathVariable Long id,
-                                               @RequestBody UserDetailsExtended details,
-                                               @RequestHeader("Authorization") String tokenHeader) {
+    public ResponseEntity<?> updateUserDetails(
+            @PathVariable Long id,
+            @RequestBody UserDetailsExtended details,
+            @RequestHeader("Authorization") String tokenHeader
+    ) {
         String token = tokenHeader.replace("Bearer ", "");
 
-        if (!isAuthorized(id, token)) {
+        if (isNotAuthorized(id, token)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access denied");
         }
 
@@ -85,8 +86,7 @@ public class UserController {
     }
 
     @GetMapping("/roles")
-    public ResponseEntity<List<RoleResponse>> getMyRoles(
-            @RequestHeader("Authorization") String authHeader
+    public ResponseEntity<List<RoleResponse>> getMyRoles(@RequestHeader("Authorization") String authHeader
     ) {
         Long userId = userService.extractUserId(authHeader);
         if (userId == null) {
@@ -102,12 +102,10 @@ public class UserController {
                 .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
 
-
-
-    private boolean isAuthorized(Long pathUserId, String token) {
+    private boolean isNotAuthorized(Long pathUserId, String token) {
         Long tokenUserId = userService.extractUserId(token);
         String roles = jwtService.extractClaim(token, claims -> claims.get("roles", String.class));
         boolean isAdmin = roles != null && roles.contains("ADMIN");
-        return pathUserId.equals(tokenUserId) || isAdmin;
+        return !pathUserId.equals(tokenUserId) && !isAdmin;
     }
 }
