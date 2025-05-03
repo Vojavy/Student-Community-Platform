@@ -1,26 +1,22 @@
 <template>
   <div class="min-h-full flex items-center justify-center text-text bg-primary">
-    <h1 class="text-3xl font-bold">Добро пожаловать в платформу</h1>
+    <h1 class="text-3xl font-bold">
+      Добро пожаловать в платформу
+    </h1>
   </div>
 </template>
 
 <script setup>
 import { onMounted, inject } from 'vue'
-
-import createAuthModel from '@/iam/models/authModel'
-import { checkTokenIntent } from '@/iam/intents/authIntents'
-import { handleAuthIntent } from '@/iam/actions/authActions'
+import { useAuthStore }      from '@/iam/stores/authStore.js'
 
 const coordinator = inject('coordinator')
-const model = createAuthModel()
+const authStore  = useAuthStore()
 
 onMounted(async () => {
-  const token = localStorage.getItem('token')
-  if (!token) return
-
+  if (!authStore.token) return
   try {
-    const intent = checkTokenIntent()
-    await handleAuthIntent(intent, { model, coordinator })
+    await authStore.checkToken(coordinator)
     coordinator.navigateToHome()
   } catch (e) {
     console.warn('Invalid token, staying on landing')

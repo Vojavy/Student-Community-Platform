@@ -1,41 +1,45 @@
 // src/iam/stores/groupStore.js
-import { defineStore }        from 'pinia'
-import createGroupModel       from '@/iam/models/group/groupModel.js'
-import createGroupPostModel   from '@/iam/models/group/groupPostModel.js'
+import { defineStore }              from 'pinia'
+import createGroupModel             from '@/iam/models/group/groupModel.js'
+import createGroupPostModel         from '@/iam/models/group/groupPostModel.js'
 
 const groupModel = createGroupModel()
 const postModel  = createGroupPostModel()
 
 export const useGroupStore = defineStore('groupStore', {
     state: () => ({
-        // your own groups
+        // ваши группы
         userGroups: {
             content: [], page: 0, size: 25, totalPages: 1, totalElements: 0
         },
-        // browse/search groups
+
+        // доступные для просмотра
         browseGroups: {
             content: [], page: 0, size: 25, totalPages: 1, totalElements: 0
         },
-        // single‐group view
+
+        // текущая группа
         currentGroup: null,
 
-        // membership
+        // участники
         members: [],                   // Array<Member>
         memberStatus: { status: 'none', role: 'member' },
 
-        // posts in the current group
+        // посты текущей группы
         posts: {
             content: [], page: 0, size: 20, totalPages: 1, totalElements: 0
         },
-        post: null,                    // single post view
+        post: null,                    // одиночный пост
 
-        // global loading / error
+        // общий статус загрузки (группа, участники и т.п.)
         loading: false,
-        error:   null
+        // отдельная загрузка списка постов
+        postsLoading: false,
+        error: null
     }),
 
     actions: {
-        // Utility to normalize topics field, flattening JSON-encoded strings or arrays
+        // Utitlity для нормализации топиков
         _parseTopics(raw) {
             if (typeof raw === 'string') {
                 try {
@@ -46,25 +50,25 @@ export const useGroupStore = defineStore('groupStore', {
                 }
             }
             if (Array.isArray(raw)) {
-                const result = []
+                const res = []
                 for (const el of raw) {
                     if (typeof el === 'string' && el.trim().startsWith('[')) {
                         try {
                             const inner = JSON.parse(el)
                             if (Array.isArray(inner)) {
-                                result.push(...inner)
+                                res.push(...inner)
                                 continue
                             }
                         } catch {}
                     }
-                    result.push(el)
+                    res.push(el)
                 }
-                return result
+                return res
             }
             return []
         },
 
-        // === groups: listing & browsing ===
+        // === группы: мои и просмотр ===
         async fetchUserGroups(page = 0, size = 25) {
             this.loading = true; this.error = null
             try {
@@ -117,7 +121,7 @@ export const useGroupStore = defineStore('groupStore', {
             }
         },
 
-        // === single‐group operations ===
+        // === одиночная группа ===
         async createGroup(groupData) {
             this.loading = true; this.error = null
             try {
@@ -161,12 +165,12 @@ export const useGroupStore = defineStore('groupStore', {
         async updateGroupSettings(groupId, settingsData) {
             this.loading = true; this.error = null
             try {
-                const updated = await groupModel.updateGroupSettings(groupId, settingsData)
-                console.log('[groupStore] updateGroupSettings →', updated)
+                const upd = await groupModel.updateGroupSettings(groupId, settingsData)
+                console.log('[groupStore] updateGroupSettings →', upd)
                 this.currentGroup = {
                     ...this.currentGroup,
-                    ...updated,
-                    topics: this._parseTopics(updated.topics)
+                    ...upd,
+                    topics: this._parseTopics(upd.topics)
                 }
                 return this.currentGroup
             } catch (e) {
@@ -185,7 +189,9 @@ export const useGroupStore = defineStore('groupStore', {
                 console.log('[groupStore] deleteGroup →', groupId)
                 this.userGroups.content = this.userGroups.content.filter(g => g.id !== groupId)
                 this.userGroups.totalElements--
-                if (this.currentGroup?.id === groupId) this.currentGroup = null
+                if (this.currentGroup?.id === groupId) {
+                    this.currentGroup = null
+                }
             } catch (e) {
                 this.error = e.response?.data?.message || e.message
                 console.error('[groupStore] deleteGroup error →', this.error)
@@ -195,7 +201,7 @@ export const useGroupStore = defineStore('groupStore', {
             }
         },
 
-        // === membership ===
+        // === участники ===
         async fetchMemberStatus(groupId, targetUserId = null) {
             this.loading = true; this.error = null
             try {
@@ -346,9 +352,9 @@ export const useGroupStore = defineStore('groupStore', {
             }
         },
 
-        // === posts CRUD ===
+        // === посты ===
         async fetchGroupPosts(groupId, page = 0, size = 20, search = '') {
-            this.loading = true; this.error = null
+            this.postsLoading = true; this.error = null
             try {
                 const resp = await postModel.fetchPosts(groupId, page, size, search)
                 console.log('[groupStore] fetchGroupPosts →', resp)
@@ -369,19 +375,15 @@ export const useGroupStore = defineStore('groupStore', {
                 console.error('[groupStore] fetchGroupPosts error →', this.error)
                 throw e
             } finally {
-                this.loading = false
+                this.postsLoading = false
             }
         },
 
         async createGroupPost(groupId, postData) {
-            this.loading = true; this.error = null
             try {
                 const raw = await postModel.createPost(groupId, postData)
                 console.log('[groupStore] createGroupPost →', raw)
-                const created = {
-                    ...raw,
-                    topics: this._parseTopics(raw.topics)
-                }
+                const created = { ...raw, topics: this._parseTopics(raw.topics) }
                 this.posts.content.unshift(created)
                 this.posts.totalElements++
                 return created
@@ -389,33 +391,26 @@ export const useGroupStore = defineStore('groupStore', {
                 this.error = e.response?.data?.message || e.message
                 console.error('[groupStore] createGroupPost error →', this.error)
                 throw e
-            } finally {
-                this.loading = false
             }
         },
 
         async updateGroupPost(groupId, postId, postData) {
-            this.loading = true; this.error = null
             try {
                 const raw = await postModel.updatePost(groupId, postId, postData)
                 console.log('[groupStore] updateGroupPost →', raw)
-                const updated = {
-                    ...raw,
-                    topics: this._parseTopics(raw.topics)
-                }
-                this.posts.content = this.posts.content.map(p => p.id === postId ? updated : p)
+                const updated = { ...raw, topics: this._parseTopics(raw.topics) }
+                this.posts.content = this.posts.content.map(p =>
+                    p.id === postId ? updated : p
+                )
                 return updated
             } catch (e) {
                 this.error = e.response?.data?.message || e.message
                 console.error('[groupStore] updateGroupPost error →', this.error)
                 throw e
-            } finally {
-                this.loading = false
             }
         },
 
         async deleteGroupPost(groupId, postId) {
-            this.loading = true; this.error = null
             try {
                 await postModel.deletePost(groupId, postId)
                 console.log('[groupStore] deleteGroupPost →', postId)
@@ -425,8 +420,6 @@ export const useGroupStore = defineStore('groupStore', {
                 this.error = e.response?.data?.message || e.message
                 console.error('[groupStore] deleteGroupPost error →', this.error)
                 throw e
-            } finally {
-                this.loading = false
             }
         }
     }

@@ -1,14 +1,14 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
-import PublicLayout    from '@/views/layouts/PublicLayout.vue'
-import HomeLayout      from '@/views/layouts/HomeLayout.vue'
+import PublicLayout         from '@/views/layouts/PublicLayout.vue'
+import HomeLayout           from '@/views/layouts/HomeLayout.vue'
 
-import LandingView     from '@/views/public/LandingView.vue'
-import LoginView       from '@/views/auth/LoginView.vue'
-import RegistrationView from '@/views/auth/RegistrationView.vue'
-import VerificationView from '@/views/auth/VerificationView.vue'
-import AccessDeniedView from '@/views/auth/AccessDeniedView.vue'
-import GroupsBlockedView from '@/views/public/GroupsBlockedView.vue'
+import LandingView          from '@/views/public/LandingView.vue'
+import LoginView            from '@/views/auth/LoginView.vue'
+import RegistrationView     from '@/views/auth/RegistrationView.vue'
+import VerificationView     from '@/views/auth/VerificationView.vue'
+import AccessDeniedView     from '@/views/auth/AccessDeniedView.vue'
+import GroupsBlockedView    from '@/views/public/GroupsBlockedView.vue'
 
 import HomeView             from '@/views/authorized/HomeView.vue'
 import UserLayout           from '@/views/layouts/UserLayout.vue'
@@ -26,7 +26,7 @@ import GroupView            from '@/views/authorized/group/GroupView.vue'
 import GroupPostsView       from '@/views/authorized/group/GroupPostsView.vue'
 import GroupNewPostView     from '@/views/authorized/group/GroupNewPostView.vue'
 
-import PublicForumsWrapper   from '@/views/forum/public/PublicForumsWrapper.vue'
+import PublicForumsWrapper  from '@/views/forum/public/PublicForumsWrapper.vue'
 import ForumSearchView      from '@/views/forum/ForumSearchView.vue'
 import ForumInfoView        from '@/views/forum/ForumInfoView.vue'
 
@@ -36,12 +36,10 @@ import ForumArchivedView    from '@/views/forum/authorized/ForumArchivedView.vue
 import ForumBannedView      from '@/views/forum/authorized/ForumBannedView.vue'
 import ForumCreateView      from '@/views/forum/authorized/ForumCreateView.vue'
 
-import { checkTokenIntent } from '@/iam/intents/authIntents'
-import { handleAuthIntent } from '@/iam/actions/authActions'
-import createAuthModel      from '@/iam/models/authModel'
+import { useAuthStore }     from '@/iam/stores/authStore.js'
 import createCoordinator    from '@/coordinator/coordinator'
 import ForumDetailPublicView from "@/views/forum/public/ForumDetailPublicView.vue";
-import ForumDetailView from "@/views/forum/authorized/ForumDetailView.vue";
+import ForumDetailView      from "@/views/forum/authorized/ForumDetailView.vue";
 
 const routes = [
     // --- Публичная часть ---
@@ -140,27 +138,24 @@ const router = createRouter({
 })
 
 router.beforeEach(async (to, from, next) => {
+    const authStore     = useAuthStore()
+    const coordinator   = createCoordinator(router)
+    const token         = authStore.token
     const requiresAuth   = to.matched.some(r => r.meta.requiresAuth)
     const requiresUnauth = to.matched.some(r => r.meta.requiresUnauth)
-    const token          = localStorage.getItem('token')
-
-    const model       = createAuthModel()
-    const coordinator = createCoordinator(router)
 
     if (requiresAuth && !token) {
-        // если пытаются зайти в группы/форумы без токена
         return next({ name: 'groups-blocked' })
     }
 
     if (requiresAuth && token) {
         try {
-            await handleAuthIntent(checkTokenIntent(), { model, coordinator })
+            await authStore.checkToken(coordinator)
             return next()
         } catch (e) {
             if (e.response?.status === 401) {
-                localStorage.removeItem('token')
+                authStore.setToken(null)
                 window.dispatchEvent(new CustomEvent('jwt-expired'))
-                return next(false)
             }
             if (e.response?.status === 403) {
                 return next({ name: 'access-denied' })
@@ -171,10 +166,10 @@ router.beforeEach(async (to, from, next) => {
 
     if (requiresUnauth && token) {
         try {
-            await handleAuthIntent(checkTokenIntent(), { model, coordinator })
+            await authStore.checkToken(coordinator)
             return next({ name: 'home' })
         } catch {
-            localStorage.removeItem('token')
+            authStore.setToken(null)
         }
     }
 

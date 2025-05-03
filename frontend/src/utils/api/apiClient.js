@@ -1,10 +1,4 @@
-// apiClient.js
 import axios from 'axios'
-import { checkTokenIntent } from '@/iam/intents/authIntents'
-import { handleAuthIntent } from '@/iam/actions/authActions'
-import createAuthModel from '@/iam/models/authModel'
-import router from '@/coordinator/router'
-import createCoordinator from '@/coordinator/coordinator'
 
 const apiClient = axios.create({
     baseURL: import.meta.env.VITE_BASE_API_URL,

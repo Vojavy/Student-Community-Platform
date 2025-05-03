@@ -2,16 +2,24 @@
   <div class="space-y-6">
     <!-- Search + “New post” -->
     <div class="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-4">
-      <input
-          v-model="searchTerm"
-          type="text"
-          :placeholder="t('groups.searchPlaceholder')"
-          class="w-full sm:flex-1 p-2 border rounded"
-      />
+      <div class="flex-1 flex">
+        <input
+            v-model="searchTerm"
+            type="text"
+            :placeholder="t('groups.searchPlaceholder')"
+            class="w-full p-2 border rounded-l"
+        />
+        <button
+            @click="onSearchClick"
+            class="px-4 py-2 bg-accent-primary text-white rounded-r hover:bg-accent-primary/90 transition"
+        >
+          🔍
+        </button>
+      </div>
       <button
           v-if="canPost"
           @click="goNewPost"
-          class="w-full sm:w-auto px-4 py-2 bg-accent-primary text-white rounded hover:bg-accent-primary/90 transition text-center"
+          class="w-full sm:w-auto px-4 py-2 bg-accent-primary text-white rounded hover:bg-accent-primary/90 transition"
       >
         {{ t('posts.newPost') }}
       </button>
@@ -22,6 +30,7 @@
         v-for="(post, i) in filteredPosts"
         :key="post.id"
         class="border rounded-lg p-4 sm:p-6 space-y-2"
+        :ref="el => postRefs[i] = el"
     >
       <!-- Header: title + topics -->
       <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
@@ -42,58 +51,50 @@
           class="relative"
           :class="{ 'overflow-hidden': post.isOverflow && !post.expanded }"
           :style="post.isOverflow && !post.expanded ? { maxHeight: previewHeight } : {}"
-          :ref="el => postRefs[i] = el"
       >
         <div v-html="post.content" class="prose max-w-none"></div>
-
-        <!-- Fade + Expand button -->
         <div
             v-if="post.isOverflow && !post.expanded"
-            class="absolute inset-x-0 bottom-0 flex justify-center pb-2 bg-gradient-to-b from-transparent to-white z-10"
+            class="absolute inset-x-0 bottom-0 flex justify-center pb-2 bg-gradient-to-b from-transparent to-white"
         >
           <button
-              @click="toggleExpand(post)"
-              class="px-4 py-1 bg-accent-secondary text-white rounded hover:bg-accent-secondary/90 transition z-20 relative text-sm"
+              @click="post.expanded = true"
+              class="px-4 py-1 bg-accent-secondary text-white rounded hover:bg-accent-secondary/90 transition text-sm"
           >
             {{ t('posts.expand') }}
           </button>
         </div>
       </div>
 
-      <!-- Author / Date / Actions -->
+      <!-- Footer: author/date/actions -->
       <div class="flex justify-between items-center text-sm text-text/70 mt-2">
         <div>
           {{ t('posts.by') }}
           <strong>{{ post.author.name || post.author.username }}</strong>
-          {{ t('posts.on') }}
-          {{ formatDate(post.createdAt) }}
+          {{ t('posts.on') }} {{ formatDate(post.createdAt) }}
         </div>
         <div class="flex gap-2">
           <button
               v-if="canEdit"
               @click="goEdit(post.id)"
-              class="px-2 py-1 border rounded hover:bg-gray-100 text-xs sm:text-sm"
+              class="px-2 py-1 border rounded hover:bg-gray-100 text-xs"
           >
             {{ t('posts.edit') }}
           </button>
           <button
               v-if="canDelete"
-              @click="deletePost(post.id)"
-              class="px-2 py-1 border rounded text-red-600 hover:bg-red-50 text-xs sm:text-sm"
+              @click="removePost(post.id)"
+              class="px-2 py-1 border rounded text-red-600 hover:bg-red-50 text-xs"
           >
             {{ t('posts.delete') }}
           </button>
         </div>
       </div>
 
-      <!-- Hide button -->
-      <div
-          v-if="post.expanded && post.isOverflow"
-          class="flex justify-end mt-2"
-      >
+      <div v-if="post.expanded && post.isOverflow" class="flex justify-end mt-2">
         <button
-            @click="toggleExpand(post)"
-            class="px-2 py-1 border rounded hover:bg-gray-100 text-xs sm:text-sm"
+            @click="post.expanded = false"
+            class="px-2 py-1 border rounded hover:bg-gray-100 text-xs"
         >
           {{ t('posts.hide') }}
         </button>
@@ -103,117 +104,92 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { inject } from 'vue'
 import checkRights from '@/utils/groups/checkRights'
+import { useGroupStore } from '@/iam/stores/groupStore.js'
 
-import {
-  fetchGroupPostsIntent,
-  deleteGroupPostIntent
-} from '@/iam/intents/groupIntents.js'
-import { handleGroupIntent } from '@/iam/actions/groupActions.js'
-import createGroupPostModel from '@/iam/models/group/groupPostModel.js'
+const { t }       = useI18n()
+const coord       = inject('coordinator')
+const group       = inject('group')
+const role        = inject('role')
+const store       = useGroupStore()
 
-const { t } = useI18n()
-const coord = inject('coordinator')
-const group = inject('group')
-const role  = inject('role')
+const searchTerm    = ref('')
+const posts         = ref([])
+const postRefs      = ref([])
+const previewHeight = '400px'
+const isLoading     = ref(false)
 
 const canPost   = computed(() => checkRights(role.value, group.value.minRoleForPosts))
 const canEdit   = computed(() => checkRights(role.value, group.value.minRoleForPosts))
 const canDelete = computed(() => checkRights(role.value, 'admin'))
 
-const searchTerm    = ref('')
-const posts         = ref([])
-const previewHeight = '400px'
-const postRefs      = ref([])
-
 async function loadPosts() {
+  if (isLoading.value) return
+  isLoading.value = true
   try {
-    const page = await handleGroupIntent(
-        fetchGroupPostsIntent(group.value.id, { search: searchTerm.value }),
-        { model: createGroupPostModel(), coordinator: coord }
+    const { content } = await store.fetchGroupPosts(
+        group.value.id,
+        0,
+        store.posts.size,
+        searchTerm.value
     )
-    const items = Array.isArray(page) ? page : (page.content || [])
-    posts.value = items.map(p => ({
+
+    posts.value = content.map(p => ({
       ...p,
       expanded: false,
       isOverflow: false,
-      parsedTopics: (() => {
-        try {
-          if (Array.isArray(p.topics)
-              && p.topics.length === 1
-              && p.topics[0].trim().startsWith('[')) {
-            return JSON.parse(p.topics[0])
-          }
-        } catch {}
-        return p.topics || []
-      })()
+      parsedTopics: store._parseTopics(p.topics)
     }))
+
     await nextTick()
-    measureOverflow()
-  } catch (e) {
-    console.error('Fetch posts failed', e)
+    posts.value.forEach((post, i) => {
+      const el = postRefs.value[i]
+      if (el && el.scrollHeight > parseInt(previewHeight)) {
+        post.isOverflow = true
+      } else {
+        post.expanded = true
+      }
+    })
+  } finally {
+    isLoading.value = false
   }
 }
 
-function measureOverflow() {
-  posts.value.forEach((post, i) => {
-    const el = postRefs.value[i]
-    if (el) {
-      post.isOverflow = el.scrollHeight > parseInt(previewHeight)
-      if (!post.isOverflow) post.expanded = true
-    }
-  })
+function onSearchClick() {
+  loadPosts()
 }
 
-onMounted(loadPosts)
-
-watch(searchTerm, async () => {
-  await loadPosts()
-})
-
-function goNewPost()      { coord.navigateToGroupNewPost(group.value.id) }
-function goEdit(id)       { coord.navigateToGroupEditPost(group.value.id, id) }
-async function deletePost(id) {
-  if (!canDelete.value) return
-  await handleGroupIntent(
-      deleteGroupPostIntent(group.value.id, id),
-      { model: createGroupPostModel(), coordinator: coord }
-  )
+function goNewPost() { coord.navigateToGroupNewPost(group.value.id) }
+function goEdit(id)  { coord.navigateToGroupEditPost(group.value.id, id) }
+async function removePost(id) {
+  await store.deleteGroupPost(group.value.id, id)
   await loadPosts()
 }
-function toggleExpand(post) { post.expanded = !post.expanded }
-function formatDate(d)       { return new Date(d).toLocaleString() }
+
+function formatDate(d) {
+  return new Date(d).toLocaleString()
+}
 
 const filteredPosts = computed(() => {
-  const term = searchTerm.value.trim().toLowerCase()
-  if (!term) return posts.value
+  const q = searchTerm.value.trim().toLowerCase()
+  if (!q) return posts.value
   return posts.value.filter(p =>
-      p.title.toLowerCase().includes(term)
-      || stripHtml(p.content).toLowerCase().includes(term)
+      p.title.toLowerCase().includes(q) ||
+      stripHtml(p.content).toLowerCase().includes(q)
   )
 })
-
 function stripHtml(html) {
   const div = document.createElement('div')
   div.innerHTML = html
   return div.textContent || div.innerText || ''
 }
-</script>
 
-<style scoped>
-.mask-gradient {
-  -webkit-mask-image: -webkit-linear-gradient(
-      to bottom,
-      rgba(0,0,0,1) 75%,
-      rgba(0,0,0,0) 100%
-  );
-  mask-image: linear-gradient(
-      to bottom,
-      rgba(0,0,0,1) 75%,
-      rgba(0,0,0,0) 100%
-  );
-}
-</style>
+onMounted(() => {
+  console.log('[GroupPostsView] onMounted')
+  loadPosts()
+})
+
+</script>
