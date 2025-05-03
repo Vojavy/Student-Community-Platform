@@ -7,9 +7,11 @@
     <RouterView />
   </div>
 </template>
+
 <script setup>
 import { RouterLink, RouterView } from 'vue-router'
 </script>
+
 <style scoped>
 .tabs { display: flex; gap: 1rem; margin-bottom: 1rem; }
 .tab  { text-decoration: none; padding: .5rem 1rem; border-bottom: 2px solid transparent; }

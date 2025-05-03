@@ -1,10 +1,12 @@
 <template>
   <div class="max-w-4xl mx-auto p-6 space-y-6">
+    <!-- Loading -->
+    <div v-if="loading" class="text-center text-text/60">
+      ⏳ {{ t('common.loading') }}…
+    </div>
 
-    <!-- Ждём загрузки форума -->
-    <div v-if="forum" class="space-y-6">
-
-      <!-- 1. Информация о форуме -->
+    <div v-else-if="forum">
+      <!-- 1. Forum info -->
       <div class="space-y-3">
         <h1 class="text-3xl font-bold">{{ forum.name }}</h1>
         <div class="flex flex-wrap gap-2">
@@ -31,24 +33,24 @@
         </div>
       </div>
 
-      <!-- 4. Редактор нового сообщения -->
+      <!-- Top-level reply editor -->
       <ReplyEditor
-          v-if="editorState.open && editorState.parentPostId === null"
+          v-if="canReply && editorState.open && editorState.parentPostId === null"
           :parent-post-id="null"
           @submit="onReply"
           @cancel="closeEditor"
       />
 
-      <!-- 5. Список сообщений -->
+      <!-- Posts tree -->
       <div class="space-y-4">
         <div
             v-for="post in posts"
             :key="post.id"
             :id="`post-${post.id}`"
             class="p-4 bg-secondary rounded-lg"
-            :style="{ marginLeft: `${postDepths[post.id] * indentRem}rem` }"
+            :style="{ marginLeft: `${depths[post.id] * indentRem}rem` }"
         >
-          <!-- цитата родителя -->
+          <!-- quote parent -->
           <div
               v-if="post.parentPostId"
               class="quote-blurb mb-2 p-2 bg-white/70 rounded cursor-pointer"
@@ -58,7 +60,6 @@
             <div class="quote-content text-xs" v-html="postMap[post.parentPostId]?.content"></div>
           </div>
 
-          <!-- содержимое -->
           <div class="flex justify-between items-start">
             <div>
               <p class="whitespace-pre-wrap" v-html="post.content" />
@@ -67,15 +68,17 @@
               </div>
             </div>
             <button
-                v-if="!settings.closed && settings.status !== 'banned'"
+                v-if="canReply"
                 @click="openEditor(post.id)"
                 class="text-sm underline text-accent-secondary"
-            >{{ t('forum.detail.reply') }}</button>
+            >
+              {{ t('forum.detail.reply') }}
+            </button>
           </div>
 
-          <!-- inline-редактор -->
+          <!-- inline reply editor -->
           <ReplyEditor
-              v-if="editorState.open && editorState.parentPostId === post.id"
+              v-if="canReply && editorState.open && editorState.parentPostId === post.id"
               :parent-post-id="post.id"
               @submit="onReply"
               @cancel="closeEditor"
@@ -83,10 +86,10 @@
         </div>
       </div>
 
-      <!-- 6. Кнопка добавить сообщение внизу -->
+      <!-- “Add message” button -->
       <div class="flex justify-end">
         <button
-            v-if="!settings.closed && settings.status !== 'banned'"
+            v-if="canReply"
             @click="openEditor(null)"
             class="px-3 py-1 bg-accent-primary text-white rounded hover:bg-accent-primary/90 transition"
         >
@@ -94,20 +97,14 @@
         </button>
       </div>
 
-      <!-- 7. Настройки форума (админ/создатель) -->
+      <!-- Admin/creator settings -->
       <div v-if="canEdit" class="border-t pt-6 space-y-6">
-
         <h2 class="text-xl font-semibold">{{ t('forum.detail.settingsTitle') }}</h2>
 
         <!-- Name -->
         <div>
           <label class="block mb-1 font-medium">{{ t('forum.create.name') }}</label>
-          <input
-              v-model="settings.name"
-              type="text"
-              class="w-full border p-2 rounded"
-              :placeholder="t('forum.create.namePlaceholder')"
-          />
+          <input v-model="settings.name" type="text" class="w-full border p-2 rounded" />
         </div>
 
         <!-- Description -->
@@ -116,7 +113,6 @@
           <textarea
               v-model="settings.description"
               class="w-full border p-2 rounded h-32"
-              :placeholder="t('forum.create.descriptionPlaceholder')"
           ></textarea>
         </div>
 
@@ -127,7 +123,6 @@
               v-model="settings.topicsInput"
               type="text"
               class="w-full border p-2 rounded"
-              :placeholder="t('forum.create.topicsPlaceholder')"
           />
           <p class="mt-1 text-xs text-text/60">{{ t('forum.create.topicsHelper') }}</p>
         </div>
@@ -147,29 +142,25 @@
           </select>
         </div>
 
-        <!-- Informational (только админ) -->
+        <!-- Informational -->
         <div v-if="isAdmin" class="flex items-center space-x-2">
-          <input
-              type="checkbox"
-              id="informational"
-              v-model="settings.informational"
-          />
+          <input type="checkbox" id="informational" v-model="settings.informational" />
           <label for="informational">{{ t('forum.create.informational') }}</label>
         </div>
 
         <!-- Public -->
-        <div v-if="!isOnlyUnverified" class="flex items-center space-x-2">
+        <div v-if="!onlyUnverified" class="flex items-center space-x-2">
           <input type="checkbox" id="public" v-model="settings.public" />
           <label for="public">{{ t('forum.create.public') }}</label>
         </div>
 
-        <!-- Pinned (только админ) -->
+        <!-- Pinned -->
         <div v-if="isAdmin" class="flex items-center space-x-2">
           <input type="checkbox" id="pinned" v-model="settings.pinned" />
           <label for="pinned">{{ t('forum.create.pinned') }}</label>
         </div>
 
-        <!-- Минимальная роль (только админ) -->
+        <!-- Min allowed role -->
         <div v-if="isAdmin">
           <label class="block mb-1 font-medium">{{ t('forum.create.minAllowedRole') }}</label>
           <select v-model="minRoleName" class="w-full border p-2 rounded">
@@ -178,9 +169,7 @@
                 v-for="r in sortedRoles"
                 :key="r.name"
                 :value="r.name"
-            >
-              {{ r.name }}
-            </option>
+            >{{ r.name }}</option>
           </select>
           <p class="mt-1 text-xs text-text/60">{{ t('forum.create.minAllowedRoleHelper') }}</p>
           <div v-if="allowedRoleNames.length" class="mt-2 text-sm">
@@ -189,56 +178,43 @@
                 v-for="name in allowedRoleNames"
                 :key="name"
                 class="ml-2 px-1 py-0.5 bg-gray-200 rounded"
-            >
-              {{ name }}
-            </span>
+            >{{ name }}</span>
           </div>
         </div>
 
-        <!-- Actions: Close/Archive/Resolve/Ban/Delete/Save -->
-<!--        TODO доделать кнопки-->
+        <!-- Actions -->
         <div class="flex flex-col sm:flex-row sm:flex-wrap gap-2 justify-end">
           <button
               v-if="isCreatorOrAdmin && !settings.closed"
               @click="closeForum"
-              class="w-full sm:w-auto px-3 py-1 bg-yellow-600 text-white rounded hover:opacity-90 transition"
+              class="px-3 py-1 bg-yellow-600 text-white rounded"
           >{{ t('forum.detail.closeForum') }}</button>
-
           <button
               v-if="isCreatorOrAdmin && settings.status !== 'archived'"
               @click="archiveForum"
-              class="w-full sm:w-auto px-3 py-1 bg-gray-600 text-white rounded hover:opacity-90 transition"
+              class="px-3 py-1 bg-gray-600 text-white rounded"
           >{{ t('forum.detail.archiveForum') }}</button>
-
           <button
               v-if="isCreatorOrAdmin && settings.status !== 'resolved'"
               @click="resolveForum"
-              class="w-full sm:w-auto px-3 py-1 bg-green-600 text-white rounded hover:opacity-90 transition"
+              class="px-3 py-1 bg-green-600 text-white rounded"
           >{{ t('forum.detail.resolveForum') }}</button>
-
           <button
               v-if="isAdmin && settings.status !== 'banned'"
               @click="banForum"
-              class="w-full sm:w-auto px-3 py-1 bg-red-600 text-white rounded hover:opacity-90 transition"
+              class="px-3 py-1 bg-red-600 text-white rounded"
           >{{ t('forum.detail.banForum') }}</button>
-
           <button
               v-if="isCreatorOrAdmin"
               @click="deleteForum"
-              class="w-full sm:w-auto px-3 py-1 bg-error text-white rounded hover:opacity-90 transition"
+              class="px-3 py-1 bg-error text-white rounded"
           >{{ t('forum.detail.deleteForum') }}</button>
-
           <button
               @click="saveSettings"
-              class="w-full sm:w-auto px-3 py-1 bg-accent-primary text-white rounded hover:bg-accent-primary/90 transition"
+              class="px-3 py-1 bg-accent-primary text-white rounded"
           >{{ t('common.save') }}</button>
         </div>
       </div>
-    </div>
-
-    <!-- Загрузка -->
-    <div v-else class="p-6 text-center text-gray-500">
-      {{ t('common.loading') }}…
     </div>
   </div>
 </template>
@@ -246,275 +222,201 @@
 <script setup>
 import { ref, reactive, computed, onMounted, inject } from 'vue'
 import { useRoute } from 'vue-router'
-import { useI18n }  from 'vue-i18n'
+import { useI18n } from 'vue-i18n'
 import { getUserIdFromToken } from '@/utils/jwt/getUserIdFromToken.js'
-
-import createForumModel    from '@/iam/models/forumModel.js'
-import { handleForumIntent } from '@/iam/actions/forumActions.js'
-import {
-  fetchForumIntent,
-  fetchForumPostsIntent,
-  createForumPostIntent,
-  updateForumIntent,
-  deleteForumIntent
-} from '@/iam/intents/forumIntents.js'
-
-import createDomainModel   from '@/iam/models/domainModel.js'
-import { fetchDomainsIntent } from '@/iam/intents/domainIntents.js'
-import { handleDomainIntent } from '@/iam/actions/domainActions.js'
-
-import createRoleModel     from '@/iam/models/roleModel.js'
-import { fetchRolesIntent } from '@/iam/intents/roleIntents.js'
-import { handleRoleIntent } from '@/iam/actions/roleActions.js'
-
+import { useForumStore } from '@/iam/stores/forumStore.js'
+import { useDomainStore } from '@/iam/stores/domainStore.js'
+import { useRoleStore } from '@/iam/stores/roleStore.js'
 import ReplyEditor from '@/components/forum/ReplyEditor.vue'
 
-const { t } = useI18n()
-const route = useRoute()
-const forum = ref(null)
-const posts = ref([])
-const coord = inject('coordinator')
-const forumId = Number(route.params.id)
+const { t }       = useI18n()
+const route       = useRoute()
+const coordinator = inject('coordinator')
 
-// отступы
-const indentRem  = 0.75
-const postMap    = computed(() => posts.value.reduce((m, p) => (m[p.id] = p, m), {}))
-const postDepths = computed(() => {
-  const depths = {}
-  function depthOf(p) {
-    if (depths[p.id] != null) return depths[p.id]
-    depths[p.id] = p.parentPostId
-        ? depthOf(postMap.value[p.parentPostId]||{parentPostId:null}) + 1
+const forumStore  = useForumStore()
+const domainStore = useDomainStore()
+const roleStore   = useRoleStore()
+
+const forumId     = Number(route.params.id)
+const loading     = computed(() => forumStore.loading)
+const forum       = computed(() => forumStore.currentForum)
+const posts       = ref([])
+
+const indentRem = 0.75
+const postMap   = computed(() =>
+    posts.value.reduce((m, p) => ((m[p.id] = p), m), {})
+)
+const depths    = computed(() => {
+  const d = {}
+  function calc(p) {
+    if (d[p.id] != null) return d[p.id]
+    d[p.id] = p.parentPostId
+        ? calc(postMap.value[p.parentPostId] || { parentPostId: null }) + 1
         : 0
-    return depths[p.id]
+    return d[p.id]
   }
-  posts.value.forEach(depthOf)
-  return depths
+  posts.value.forEach(calc)
+  return d
 })
 
-// справочники
-const domains  = ref([])
-const allRoles = ref([])
-async function loadAux() {
-  domains.value = await handleDomainIntent(fetchDomainsIntent(), {
-    model: createDomainModel()
-  })
-  allRoles.value = await handleRoleIntent(fetchRolesIntent(), {
-    model: createRoleModel()
-  })
-}
-
-// права
-const role       = inject('user_roles')
-const isAdmin    = computed(() => role.value.some(r => r.name === 'ROLE_ADMIN'))
-const isCreator  = computed(() =>
-    forum.value?.createdBy.id === getUserIdFromToken()
-)
-const isCreatorOrAdmin = computed(() =>
-    isAdmin.value || isCreator.value
-)
-const canEdit    = computed(() =>
-    forum.value && (isAdmin.value || isCreator.value)
-)
-
-const isOnlyUnverified = computed(() => {
-  return role.value.length === 1 && role.value[0].name === 'ROLE_UNVERIFIED';
-})
-
-// редактор
-const editorState = ref({ open:false, parentPostId:null })
-function openEditor(pid) { editorState.value = { open:true, parentPostId:pid } }
-function closeEditor()    { editorState.value = { open:false, parentPostId:null } }
-
-// форма настроек
-const settings = reactive({
-  name:             '',
-  description:      '',
-  topicsInput:      '',
-  universityDomain: '',
-  informational:    false,
-  public:           true,
-  pinned:           false
+const settings    = reactive({
+  name:            '',
+  description:     '',
+  topicsInput:     '',
+  universityDomain:'',
+  informational:   false,
+  public:          true,
+  pinned:          false,
+  closed:          false,
+  status:          ''
 })
 const minRoleName = ref('')
 
-// иерархия ролей по id
-//TODO не работает(
-const sortedRoles = computed(() =>
-    [...allRoles.value].sort((a, b) => a.id - b.id)
+const editorState = ref({ open: false, parentPostId: null })
+function openEditor(pid) { editorState.value = { open: true, parentPostId: pid } }
+function closeEditor()    { editorState.value = { open: false, parentPostId: null } }
+
+async function loadAux() {
+  await domainStore.fetchDomains()
+  await roleStore.fetchRoles()
+}
+
+const userRoles        = computed(() => roleStore.roles)
+const isAdmin          = computed(() => userRoles.value.some(r => r.name === 'ROLE_ADMIN'))
+const isCreator        = computed(() => forum.value?.createdBy.id === getUserIdFromToken())
+const isCreatorOrAdmin = computed(() => isAdmin.value || isCreator.value)
+const canEdit          = computed(() => !!forum.value && isCreatorOrAdmin.value)
+
+const isAuth   = computed(() => !!getUserIdFromToken())
+const canReply = computed(() =>
+    isAuth.value && forum.value && !forum.value.closed
 )
+
+const onlyUnverified   = computed(() =>
+    userRoles.value.length === 1 && userRoles.value[0].name === 'ROLE_UNVERIFIED'
+)
+
+const sortedRoles      = computed(() => [...userRoles.value].sort((a,b) => a.id - b.id))
 const allowedRoleNames = computed(() => {
   const idx = sortedRoles.value.findIndex(r => r.name === minRoleName.value)
-  return idx>=0
-      ? sortedRoles.value.slice(idx).map(r=>r.name)
-      : []
+  return idx < 0 ? [] : sortedRoles.value.slice(idx).map(r => r.name)
 })
 
-// загрузка форума и постов
+const formatDate     = s => new Date(s).toLocaleDateString()
+const formatDateTime = s => new Date(s).toLocaleString()
+
 async function loadForum() {
-  const f = await handleForumIntent(fetchForumIntent(forumId), {
-    model: createForumModel()
-  })
-  forum.value = f
+  await forumStore.fetchForum(forumId)
+  const f = forumStore.currentForum
   Object.assign(settings, {
-    name:             f.name,
-    description:      f.description,
-    topicsInput:      f.topics.join(','),
-    universityDomain: f.universityDomain.domain,
-    informational:    f.status==='informational',
-    public:           f.public,
-    pinned:           f.pinned,
-    closed:           f.closed,
+    name:            f.name,
+    description:     f.description,
+    topicsInput:     f.topics.join(','),
+    universityDomain:f.universityDomain.domain,
+    informational:   f.status === 'informational',
+    public:          f.public,
+    pinned:          f.pinned,
+    closed:          f.closed,
+    status:          f.status
   })
-  minRoleName.value = f.allowedRoles.length ? f.allowedRoles[0] : ''
+  minRoleName.value = f.allowedRoles?.[0] || ''
 }
 async function loadPosts() {
-  const resp = await handleForumIntent(fetchForumPostsIntent(forumId), {
-    model: createForumModel()
-  })
+  const resp = await forumStore.fetchForumPosts(forumId)
   posts.value = resp.content
 }
 
 onMounted(async () => {
-  await Promise.all([ loadAux(), loadForum(), loadPosts() ])
+  await Promise.all([loadAux(), loadForum(), loadPosts()])
 })
 
-// ответы
-async function onReply({content,parentPostId}) {
-  await handleForumIntent(
-      createForumPostIntent(forumId,{content,parentPostId}),
-      {model:createForumModel()}
-  )
+async function onReply({ content, parentPostId }) {
+  await forumStore.createForumPost(forumId, { content, parentPostId })
   closeEditor()
   await loadPosts()
 }
 
-// действия по кнопкам
-async function closeForum() {
-  await handleForumIntent(
-      updateForumIntent(forumId,{
-        name:             settings.name.trim(),
-        description:      settings.description.trim(),
-        topics:           settings.topicsInput.split(',').map(s=>s.trim()).filter(Boolean),
-        universityDomain: settings.universityDomain,
-        status:           'archived',
-        public:           settings.public,
-        pinned:           isAdmin.value ? settings.pinned : undefined,
-        closed:           true,
-        allowedRoles:     allowedRoleNames.value
-      }),
-      {model:createForumModel()}
-  )
-  settings.closed = true
-}
-async function archiveForum() {
-  await handleForumIntent(
-      updateForumIntent(forumId,{
-        name:             settings.name.trim(),
-        description:      settings.description.trim(),
-        topics:           settings.topicsInput.split(',').map(s=>s.trim()).filter(Boolean),
-        universityDomain: settings.universityDomain,
-        status:           'archived',
-        public:           settings.public,
-        pinned:           isAdmin.value ? settings.pinned : undefined,
-        closed:           settings.closed,
-        allowedRoles:     allowedRoleNames.value
-      }),
-      {model:createForumModel()}
-  )
-  settings.informational = false
-  forum.value.status = 'archived'
-}
-async function resolveForum() {
-  await handleForumIntent(
-      updateForumIntent(forumId,{
-        name:             settings.name.trim(),
-        description:      settings.description.trim(),
-        topics:           settings.topicsInput.split(',').map(s=>s.trim()).filter(Boolean),
-        universityDomain: settings.universityDomain,
-        status:           'resolved',
-        public:           settings.public,
-        pinned:           isAdmin.value ? settings.pinned : undefined,
-        closed:           settings.closed,
-        allowedRoles:     allowedRoleNames.value
-      }),
-      {model:createForumModel()}
-  )
-  forum.value.status = 'resolved'
-}
-async function banForum() {
-  await handleForumIntent(
-      updateForumIntent(forumId,{
-        name:             settings.name.trim(),
-        description:      settings.description.trim(),
-        topics:           settings.topicsInput.split(',').map(s=>s.trim()).filter(Boolean),
-        universityDomain: settings.universityDomain,
-        status:           'banned',
-        public:           settings.public,
-        pinned:           isAdmin.value ? settings.pinned : undefined,
-        closed:           true,
-        allowedRoles:     allowedRoleNames.value
-      }),
-      {model:createForumModel()}
-  )
-  forum.value.status = 'banned'
-  settings.closed = true
-}
-
-// сохранение настроек
-async function saveSettings() {
-  await handleForumIntent(
-      updateForumIntent(forumId,{
-        name:             settings.name.trim(),
-        description:      settings.description.trim(),
-        topics:           settings.topicsInput.split(',').map(s=>s.trim()).filter(Boolean),
-        universityDomain: settings.universityDomain,
-        status:           settings.informational ? 'informational' : forum.value.status,
-        public:           settings.public,
-        pinned:           isAdmin.value ? settings.pinned : undefined,
-        closed:           settings.closed,
-        allowedRoles:     allowedRoleNames.value
-      }),
-      {model:createForumModel()}
-  )
+async function updateForumStatus(payload) {
+  await forumStore.updateForum(forumId, payload)
   await loadForum()
 }
 
-// удаление
+async function closeForum() {
+  await updateForumStatus({
+    ...settings,
+    topics:        settings.topicsInput.split(',').map(s => s.trim()).filter(Boolean),
+    status:        'archived',
+    closed:        true,
+    allowedRoles:  allowedRoleNames.value
+  })
+}
+async function archiveForum() {
+  await updateForumStatus({
+    ...settings,
+    topics:       settings.topicsInput.split(',').map(s => s.trim()).filter(Boolean),
+    status:       'archived',
+    allowedRoles: allowedRoleNames.value
+  })
+}
+async function resolveForum() {
+  await updateForumStatus({
+    ...settings,
+    topics:       settings.topicsInput.split(',').map(s => s.trim()).filter(Boolean),
+    status:       'resolved',
+    allowedRoles: allowedRoleNames.value
+  })
+}
+async function banForum() {
+  await updateForumStatus({
+    ...settings,
+    topics:       settings.topicsInput.split(',').map(s => s.trim()).filter(Boolean),
+    status:       'banned',
+    closed:       true,
+    allowedRoles: allowedRoleNames.value
+  })
+}
+async function saveSettings() {
+  await updateForumStatus({
+    name:            settings.name.trim(),
+    description:     settings.description.trim(),
+    topics:          settings.topicsInput.split(',').map(s => s.trim()).filter(Boolean),
+    universityDomain:settings.universityDomain,
+    status:          settings.informational ? 'informational' : settings.status,
+    public:          settings.public,
+    pinned:          settings.pinned,
+    closed:          settings.closed,
+    allowedRoles:    allowedRoleNames.value
+  })
+}
 async function deleteForum() {
   if (!confirm(t('forum.detail.confirmDelete'))) return
-  await handleForumIntent(deleteForumIntent(forumId), {
-    model: createForumModel()
-  })
-  coord.navigateToForumSearch()
+  await forumStore.deleteForum(forumId)
+  coordinator.navigateToForumSearch()
 }
 
-// плавный скролл
+// scroll to quote
 function scrollTo(id) {
   const el = document.getElementById(`post-${id}`)
-  if (!el) return
-  el.scrollIntoView({ behavior:'smooth', block:'center' })
-  el.classList.add('ring-2','ring-accent-primary')
-  setTimeout(()=>el.classList.remove('ring-2','ring-accent-primary'),2000)
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    el.classList.add('ring-2','ring-accent-primary')
+    setTimeout(() => el.classList.remove('ring-2','ring-accent-primary'), 2000)
+  }
 }
-
-// формат дат
-function formatDate(s)     { return new Date(s).toLocaleDateString() }
-function formatDateTime(s) { return new Date(s).toLocaleString() }
 </script>
 
 <style scoped>
-.prose img { max-width:100%; height:auto; }
+.prose img { max-width: 100%; height: auto; }
 .quote-blurb {
-  position:relative;
-  max-height:100px;
-  overflow:hidden;
+  position: relative;
+  max-height: 100px;
+  overflow: hidden;
 }
 .quote-blurb::after {
-  content:'';
-  position:absolute;
-  bottom:0; left:0;
-  width:100%; height:25px;
-  background:linear-gradient(rgba(255,255,255,0),rgba(255,255,255,0.7));
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0;
+  width: 100%; height: 25px;
+  background: linear-gradient(rgba(255,255,255,0), rgba(255,255,255,0.7));
 }
 </style>

@@ -44,10 +44,10 @@
         {{ t('forum.tabs.banned') }}
       </RouterLink>
     </nav>
-    
+
     <RouterView />
 
-    <!-- Floating Add -->
+    <!-- Floating “Create Forum” button -->
     <button
         @click="coordinator.navigateToForumCreate()"
         class="fixed right-6 bg-accent-primary text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center hover:bg-accent-primary/90 transition"
@@ -65,18 +65,23 @@
 
 <script setup>
 import { RouterLink, RouterView } from 'vue-router'
-import { inject, computed } from 'vue'
-import { useI18n } from 'vue-i18n'
-import checkRights from '@/utils/groups/checkRights'
-import { getUserIdFromToken } from '@/utils/jwt/getUserIdFromToken.js'
-import { useIsMobile } from "@/utils/device/useIsMobile.js";
+import { inject, computed }       from 'vue'
+import { useI18n }                from 'vue-i18n'
+import { useRoleStore }           from '@/iam/stores/roleStore.js'
+import { getUserIdFromToken }     from '@/utils/jwt/getUserIdFromToken.js'
+import { useIsMobile }            from '@/utils/device/useIsMobile.js'
 
 const coordinator = inject('coordinator')
-const role = inject('user_roles')
-const isAuth  = computed(() => !!getUserIdFromToken())
-const isAdmin = computed(() => role.value.some(r => r.name === 'ROLE_ADMIN'))
-const { t } = useI18n()
-const isMobile = useIsMobile()
+const { t }       = useI18n()
+const isMobile    = useIsMobile()
+
+const isAuth = computed(() => !!getUserIdFromToken())
+
+// roleStore.roles is array of { id, name }
+const roleStore = useRoleStore()
+const isAdmin   = computed(() =>
+    roleStore.roles.some(r => r.name === 'ROLE_ADMIN')
+)
 </script>
 
 <style scoped>

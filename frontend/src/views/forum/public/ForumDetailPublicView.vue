@@ -1,9 +1,6 @@
 <template>
   <div class="space-y-6">
-    <!-- Заголовок -->
-    <h1 class="text-2xl font-bold">{{ forum.name }}</h1>
-
-    <!-- Темы -->
+    <h1 class="text-2xl font-bold">{{ forum?.name }}</h1>
     <div class="flex flex-wrap gap-2">
       <span
           v-for="topic in forum.topics"
@@ -13,11 +10,8 @@
         {{ topic }}
       </span>
     </div>
-
-    <!-- Описание -->
     <div class="prose" v-html="forum.description"></div>
 
-    <!-- Метаданные -->
     <div class="text-sm text-gray-500 space-x-4">
       <span>
         <strong>{{ t('forum.detail.createdBy') }}:</strong>
@@ -33,8 +27,7 @@
       </span>
     </div>
 
-    <!-- Форма нового сообщения (только для залогиненных) -->
-    <div v-if="isAuth" class="border-t pt-4">
+    <div v-if="isAuth && !forum.closed" class="border-t pt-4">
       <h2 class="font-semibold mb-2">{{ t('forum.detail.newPostTitle') }}</h2>
       <textarea
           v-model="newPost.content"
@@ -45,7 +38,7 @@
       <div v-if="newPost.parentPostId" class="text-xs text-gray-600 mt-1">
         {{ t('forum.detail.replyingTo') }}
         <a
-            :href="'#post-'+newPost.parentPostId"
+            :href="'#post-' + newPost.parentPostId"
             class="text-accent-secondary underline"
         >
           {{ newPost.parentPostId }}
@@ -62,43 +55,36 @@
       </button>
     </div>
 
-    <!-- Список сообщений -->
     <div class="space-y-4 mt-6">
       <div
-          v-for="post in posts"
+          v-for="post in forumPosts"
           :key="post.id"
-          :id="'post-'+post.id"
+          :id="'post-' + post.id"
           class="p-4 bg-secondary rounded-lg"
-          :class="{'ml-8': post.parentPostId}"
+          :class="{ 'ml-8': post.parentPostId }"
       >
         <div class="flex justify-between items-start">
           <div>
             <p class="whitespace-pre-wrap" v-html="post.content" />
             <div class="text-xs text-gray-400 mt-2">
-              {{ post.author.displayName }},
-              {{ formatDateTime(post.createdAt) }}
+              {{ post.author.displayName }}, {{ formatDateTime(post.createdAt) }}
             </div>
           </div>
           <button
-              v-if="isAuth && !forum.closed"
+              v-if="isAuth"
               @click="startReply(post.id)"
               class="text-sm text-accent-primary underline"
           >
             {{ t('forum.detail.reply') }}
           </button>
         </div>
-        <!-- Ссылка на родительский пост -->
         <div v-if="post.parentPostId" class="text-xs mt-2">
-          <router-link
-              :to="{
-              name: 'forum-info-public',
-              params: { forumId },
-              hash: '#post-'+post.parentPostId
-            }"
+          <RouterLink
+              :to="{ name:'forum-info-public', params:{ forumId }, hash:'#post-'+post.parentPostId }"
               class="underline text-accent-secondary"
           >
             {{ t('forum.detail.replyToPost') }} {{ post.parentPostId }}
-          </router-link>
+          </RouterLink>
         </div>
       </div>
     </div>
@@ -107,43 +93,30 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
-import { useRoute } from 'vue-router'
-import { useI18n } from 'vue-i18n'
-import { getUserIdFromToken } from '@/utils/jwt/getUserIdFromToken.js'
-import createForumModel from '@/iam/models/forumModel.js'
-import {
-  handleForumIntent
-} from '@/iam/actions/forumActions.js'
-import {
-  fetchForumIntent,
-  fetchForumPostsIntent,
-  createForumPostIntent
-} from '@/iam/intents/forumIntents.js'
+import { useRoute, RouterLink }    from 'vue-router'
+import { useI18n }                 from 'vue-i18n'
+import { useForumStore }           from '@/iam/stores/forumStore.js'
+import { getUserIdFromToken }      from '@/utils/jwt/getUserIdFromToken.js'
 
-const { t } = useI18n()
-const route = useRoute()
-const forumId = Number(route.params.id)
-const forum = ref(null)
-const posts = ref([])
-const isAuth = computed(() => !!getUserIdFromToken())
-const currentUserId = computed(() => getUserIdFromToken())
+const { t }          = useI18n()
+const route         = useRoute()
+const forumId       = Number(route.params.forumId || route.params.id)
+const forumStore    = useForumStore()
+const forum         = computed(() => forumStore.currentForum)
+const forumPosts    = ref([])
+const isAuth        = computed(() => !!getUserIdFromToken())
 
-// загрузка данных
+const newPost       = ref({ content: '', parentPostId: null })
+
 async function loadForum() {
-  forum.value = await handleForumIntent(
-      fetchForumIntent(forumId),
-      { model: createForumModel() }
-  )
-}
-async function loadPosts() {
-  const resp = await handleForumIntent(
-      fetchForumPostsIntent(forumId),
-      { model: createForumModel() }
-  )
-  posts.value = resp.content
+  await forumStore.fetchForum(forumId)
 }
 
-// формат даты
+async function loadPosts() {
+  const resp = await forumStore.fetchForumPosts(forumId)
+  forumPosts.value = resp.content
+}
+
 function formatDate(s) {
   return new Date(s).toLocaleDateString()
 }
@@ -151,21 +124,17 @@ function formatDateTime(s) {
   return new Date(s).toLocaleString()
 }
 
-// новая форма поста
-const newPost = ref({ content: '', parentPostId: null })
 function startReply(id) {
   newPost.value.parentPostId = id
 }
 function cancelReply() {
   newPost.value.parentPostId = null
 }
+
 async function submitPost() {
   if (!newPost.value.content.trim()) return
-  await handleForumIntent(
-      createForumPostIntent(forumId, newPost.value),
-      { model: createForumModel() }
-  )
-  newPost.value.content = ''
+  await forumStore.createForumPost(forumId, newPost.value)
+  newPost.value.content      = ''
   newPost.value.parentPostId = null
   await loadPosts()
 }

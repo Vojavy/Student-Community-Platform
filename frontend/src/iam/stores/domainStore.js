@@ -1,50 +1,59 @@
+// src/iam/stores/domainStore.js
 import { defineStore } from 'pinia'
 import createDomainModel from '@/iam/models/domainModel.js'
 
-const model = createDomainModel()
+const domainModel = createDomainModel()
 
 export const useDomainStore = defineStore('domainStore', {
     state: () => ({
-        domains: [],
-        domain: null,
+        domains: [],           // Array<{ domain, domainName, … }>
+        currentDomain: null,   // single domain
         loading: false,
-        error: null
+        error:   null
     }),
     actions: {
         async fetchDomains() {
             this.loading = true
-            this.error = null
+            this.error   = null
             try {
-                this.domains = await model.fetchDomains()
-                return this.domains
+                const data = await domainModel.fetchDomains()
+                this.domains = data
+                return data
             } catch (e) {
-                this.error = e.response?.data?.message || e.message || 'Fetch domains failed'
+                this.error = e.response?.data?.message || e.message
+                console.error('[domainStore] fetchDomains error →', this.error)
                 throw e
             } finally {
                 this.loading = false
             }
         },
-        async fetchById(id) {
+
+        async fetchDomainById(id) {
             this.loading = true
-            this.error = null
+            this.error   = null
             try {
-                this.domain = await model.fetchDomainById(id)
-                return this.domain
+                const data = await domainModel.fetchDomainById(id)
+                this.currentDomain = data
+                return data
             } catch (e) {
-                this.error = e.response?.data?.message || e.message || 'Fetch domain by ID failed'
+                this.error = e.response?.data?.message || e.message
+                console.error('[domainStore] fetchDomainById error →', this.error)
                 throw e
             } finally {
                 this.loading = false
             }
         },
-        async fetchByCode(domainCode) {
+
+        async fetchDomainByCode(domainCode) {
             this.loading = true
-            this.error = null
+            this.error   = null
             try {
-                this.domain = await model.fetchDomainByCode(domainCode)
-                return this.domain
+                const data = await domainModel.fetchDomainByCode(domainCode)
+                this.currentDomain = data
+                return data
             } catch (e) {
-                this.error = e.response?.data?.message || e.message || 'Fetch domain by code failed'
+                this.error = e.response?.data?.message || e.message
+                console.error('[domainStore] fetchDomainByCode error →', this.error)
                 throw e
             } finally {
                 this.loading = false

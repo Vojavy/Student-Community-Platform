@@ -23,7 +23,9 @@
         @click="showFilters = !showFilters"
         class="text-sm text-accent-primary hover:underline"
     >
-      {{ showFilters ? t('forum.actions.hideFilters') : t('forum.actions.showFilters') }}
+      {{ showFilters
+        ? t('forum.actions.hideFilters')
+        : t('forum.actions.showFilters') }}
     </button>
 
     <!-- Extra: Domain, Public, Sort -->
@@ -91,13 +93,13 @@
     <div class="flex justify-center space-x-2 mt-6">
       <button
           :disabled="page.first"
-          @click="changePage(page.number - 1)"
+          @click="changePage(page.page - 1)"
           class="px-3 py-1 border rounded disabled:opacity-50"
       >←</button>
-      <span>{{ page.number + 1 }} / {{ page.totalPages }}</span>
+      <span>{{ page.page + 1 }} / {{ page.totalPages }}</span>
       <button
           :disabled="page.last"
-          @click="changePage(page.number + 1)"
+          @click="changePage(page.page + 1)"
           class="px-3 py-1 border rounded disabled:opacity-50"
       >→</button>
     </div>
@@ -105,53 +107,65 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useI18n }        from 'vue-i18n'
-import { inject }         from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { useI18n }                from 'vue-i18n'
+import { inject }                 from 'vue'
+import { useForumStore }          from '@/iam/stores/forumStore.js'
+import { useDomainStore }         from '@/iam/stores/domainStore.js'
 
-import { fetchForumsIntent } from '@/iam/intents/forumIntents.js'
-import { handleForumIntent } from '@/iam/actions/forumActions.js'
-import createForumModel      from '@/iam/models/forumModel.js'
+const { t }         = useI18n()
+const coordinator   = inject('coordinator')
 
-import { fetchDomainsIntent } from '@/iam/intents/domainIntents.js'
-import { handleDomainIntent } from '@/iam/actions/domainActions.js'
-import createDomainModel      from '@/iam/models/domainModel.js'
+const forumStore    = useForumStore()
+const domainStore   = useDomainStore()
 
-const { t }   = useI18n()
-const coord   = inject('coordinator')
-
-// state
-const domains     = ref([])
-const page        = ref({ content: [], number:0, totalPages:1, first:true, last:true })
-const showFilters = ref(false)
-const filters     = ref({
-  page:      0,
-  size:      20,
-  status:    'archived',
-  isPublic:  null,
-  domain:    '',
-  name:      '',
-  sort:      'newest'
+// local UI state
+const filters       = ref({
+  page:     0,
+  size:     20,
+  status:   'archived',
+  isPublic: null,
+  domain:   '',
+  name:     '',
+  sort:     'newest'
 })
+const showFilters   = ref(false)
 
+// derive data from stores
+const page          = computed(() => forumStore.forums)
+const domains       = computed(() => domainStore.domains)
+
+// actions
 async function load() {
-  page.value = await handleForumIntent(
-      fetchForumsIntent({ ...filters.value, domain: filters.value.domain || undefined }),
-      { model: createForumModel(), coordinator: coord }
-  )
+  // ensure domain list is fresh
+  await domainStore.fetchDomains()
+  // fetch only archived forums with current filters
+  await forumStore.fetchForums({
+    ...filters.value,
+    domain: filters.value.domain || undefined
+  })
 }
-function applyFilters() { filters.value.page = 0; load() }
-function changePage(n) { filters.value.page = n; load() }
-function goDetails(id) { coord.navigateToForum(id) }
-function formatDate(s) { return new Date(s).toLocaleDateString() }
 
-onMounted(async () => {
-  domains.value = await handleDomainIntent(
-      fetchDomainsIntent(),
-      { model: createDomainModel(), coordinator: coord }
-  )
+function applyFilters() {
+  filters.value.page = 0
   load()
-})
+}
+
+function changePage(n) {
+  filters.value.page = n
+  load()
+}
+
+function goDetails(id) {
+  coordinator.navigateToForum(id)
+}
+
+function formatDate(s) {
+  return new Date(s).toLocaleDateString()
+}
+
+// initial load
+onMounted(load)
 </script>
 
 <style scoped>
