@@ -206,6 +206,15 @@ export default {
             sendMessage: 'Написать сообщение'
         }
     },
+    chat: {
+        title: 'Чат',
+        send: 'Отправить',
+        reply: 'Ответить',
+        replyingTo: 'Вы отвечаете на сообщение',
+        replyPreviewDeleted: 'Сообщение удалено',
+        readAt: 'Прочитано в {{time}}',
+        placeholder: 'Введите сообщение...'
+    },
     groups: {
         title: 'Группы',
         domain: 'Домен',

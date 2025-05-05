@@ -1,3 +1,4 @@
+// src/iam/stores/chatStore.js
 import { defineStore } from 'pinia'
 import createChatModel from '@/iam/models/chatModel.js'
 
@@ -9,6 +10,7 @@ export const useChatStore = defineStore('chatStore', {
         connected: false,
         error: null
     }),
+
     actions: {
         async connect() {
             try {
@@ -19,35 +21,67 @@ export const useChatStore = defineStore('chatStore', {
                 throw e
             }
         },
+
         disconnect() {
             model.disconnect()
             this.connected = false
         },
+
         clearMessages() {
             this.messages = []
         },
+
         subscribe() {
-            model.subscribeToMessages(m => this.messages.push(m))
-            model.subscribeToReads(m => {
-                const msg = this.messages.find(x => x.id === m.id)
-                if (msg) {
-                    msg.read = true
-                    msg.readAt = m.readAt
-                }
-            })
+            // получение истории
             model.subscribeToHistory(history => {
                 this.clearMessages()
                 this.messages.push(...history)
             })
+            // новые сообщения
+            model.subscribeToMessages(msg => {
+                this.messages.push(msg)
+            })
+            // отметки прочитанных
+            model.subscribeToReads(msg => {
+                const found = this.messages.find(m => m.id === msg.id)
+                if (found) {
+                    found.read   = true
+                    found.readAt = msg.readAt
+                }
+            })
         },
+
         requestHistory(otherUserId) {
             model.requestHistory(otherUserId)
         },
-        sendMessage(payload) {
-            model.sendMessage(payload)
+
+        /**
+         * Отправка сообщения.
+         * @param {number} recipientId — ID получателя
+         * @param {{text?:string, base64?:string, parentMessageId?:number}} opts
+         */
+        async sendMessage(recipientId, { text = '', base64 = null, parentMessageId = null } = {}) {
+            const payload = {
+                recipientId,
+                contentText:   text || null,
+                contentBase64: base64,
+                parentMessageId
+            }
+            try {
+                await model.sendMessage(payload)
+            } catch (e) {
+                this.error = e
+                throw e
+            }
         },
-        markAsRead(messageId) {
-            model.markAsRead(messageId)
+
+        async markAsRead(messageId) {
+            try {
+                await model.markAsRead(messageId)
+            } catch (e) {
+                this.error = e
+                throw e
+            }
         }
     }
 })

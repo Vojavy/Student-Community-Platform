@@ -206,6 +206,15 @@ export default {
             sendMessage: 'Send Message'
         }
     },
+    chat: {
+        title: 'Chat',
+        send: 'Send',
+        reply: 'Reply',
+        replyingTo: 'Replying to message',
+        replyPreviewDeleted: 'Message deleted',
+        readAt: 'Read at {{time}}',
+        placeholder: 'Type a message...'
+    },
     groups: {
         title: 'Groups',
         domain: 'Domain',

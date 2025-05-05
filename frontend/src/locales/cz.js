@@ -206,6 +206,15 @@ export default {
             sendMessage: 'Poslat zprávu'
         }
     },
+    chat: {
+        title: 'Chat',
+        send: 'Odeslat',
+        reply: 'Odpovědět',
+        replyingTo: 'Odpovídáte na zprávu',
+        replyPreviewDeleted: 'Zpráva byla smazána',
+        readAt: 'Přečteno v {{time}}',
+        placeholder: 'Zadejte zprávu...'
+    },
     groups: {
         title: 'Skupiny',
         domain: 'Doména',
