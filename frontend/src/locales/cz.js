@@ -7,7 +7,9 @@ export default {
         delete: 'Smazat',
         loading: 'Načítá se...',
         search: 'Hledat',
-        submit: 'Odeslat'
+        submit: 'Odeslat',
+        showFilters: 'Zobrazit filtry',
+        hideFilters: 'Skrýt filtry',
     },
     verification: {
         title: 'Ověření e-mailu',
@@ -65,6 +67,7 @@ export default {
         calendar: 'Kalendář',
         groups: 'Skupiny',
         messages: 'Soukromé zprávy',
+        searchUsers: 'Uzivatele',
         mobile: {
             index: 'Domů',
             market: 'Tržiště',
@@ -118,10 +121,21 @@ export default {
         active: 'Aktivní',
         yes: 'Ano',
         no: 'Ne',
+        username: 'username',
         notFound: 'Uživatel nenalezen',
         registered: 'Registrován',
         detailsTitle: 'Detaily',
         noDetails: 'Žádné údaje',
+        search:
+        {
+            placeholderName: "Hledat podle jména nebo příjmení",
+            placeholderEmail: "Email",
+            placeholderRocnik: "Ročník",
+            placeholderFakulta: "Fakulta",
+            placeholderObor: "Obor",
+            domainAll: "Všechny domény",
+            titulAll: "Všechny tituly"
+        },
         friends: {
             title: 'Přátelé',
             empty: 'Zatím žádní přátelé',
@@ -168,6 +182,8 @@ export default {
             }
         },
         contacts: {
+            show: 'Zobrazit kontakty',
+            hide: 'Skrýt kontakty',
             inst: 'Instagram',
             tg: 'Telegram',
             fb: 'Facebook',
@@ -305,8 +321,6 @@ export default {
             oldest: 'Nejstarší'
         },
         actions: {
-            showFilters: 'Zobrazit filtry',
-            hideFilters: 'Skrýt filtry',
             editForum: 'Upravit fórum',
             archive: 'Archivovat fórum',
             activate: 'Aktivovat fórum',

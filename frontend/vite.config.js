@@ -12,6 +12,9 @@ export default defineConfig({
     vueDevTools(),
     tailwindcss(),
   ],
+  define: {
+    global: 'window',
+  },
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))

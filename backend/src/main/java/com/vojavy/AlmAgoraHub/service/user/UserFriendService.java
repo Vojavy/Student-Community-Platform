@@ -23,106 +23,85 @@ public class UserFriendService {
             UserService userService,
             NotificationService notificationService
     ) {
-        this.friendRepository = friendRepository;
-        this.userService = userService;
-        this.notificationService  = notificationService;
+        this.friendRepository   = friendRepository;
+        this.userService        = userService;
+        this.notificationService = notificationService;
     }
 
     public void sendFriendRequest(Long fromUserId, Long toUserId) {
-        Optional<User> fromUserOpt = userService.findById(fromUserId);
-        Optional<User> toUserOpt = userService.findById(toUserId);
-
-        if (fromUserOpt.isEmpty() || toUserOpt.isEmpty()) {
-            throw new IllegalArgumentException("User(s) not found");
-        }
-
-        User fromUser = fromUserOpt.get();
-        User toUser = toUserOpt.get();
+        User from = userService.findById(fromUserId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + fromUserId));
+        User to   = userService.findById(toUserId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + toUserId));
 
         if (fromUserId.equals(toUserId)) {
             throw new IllegalArgumentException("Cannot send friend request to yourself.");
         }
-
-        if (friendRepository.findByUser1AndUser2(fromUser, toUser).isPresent()) {
+        if (friendRepository.findByUser1AndUser2(from, to).isPresent()) {
             throw new IllegalStateException("Friend request already exists.");
         }
 
-        UserFriend friendRequest = new UserFriend();
-        friendRequest.setUser1(fromUser);
-        friendRequest.setUser2(toUser);
-        friendRequest.setStatus("pending");
-        friendRequest.setHidden(false);
-        friendRequest.setCreatedAt(Instant.now());
+        UserFriend req = new UserFriend();
+        req.setUser1(from);
+        req.setUser2(to);
+        req.setStatus("pending");
+        req.setHidden(false);
+        req.setCreatedAt(Instant.now());
+        friendRepository.save(req);
 
-        friendRepository.save(friendRequest);
-
-        notificationService.sendFriendRequestNotification(fromUser, toUser);
+        notificationService.sendFriendRequestNotification(from, to);
     }
 
     public void acceptFriendRequest(Long requesterId, Long receiverId) {
-        Optional<User> requesterOpt = userService.findById(requesterId);
-        Optional<User> receiverOpt = userService.findById(receiverId);
+        User reqUser = userService.findById(requesterId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + requesterId));
+        User recv   = userService.findById(receiverId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + receiverId));
 
-        if (requesterOpt.isEmpty() || receiverOpt.isEmpty()) {
-            throw new IllegalArgumentException("User(s) not found");
-        }
-
-        User requester = requesterOpt.get();
-        User receiver = receiverOpt.get();
-
-        UserFriend request = friendRepository.findByUser1AndUser2(requester, receiver)
+        UserFriend req = friendRepository.findByUser1AndUser2(reqUser, recv)
                 .orElseThrow(() -> new IllegalStateException("No pending friend request found"));
-
-        if (!"pending".equals(request.getStatus())) {
-            throw new IllegalStateException("Request already accepted or invalid");
+        if (!"pending".equals(req.getStatus())) {
+            throw new IllegalStateException("Request already processed");
         }
-
-        request.setStatus("approved");
-        friendRepository.save(request);
+        req.setStatus("approved");
+        friendRepository.save(req);
     }
 
     public void deleteFriendship(Long userId1, Long userId2) {
-        Optional<User> user1Opt = userService.findById(userId1);
-        Optional<User> user2Opt = userService.findById(userId2);
+        Optional<User> u1 = userService.findById(userId1);
+        Optional<User> u2 = userService.findById(userId2);
+        if (u1.isEmpty() || u2.isEmpty()) return;
 
-        if (user1Opt.isEmpty() || user2Opt.isEmpty()) {
-            return;
+        friendRepository.findByUser1AndUser2(u1.get(), u2.get())
+                .ifPresent(friendRepository::delete);
+        friendRepository.findByUser1AndUser2(u2.get(), u1.get())
+                .ifPresent(friendRepository::delete);
+    }
+
+    public List<UserFriend> getApprovedRelationsForUser(Long userId) {
+        User me = userService.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
+        return friendRepository
+                .findByUser1OrUser2AndStatus(me, me, "approved");
+    }
+
+    public Optional<UserFriend> getRelation(Long userId1, Long userId2) {
+        User u1 = userService.findById(userId1)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId1));
+        User u2 = userService.findById(userId2)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId2));
+
+        Optional<UserFriend> rel = friendRepository.findByUser1AndUser2(u1, u2);
+        if (rel.isEmpty()) {
+            rel = friendRepository.findByUser1AndUser2(u2, u1);
         }
-
-        User user1 = user1Opt.get();
-        User user2 = user2Opt.get();
-
-        friendRepository.findByUser1AndUser2(user1, user2).ifPresent(friendRepository::delete);
-        friendRepository.findByUser1AndUser2(user2, user1).ifPresent(friendRepository::delete);
-    }
-
-    public List<User> getFriendsForUser(Long userId) {
-        Optional<User> userOpt = userService.findById(userId);
-        if (userOpt.isEmpty()) return List.of();
-
-        User user = userOpt.get();
-        List<UserFriend> relations = friendRepository.findByUser1OrUser2AndStatus(user, user, "approved");
-
-        return relations.stream()
-                .map(f -> f.getUser1().equals(user) ? f.getUser2() : f.getUser1())
-                .collect(Collectors.toList());
-    }
-
-    public List<User> getPendingFriendRequests(Long userId) {
-        Optional<User> userOpt = userService.findById(userId);
-        if (userOpt.isEmpty()) return List.of();
-
-        return friendRepository.findByUser2AndStatus(userOpt.get(), "pending")
-                .stream()
-                .map(UserFriend::getUser1)
-                .collect(Collectors.toList());
+        return rel;
     }
 
     public List<User> getIncomingRequests(Long userId) {
-        Optional<User> userOpt = userService.findById(userId);
-        if (userOpt.isEmpty()) return List.of();
-
-        return friendRepository.findByUser2AndStatus(userOpt.get(), "pending")
+        User me = userService.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
+        return friendRepository.findByUser2AndStatus(me, "pending")
                 .stream()
                 .map(UserFriend::getUser1)
                 .collect(Collectors.toList());

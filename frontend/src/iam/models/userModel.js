@@ -21,6 +21,22 @@ export default function createUserModel() {
         async fetchUserRoles(){
             const response = await apiClient.get('/users/roles')
             return response.data
+        },
+        async searchUsers({
+            name   = null,
+            email  = null,
+            domain = null,
+            rocnik = null,
+            titul  = null,
+            fakulta= null,
+            obor   = null,
+            page   = 0,
+            size   = 20
+        } = {}) {
+            const response = await apiClient.get('/users/search', {
+                params: { name, email, domain, rocnik, titul, fakulta, obor, page, size }
+            })
+            return response.data
         }
     }
 }

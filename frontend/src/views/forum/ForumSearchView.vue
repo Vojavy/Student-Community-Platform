@@ -29,8 +29,8 @@
               d="M19 9l-7 7-7-7"/>
       </svg>
       {{ showFilters
-        ? t('forum.actions.hideFilters')
-        : t('forum.actions.showFilters') }}
+        ? t('common.hideFilters')
+        : t('common.showFilters') }}
     </button>
 
     <div v-show="showFilters" class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">

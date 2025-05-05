@@ -7,7 +7,9 @@ export default {
         delete: 'Delete',
         loading: 'Loading...',
         search: 'Search',
-        submit: 'Submit'
+        submit: 'Submit',
+        showFilters: 'Show filters',
+        hideFilters: 'Hide filters',
     },
     verification: {
         title: 'Email Verification',
@@ -65,6 +67,7 @@ export default {
         calendar: 'Calendar',
         groups: 'Groups',
         messages: 'Private Messages',
+        searchUsers: 'Users',
         mobile: {
             index: 'Home',
             market: 'Marketplace',
@@ -118,10 +121,21 @@ export default {
         active: 'Active',
         yes: 'Yes',
         no: 'No',
+        username: 'username',
         notFound: 'User not found',
         registered: 'Registered',
         detailsTitle: 'Details',
         noDetails: 'No details provided',
+        search:
+        {
+            placeholderName: "Search by first or last name",
+            placeholderEmail: "Email",
+            placeholderRocnik: "Year",
+            placeholderFakulta: "Faculty",
+            placeholderObor: "Program",
+            domainAll: "All domains",
+            titulAll: "All titles"
+        },
         friends: {
             title: 'Friends',
             empty: 'You have no friends yet',
@@ -168,6 +182,8 @@ export default {
             }
         },
         contacts: {
+            show: 'Show contacts',
+            hide: 'Hide contacts',
             inst: 'Instagram',
             tg: 'Telegram',
             fb: 'Facebook',
@@ -305,8 +321,6 @@ export default {
             oldest: 'Oldest first'
         },
         actions: {
-            showFilters: 'Show filters',
-            hideFilters: 'Hide filters',
             editForum: 'Edit forum',
             archive: 'Archive forum',
             activate: 'Activate forum',

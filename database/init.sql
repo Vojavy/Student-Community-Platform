@@ -12,6 +12,10 @@ create sequence user_is_data_id_seq;
 
 alter sequence user_is_data_id_seq owner to admin;
 
+create sequence user_messages_id_seq;
+
+alter sequence user_messages_id_seq owner to admin;
+
 create table roles
 (
     id   bigint generated always as identity
@@ -54,6 +58,9 @@ create table users
     created_at           timestamp    not null,
     updated_at           timestamp    not null,
     domain_id            bigint
+        constraint fk_users_domains
+            references university_domains
+            on delete set null
         constraint fk_users_domains
             references university_domains
             on delete set null,
@@ -493,58 +500,57 @@ alter table forum_allowed_roles
 create index idx_forum_allowed_roles_role_id
     on forum_allowed_roles (role_id);
 
+create table user_messages
+(
+    id                bigint    default nextval('user_messages_id_seq'::regclass) not null
+        constraint user_messages_pk
+            primary key,
+    sender_id         bigint                                                      not null
+        constraint fk_user_messages_sender
+            references users
+            on delete cascade,
+    recipient_id      bigint                                                      not null
+        constraint fk_user_messages_recipient
+            references users
+            on delete cascade,
+    content_text      text,
+    content_base64    text,
+    is_read           boolean   default false                                     not null,
+    created_at        timestamp default now()                                     not null,
+    read_at           timestamp,
+    parent_message_id bigint
+        constraint fk_user_messages_parent
+            references user_messages
+            on delete set null
+);
+
+alter table user_messages
+    owner to admin;
+
+create index idx_user_messages_sender
+    on user_messages (sender_id);
+
+create index idx_user_messages_recipient
+    on user_messages (recipient_id);
+
+create index idx_user_messages_parent
+    on user_messages (parent_message_id);
+
 create view user_profile_view
             (user_id, email, active, domain, admin_email, os_cislo, stpr_idno, user_name, jmeno, prijmeni, titul_pred,
              titul_za, pohlavi, fakulta_sp, obor_komb, nazev_sp, kod_sp, forma_sp, typ_sp, rocnik, stav, misto_vyuky,
              cislo_karty, rozvrhovy_krouzek, studijni_kruh, evidovan_bankovni_ucet, details)
 as
-SELECT u.id AS user_id,
-       u.email,
-       u.active,
-       d.domain,
-       d.admin_email,
-       isd.os_cislo,
-       isd.stpr_idno,
-       isd.user_name,
-       isd.jmeno,
-       isd.prijmeni,
-       isd.titul_pred,
-       isd.titul_za,
-       isd.pohlavi,
-       isd.fakulta_sp,
-       isd.obor_komb,
-       isd.nazev_sp,
-       isd.kod_sp,
-       isd.forma_sp,
-       isd.typ_sp,
-       isd.rocnik,
-       isd.stav,
-       isd.misto_vyuky,
-       isd.cislo_karty,
-       isd.rozvrhovy_krouzek,
-       isd.studijni_kruh,
-       isd.evidovan_bankovni_ucet,
-       u.details
-FROM users u
-         LEFT JOIN university_domains d ON u.domain_id = d.id
-         LEFT JOIN user_is_data isd ON u.id = isd.user_id;
+-- missing source code
+;
 
 alter table user_profile_view
     owner to admin;
 
 create view pending_friend_requests
             (requester_id, requester_email, recipient_id, recipient_email, status, hidden, created_at) as
-SELECT uf.user_id_1 AS requester_id,
-       u1.email     AS requester_email,
-       uf.user_id_2 AS recipient_id,
-       u2.email     AS recipient_email,
-       uf.status,
-       uf.hidden,
-       uf.created_at
-FROM user_friends uf
-         JOIN users u1 ON u1.id = uf.user_id_1
-         JOIN users u2 ON u2.id = uf.user_id_2
-WHERE uf.status::text = 'pending'::text;
+-- missing source code
+;
 
 alter table pending_friend_requests
     owner to admin;

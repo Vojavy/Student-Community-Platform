@@ -7,7 +7,9 @@ export default {
         delete: 'Удалить',
         loading: 'Загрузка...',
         search: 'Поиск',
-        submit: 'Отправить'
+        submit: 'Отправить',
+        showFilters: 'Показать фильтры',
+        hideFilters: 'Скрыть фильтры',
     },
     verification: {
         title: 'Подтверждение Email',
@@ -65,6 +67,7 @@ export default {
         calendar: 'Календарь',
         groups: 'Группы',
         messages: 'Личные сообщения',
+        searchUsers: 'Пользователи',
         mobile: {
             index: 'Главная',
             market: 'Базар',
@@ -118,10 +121,21 @@ export default {
         active: 'Активен',
         yes: 'Да',
         no: 'Нет',
+        username: 'username',
         notFound: 'Пользователь не найден',
         registered: 'Зарегистрирован',
         detailsTitle: 'Детали',
         noDetails: 'Нет указанных данных',
+        search:
+        {
+            placeholderName: "Поиск по имени или фамилии",
+            placeholderEmail: "Email",
+            placeholderRocnik: "Рочник",
+            placeholderFakulta: "Факультет",
+            placeholderObor: "Направление",
+            domainAll: "Все домены",
+            titulAll: "Все титулы"
+        },
         friends: {
             title: 'Друзья',
             empty: 'У вас пока нет друзей',
@@ -168,6 +182,8 @@ export default {
             }
         },
         contacts: {
+            show: 'Показать контакты',
+            hide: 'Скрыть контакты',
             inst: 'Instagram',
             tg: 'Telegram',
             fb: 'Facebook',
@@ -305,8 +321,6 @@ export default {
             oldest: 'Сначала старые'
         },
         actions: {
-            showFilters: 'Показать фильтры',
-            hideFilters: 'Скрыть фильтры',
             editForum: 'Редактировать форум',
             archive: 'Архивировать форум',
             activate: 'Активировать форум',

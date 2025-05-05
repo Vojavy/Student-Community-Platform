@@ -10,10 +10,12 @@
   },
   "dependencies": {
     "@heroicons/vue": "^2.2.0",
+    "@stomp/stompjs": "^7.1.1",
     "@tailwindcss/vite": "^4.1.4",
     "axios": "^1.8.4",
     "dompurify": "^3.2.5",
     "pinia": "^3.0.2",
+    "sockjs-client": "^1.6.1",
     "tailwindcss": "^4.1.4",
     "vue": "^3.5.13",
     "vue-i18n": "^11.1.3",

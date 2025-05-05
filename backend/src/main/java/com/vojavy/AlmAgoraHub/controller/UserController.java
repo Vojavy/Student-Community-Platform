@@ -8,6 +8,7 @@ import com.vojavy.AlmAgoraHub.model.user.UserDetailsExtended;
 import com.vojavy.AlmAgoraHub.service.authentication.JwtService;
 import com.vojavy.AlmAgoraHub.service.user.UserProfileService;
 import com.vojavy.AlmAgoraHub.service.user.UserService;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -34,6 +35,16 @@ public class UserController {
         this.jwtService = jwtService;
         this.passwordEncoder = passwordEncoder;
         this.userProfileService = userProfileService;
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<UserProfileResponse> getUserByIdSimple(
+            @PathVariable Long id
+    ) {
+        Optional<UserProfileResponse> profileOpt = userProfileService.getProfileById(id);
+        return profileOpt
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @PutMapping("/{id}")
@@ -100,6 +111,23 @@ public class UserController {
                 )
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+    }
+
+    @GetMapping("/search")
+    public Page<UserProfileResponse> searchUsers(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String email,
+            @RequestParam(required = false) String domain,
+            @RequestParam(required = false) String rocnik,
+            @RequestParam(required = false) String titul,
+            @RequestParam(required = false) String fakulta,
+            @RequestParam(required = false) String obor,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        return userProfileService.searchProfiles(
+                name, email, domain, rocnik, titul, fakulta, obor, page, size
+        );
     }
 
     private boolean isNotAuthorized(Long pathUserId, String token) {

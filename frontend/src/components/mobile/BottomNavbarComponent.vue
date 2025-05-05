@@ -17,9 +17,9 @@
       <span>👥</span>
       <span>{{ t('navBar.mobile.groups') }}</span>
     </button>
-    <button @click="goMessages" class="flex flex-col items-center">
-      <span>📩</span>
-      <span>{{ t('navBar.mobile.messages') }}</span>
+    <button @click="goUserSearch" class="flex flex-col items-center">
+      <span>🔍</span>
+      <span>{{ t('navBar.mobile.searchUsers') }}</span>
     </button>
   </div>
 </template>
@@ -31,9 +31,9 @@ import { useI18n } from 'vue-i18n'
 const { t } = useI18n()
 const coordinator = inject('coordinator')
 
-const goHome     = () => coordinator.navigateToHome()
-const goMarket   = () => coordinator.navigateToMarket?.()
-const goForum    = () => coordinator.navigateToForum()
-const goGroups   = () => coordinator.navigateToGroups()
-const goMessages = () => coordinator.navigateToMessages()
+const goHome       = () => coordinator.navigateToHome()
+const goMarket     = () => coordinator.navigateToMarket?.()
+const goForum      = () => coordinator.navigateToForum()
+const goGroups     = () => coordinator.navigateToGroups()
+const goUserSearch = () => coordinator.navigateToUserSearch()
 </script>

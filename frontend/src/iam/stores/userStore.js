@@ -10,7 +10,19 @@ export const useUserStore = defineStore('userStore', {
         profile: {},
         roles: [],
         loading: false,
-        error: null
+        error: null,
+        searchResults: {
+            content: [],
+            number: 0,
+            size: 20,
+            totalElements: 0,
+            totalPages: 0,
+            last: true,
+            first: true,
+            numberOfElements: 0,
+            empty: true,
+            pageable: {}
+        }
     }),
 
     actions: {
@@ -94,6 +106,25 @@ export const useUserStore = defineStore('userStore', {
             } catch (e) {
                 this.error = e.response?.data?.message || e.message || 'Fetch roles failed'
                 console.error('[userStore] fetchRoles error:', this.error)
+                throw e
+            } finally {
+                this.loading = false
+            }
+        },
+
+        async searchUsers(filters = {}) {
+            this.loading = true
+            this.error   = null
+            try {
+                const resp = await model.searchUsers(filters)
+                this.searchResults = {
+                    ...resp,
+                    content: resp.content.map(u => u) // no transformation needed here
+                }
+                return this.searchResults
+            } catch (e) {
+                this.error = e.response?.data?.message || e.message || 'Search users failed'
+                console.error('[userStore] searchUsers error →', this.error)
                 throw e
             } finally {
                 this.loading = false

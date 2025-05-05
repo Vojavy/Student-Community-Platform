@@ -112,16 +112,21 @@ export default function createCoordinator(router) {
         navigateToForumDetails(id) {
             router.push({ name: 'forum-info', params: { forumId: id } })
         },
-        refreshPage() {
-            router.go(0);
+        navigateToChat(userId) {
+            router.push({ name: 'chat', params: { id: userId } })
         },
         navigateToExternal(url) {
             if (!url) return
-            // либо через window.open, либо через router.push, если нужна внутренняя обёртка
             window.open(this.normalizeLink(url), '_blank')
+        },
+        navigateToUserSearch() {
+            router.push('/user/search')
         },
         normalizeLink(str) {
             return str.startsWith('http') ? str : `https://${str}`
-        }
+        },
+        refreshPage() {
+            router.go(0);
+        },
     }
 }

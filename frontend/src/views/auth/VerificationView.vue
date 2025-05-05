@@ -68,7 +68,7 @@ const email = route.query.email || null
 const codeFromUrl = route.query.code || null
 
 const onVerify = async () => {
-  await authStore.verify({ email, verificationCode: verificationCode.value }, coordinator, false)
+  await authStore.verify(email, verificationCode.value, coordinator);
 }
 
 const onResend = async () => {
@@ -81,7 +81,7 @@ onMounted(() => {
     return
   }
   if (codeFromUrl) {
-    authStore.verify({ email, verificationCode: codeFromUrl }, coordinator, true)
+    authStore.verify(email, codeFromUrl, coordinator);
   }
 })
 </script>

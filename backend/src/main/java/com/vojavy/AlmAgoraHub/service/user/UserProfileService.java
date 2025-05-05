@@ -3,6 +3,9 @@ package com.vojavy.AlmAgoraHub.service.user;
 import com.vojavy.AlmAgoraHub.model.user.UserProfileView;
 import com.vojavy.AlmAgoraHub.repository.UserProfileViewRepository;
 import com.vojavy.AlmAgoraHub.dto.responses.UserProfileResponse;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -50,6 +53,49 @@ public class UserProfileService {
         dto.setRozvrhovyKrouzek(entity.getRozvrhovyKrouzek());
         dto.setStudijniKruh(entity.getStudijniKruh());
         dto.setEvidovanBankovniUcet(entity.getEvidovanBankovniUcet());
+
+        return dto;
+    }
+
+    public Page<UserProfileResponse> searchProfiles(
+            String name,
+            String email,
+            String domain,
+            String rocnik,
+            String titul,
+            String fakulta,
+            String obor,
+            int page,
+            int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size);
+        return profileViewRepository
+                .search(name, email, domain, rocnik, titul, fakulta, obor, pageable)
+                .map(this::mapToDtoForSearch);
+    }
+
+    private UserProfileResponse mapToDtoForSearch(UserProfileView v) {
+        UserProfileResponse dto = new UserProfileResponse();
+
+        // —————— Обязательные ID/контакты ——————
+        dto.setUserId(v.getUserId());
+        dto.setEmail(v.getEmail());
+        dto.setDomain(v.getDomain());
+        dto.setJmeno(v.getJmeno());
+        dto.setPrijmeni(v.getPrijmeni());
+        dto.setDetails(v.getDetails());
+        dto.setTitulPred(v.getTitulPred());
+        dto.setTitulZa(v.getTitulZa());
+        dto.setPohlavi(v.getPohlavi());
+        dto.setFakultaSp(v.getFakultaSp());
+        dto.setOborKomb(v.getOborKomb());
+        dto.setNazevSp(v.getNazevSp());
+        dto.setKodSp(v.getKodSp());
+        dto.setFormaSp(v.getFormaSp());
+        dto.setTypSp(v.getTypSp());
+        dto.setRocnik(v.getRocnik());
+        dto.setStav(v.getStav());
+        dto.setMistoVyuky(v.getMistoVyuky());
 
         return dto;
     }

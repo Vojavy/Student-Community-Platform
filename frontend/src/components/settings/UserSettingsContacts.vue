@@ -169,15 +169,17 @@ function cancelEditing(key) {
 function deleteField(key) {
   const updated = { ...local.contacts, [key]: '' }
   emit('update-details', {
-    contacts: updated,
-    other: localOtherArray.value
+    ...props.profile.details,
+    contacts: { ...local.contacts },
+    other:    localOtherArray.value
   })
   editing[key] = false
 }
 function saveField(key) {
   emit('update-details', {
+    ...props.profile.details,
     contacts: { ...local.contacts },
-    other: localOtherArray.value
+    other:    localOtherArray.value
   })
   editing[key] = false
 }
@@ -202,8 +204,9 @@ function removeOther(source) {
   const o = { ...local.otherMap }
   delete o[source]
   emit('update-details', {
-    contacts: local.contacts,
-    other: Object.entries(o).map(([s,v]) => ({ source:s, value:v }))
+    ...props.profile.details,
+    contacts: { ...local.contacts },
+    other:    localOtherArray.value
   })
 }
 function confirmOther() {
@@ -212,8 +215,9 @@ function confirmOther() {
   if (!source) return
   const o = { ...local.otherMap, [source]: val }
   emit('update-details', {
-    contacts: local.contacts,
-    other: Object.entries(o).map(([s,v]) => ({ source:s, value:v }))
+    ...props.profile.details,
+    contacts: { ...local.contacts },
+    other:    localOtherArray.value
   })
   editingOther.value = null
 }

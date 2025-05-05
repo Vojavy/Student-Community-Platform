@@ -2,7 +2,9 @@ package com.vojavy.AlmAgoraHub.model.user;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
 
@@ -140,7 +142,9 @@ public class UserDetailsExtended {
 
     @Converter
     public static class ConverterImpl implements AttributeConverter<UserDetailsExtended, String> {
-        private static final ObjectMapper mapper = new ObjectMapper();
+        private static final ObjectMapper mapper = new ObjectMapper()
+                .configure(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY, true)
+                .registerModule(new JavaTimeModule());
 
         @Override
         public String convertToDatabaseColumn(UserDetailsExtended attribute) {

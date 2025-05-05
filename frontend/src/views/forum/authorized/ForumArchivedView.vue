@@ -24,8 +24,8 @@
         class="text-sm text-accent-primary hover:underline"
     >
       {{ showFilters
-        ? t('forum.actions.hideFilters')
-        : t('forum.actions.showFilters') }}
+        ? t('common.hideFilters')
+        : t('common.showFilters') }}
     </button>
 
     <!-- Extra: Domain, Public, Sort -->

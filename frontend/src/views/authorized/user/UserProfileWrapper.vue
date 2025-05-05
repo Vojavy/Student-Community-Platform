@@ -1,4 +1,3 @@
-<!-- src/views/authorized/User/UserProfileWrapper.vue -->
 <template>
   <UserProfilePersonalView v-if="isOwner" />
   <UserProfilePublicView  v-else />

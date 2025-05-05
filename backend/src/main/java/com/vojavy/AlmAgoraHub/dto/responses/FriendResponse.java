@@ -2,8 +2,8 @@ package com.vojavy.AlmAgoraHub.dto.responses;
 
 public class FriendResponse {
     private Long userId;
-    private String name; // jmeno + prijmeni || email
-    private String status; // approved/pending
+    private String name;
+    private String status;
 
     public String getStatus() {
         return status;

@@ -12,7 +12,6 @@ import en from './locales/en'
 import ru from './locales/ru'
 import cz from './locales/cz'
 
-
 const i18n = createI18n({
     legacy: false,
     locale: 'cz',
