@@ -1,162 +1,230 @@
-Zde je profesionálně napsaný **README.md** soubor pro Git repozitář vašeho bakalářského projektu *Studentská komunitní platforma*:
+# Student Community Platform
+
+**Responsive web application for university students to interact, share resources, and collaborate.**
 
 ---
 
-````markdown
-# 🧑‍🎓 The Student Community Platform
+## Table of Contents
 
-A responsive web-based platform created as part of a Bachelor's thesis at the University of Pardubice. The project aims to facilitate interaction, collaboration, and resource sharing among university students.
+* [Overview](#overview)
+* [Features](#features)
+* [Architecture & Tech Stack](#architecture--tech-stack)
+* [Prerequisites](#prerequisites)
+* [Installation & Setup](#installation--setup)
 
-## 📚 Project Overview
+  * [Backend (Spring Boot)](#backend-spring-boot)
+  * [Frontend (Vue.js)](#frontend-vuejs)
+  * [Database & Environment](#database--environment)
+* [Running with Docker](#running-with-docker)
+* [Usage](#usage)
+* [Configuration](#configuration)
 
-This application serves as a centralized platform for students to:
-- Create and manage study groups
-- Share materials and announcements
-- Discuss via forums
-- Connect via internal messaging
-- Integrate with IS/STAG for verified academic data
-
-> 🎓 This project was developed by Andrii Streblychenko (FEI, University of Pardubice, 2025)
-
----
-
-## ⚙️ Tech Stack
-
-### Backend
-- Java 21
-- Spring Boot 3
-- PostgreSQL
-- JWT-based Authentication
-- WebSocket (for chat and notifications)
-- Maven
-
-### Frontend
-- Vue.js 3 + Composition API
-- Vue Router
-- Pinia (store)
-- Tailwind CSS
-- Axios
-
-### Infrastructure
-- Docker & Docker Compose
-- RESTful API architecture
-- CI-ready structure
+  * [STAG Integration](#stag-integration)
+* [Contributing](#contributing)
+* [License](#license)
+* [Author](#author)
 
 ---
 
-## 🧩 Features
+## Overview
 
-### ✅ Implemented
-- JWT authentication (local + Microsoft login)
-- Email verification flow
-- Study group creation and role-based access control
-- Public/private forums with reply & moderation options
-- Personal and public user profiles
-- Private chat between users (real-time)
-- STAG integration (via token)
-- User search and contact sharing
-
-### 🚧 Planned (not yet implemented)
-- Event system and calendar
-- File storage in external/NoSQL system
-- Marketplace ("bazar") for local student offers
-- Group file attachments
-- Group announcements/events (UI only for now)
+This project implements a **responsive**, **secure** web–based database application designed to foster interaction, collaboration, and information sharing among university students.
+Developed as a Bachelor’s thesis at the University of Pardubice, Faculty of Electrical Engineering and Informatics.
 
 ---
 
-## 🛡️ Security & Architecture
+## Features
 
-- RESTful backend following layered architecture (controllers, services, repositories, DTOs)
-- Role-based authorization system
-- Secure token management via `user_tokens` table
-- MVVM-C frontend pattern with modular separation of view, logic, and routing
-- Input validation both client- and server-side
+* **User Authentication & Authorization**
+
+  * Email verification, JWT–based login
+* **STAG Integration**
+
+  * Pulls official study data (OSČÍSLO, faculty, program, year)
+* **Study Groups Module**
+
+  * Create/join private or public groups
+  * Post news, share files, manage membership
+* **Forum Module**
+
+  * Multi–topic forums, threaded discussions
+  * Moderator & pinned/informational flags
+* **Real–time Chat & Notifications**
+
+  * One–to–one WebSocket chat
+  * In–app notifications
+* **Marketplace & Calendar**
+
+  * Buy/sell student items, events scheduling
+* **User Profiles & Networking**
+
+  * Public/private profiles, friends list, search
+  * Skills, status, personal “About me”
+* **Responsive UI**
+
+  * Mobile–friendly layout in Vue.js
 
 ---
 
-## 🗃️ Database
+## Architecture & Tech Stack
 
-- PostgreSQL schema with over 20 interconnected tables
-- Support for views (e.g. `user_profile_view`, `pending_friend_requests`)
-- Manual domain/role provisioning (for university-wide scope)
-- JSONB usage for flexible profile metadata and post topics
+| Layer           | Technology                             |
+| --------------- | -------------------------------------- |
+| **Backend**     | Java 17, Spring Boot, Spring Security  |
+| **Frontend**    | Vue.js 3, Vuex, Vue Router, Axios      |
+| **Database**    | PostgreSQL                             |
+| **Realtime**    | WebSocket (STOMP over SockJS)          |
+| **Container**   | Docker, Docker Compose                 |
+| **Build Tools** | Maven (backend), npm & Vite (frontend) |
+
+Architecture follows a **multilayer MVC** pattern:
+
+* **Model**: Entities & DTOs
+* **Repository**: Spring Data JPA
+* **Service**: Business logic, STAG service
+* **Controller**: REST & WebSocket endpoints
+* **ViewModel/Store**: Vuex stores & reactive components
 
 ---
 
-## 🧪 How to Run Locally
+## Prerequisites
 
-### Prerequisites
-- Docker
-- Java 21
-- Node.js + npm
+* **Java 17+**
+* **Node.js 16+ & npm**
+* **PostgreSQL 12+**
+* **Docker & Docker Compose** (optional, recommended)
 
-### Backend
+---
+
+## Installation & Setup
+
+### Backend (Spring Boot)
+
+1. Clone the repo and navigate to the backend folder:
+
+   ```bash
+   git clone https://github.com/your-org/student-community-platform.git
+   cd student-community-platform/backend
+   ```
+2. Configure application properties in `src/main/resources/application.properties`:
+
+   ```properties
+   spring.datasource.url=jdbc:postgresql://localhost:5432/student_platform
+   spring.datasource.username=…
+   spring.datasource.password=…
+   stag.api.url=https://stag.upce.cz/oauth2
+   stag.client.id=…
+   stag.client.secret=…
+   ```
+3. Build & run:
+
+   ```bash
+   mvn clean package
+   java -jar target/student-community-platform-0.1.0.jar
+   ```
+
+### Frontend (Vue.js)
+
+1. In a new terminal, go to the frontend folder:
+
+   ```bash
+   cd ../frontend
+   ```
+2. Install dependencies & configure API base URL in `.env`:
+
+   ```
+   VITE_API_BASE_URL=http://localhost:8080/api
+   ```
+3. Start development server:
+
+   ```bash
+   npm install
+   npm run dev
+   ```
+
+### Database & Environment
+
+1. Create PostgreSQL database & user:
+
+   ```sql
+   CREATE DATABASE student_platform;
+   CREATE USER scp_user WITH PASSWORD 'your_password';
+   GRANT ALL PRIVILEGES ON DATABASE student_platform TO scp_user;
+   ```
+2. Ensure the credentials match `application.properties`.
+
+---
+
+## Running with Docker
+
+A simple way to launch the full stack:
 
 ```bash
-cd backend
-./mvnw spring-boot:run
-````
-
-Or with Docker:
-
-```bash
+cd docker
 docker-compose up --build
 ```
 
-### Frontend
+This will start:
 
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-The app will be available at `http://localhost:5173`
+* `backend` service on `:8080`
+* `frontend` service on `:5173`
+* `postgres` service on `:5432`
 
 ---
 
-## 📁 Directory Structure
+## Usage
 
-```
-├── backend
-│   ├── src/main/java/cz/upce/platform
-│   └── application.properties
-├── frontend
-│   ├── src
-│   │   ├── views
-│   │   ├── components
-│   │   ├── stores
-│   │   ├── models
-│   │   └── router
-└── docker-compose.yml
-```
+1. Register a new account or log in with your university email.
+2. Complete your profile and connect to STAG for automatic data import.
+3. Explore or create **groups**, **forums**, and **events**.
+4. Chat privately with other students.
+5. Share and browse study materials or marketplace posts.
 
 ---
 
-## ✍️ Author
+## Configuration
+
+### STAG Integration
+
+To import official student data:
+
+1. In your profile, click **Connect STAG**.
+2. Authorize the application via the university’s OAuth2 endpoint.
+3. On success, your STAG token is stored and student info is fetched automatically.
+
+---
+
+## Contributing
+
+1. Fork the repository & create a feature branch:
+
+   ```bash
+   git checkout -b feature/YourFeature
+   ```
+2. Commit your changes & push:
+
+   ```bash
+   git commit -m "Add YourFeature"
+   git push origin feature/YourFeature
+   ```
+3. Open a Pull Request for review.
+
+Please follow the existing code style and include tests for new functionality.
+
+---
+
+## License
+
+This project is licensed under the **MIT License**. See [LICENSE](LICENSE) for details.
+
+---
+
+## Author
 
 **Andrii Streblychenko**
-Faculty of Electrical Engineering and Informatics
-University of Pardubice, 2025
-📧 [streblychenko@student.upce.cz](mailto:streblychenko@student.upce.cz)
+Bachelor Thesis, University of Pardubice, 2025
+Email: [sir.strel@gmail.com](mailto:sir.strel@gmail.com)
 
 ---
 
-## 📝 License
-
-This project is licensed under the MIT License – see the [LICENSE](LICENSE) file for details.
-
----
-
-## 📎 Thesis
-
-The project is documented in detail in the attached thesis:
-📄 [`Bakalarka.pdf`](./docs/Bakalarka.pdf)
-
-```
-
----
-
-Pokud byste chtěl českou verzi tohoto README, nebo ji přidat jako `README.cs.md`, dejte vědět. Můžu také připravit `.gitignore`, `LICENSE`, nebo CI konfiguraci.
-```
+*This README is part of the “Studentská komunitní platforma” project*
